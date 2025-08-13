@@ -92,9 +92,12 @@ fun AppLoginScreen(modifier: Modifier = Modifier, successAction: () -> Unit = {}
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Email, imeAction = ImeAction.Next
                 ),
-                keyboardActions = KeyboardActions(onDone = {
-                    passwordFocusRequester.requestFocus();
-                })
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        passwordFocusRequester.requestFocus();
+                    }
+                ),
+                maxLines = 1
             )
             OutlinedTextField(
                 modifier = Modifier
@@ -124,7 +127,8 @@ fun AppLoginScreen(modifier: Modifier = Modifier, successAction: () -> Unit = {}
 
                         blockContinue = false;
                     }
-                })
+                }),
+                maxLines = 1
             )
         }
     }
