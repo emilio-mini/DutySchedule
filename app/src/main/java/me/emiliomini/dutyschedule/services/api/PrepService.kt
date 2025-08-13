@@ -1,0 +1,259 @@
+package me.emiliomini.dutyschedule.services.api
+
+import android.content.Context
+import android.util.Log
+import kotlinx.coroutines.delay
+import me.emiliomini.dutyschedule.services.models.LocalStorageKey
+import me.emiliomini.dutyschedule.data.models.TimelineItem
+import me.emiliomini.dutyschedule.data.models.DutyDefinition
+import me.emiliomini.dutyschedule.data.models.Employee
+import me.emiliomini.dutyschedule.data.models.Incode
+import me.emiliomini.dutyschedule.data.models.mapping.OrgUnitDataGuid
+import me.emiliomini.dutyschedule.services.storage.LocalStorageService
+import okio.IOException
+import org.json.JSONException
+import org.json.JSONObject
+import java.time.OffsetDateTime
+import java.util.regex.Pattern
+
+object PrepService {
+    const val DEBUG_MODE = false;
+    private const val TAG = "PrepService";
+
+    private var incode: Incode? = null;
+    private var self: Employee? = null;
+
+    fun getSelf(): Employee? {
+        return this.self;
+    }
+
+    fun getIncode(): Incode? {
+        return this.incode;
+    }
+
+    fun isLoggedIn(): Boolean {
+        return this.incode != null;
+    }
+
+
+    suspend fun login(context: Context, username: String, password: String): Boolean {
+        var loginResult: Result<String?>;
+        if (this.DEBUG_MODE) {
+            loginResult =
+                Result.success("...{ headers: { 'x-incode-EXAMPLEKEY': 'EXAMPLEVALUE' } }...");
+        } else {
+            loginResult = NetworkService.login(username, password);
+        }
+
+        val responseBody = loginResult.getOrNull();
+        if (responseBody.isNullOrBlank()) {
+            return false;
+        }
+
+        val incodeRegex = Pattern.compile("'(x-incode-[^']+)': '([^']+)'");
+        val incodeMatcher = incodeRegex.matcher(responseBody);
+
+        if (incodeMatcher.find()) {
+            val incodeToken = incodeMatcher.group(1);
+            val incodeValue = incodeMatcher.group(2);
+            if (incodeToken.isNullOrBlank() || incodeValue.isNullOrBlank()) {
+                return false;
+            }
+
+            this.incode = Incode(incodeToken, incodeValue);
+
+            LocalStorageService.save(context, LocalStorageKey.USERNAME, username);
+            LocalStorageService.save(context, LocalStorageKey.PASSWORD, password);
+
+            Log.d(TAG, "Logged in!");
+        } else {
+            Log.w(TAG, "Could not find x-incode in response body");
+            return false;
+        }
+
+        val guidRegex = Pattern.compile("ressourceDataGuid === '([^']+)'");
+        val guidMatcher = guidRegex.matcher(responseBody);
+        if (guidMatcher.find()) {
+            val guid = guidMatcher.group(1);
+            if (guid.isNullOrBlank()) {
+                return false;
+            }
+
+            val staffResult = this.getStaff(context, OrgUnitDataGuid.SATTLEDT, listOf(guid), OffsetDateTime.now(), OffsetDateTime.now()).getOrNull();
+            if (staffResult != null && staffResult.isNotEmpty()) {
+                this.self = staffResult.firstOrNull { it.guid == guid };
+            }
+
+            Log.d(TAG, "Loaded self identity");
+        } else {
+            Log.w(TAG, "Could not find self dataGuid in response body");
+        }
+
+        return true;
+    }
+
+    suspend fun previouslyLoggedIn(context: Context): Boolean {
+        val username = LocalStorageService.loadValue(context, LocalStorageKey.USERNAME);
+        val password = LocalStorageService.loadValue(context, LocalStorageKey.PASSWORD);
+
+        return username != null && password != null;
+    }
+
+    suspend fun restoreLogin(context: Context): Boolean {
+        val username = LocalStorageService.loadValue(context, LocalStorageKey.USERNAME);
+        val password = LocalStorageService.loadValue(context, LocalStorageKey.PASSWORD);
+
+        if (username.isNullOrBlank() || password.isNullOrBlank()) {
+            return false;
+        }
+
+        if (this.DEBUG_MODE) {
+            return this.login(context, username, password);
+        }
+
+        // Try restoring using keepalive
+        val keepAlive = NetworkService.keepAlive().getOrNull();
+        if (keepAlive == "true") {
+            return true;
+        }
+
+        return this.login(context, username, password);
+    }
+
+    suspend fun logout(context: Context) {
+        this.incode = null;
+        LocalStorageService.clear(context, LocalStorageKey.USERNAME);
+        LocalStorageService.clear(context, LocalStorageKey.PASSWORD);
+    }
+
+    suspend fun loadPlan(
+        context: Context,
+        orgUnitDataGuid: OrgUnitDataGuid,
+        from: OffsetDateTime,
+        to: OffsetDateTime
+    ): Result<List<DutyDefinition>> {
+        Log.d(TAG, "Loading plan...");
+
+        if (!this.isLoggedIn()) {
+            return Result.failure(IOException("Not logged in!"));
+        }
+
+        if (this.DEBUG_MODE) {
+            delay(2000);
+            return Result.success(
+                listOf(
+                    DutyDefinition.getSample()
+                )
+            );
+        }
+
+        val planBody = NetworkService.loadPlan(incode!!, orgUnitDataGuid, from, to).getOrNull();
+        if (planBody.isNullOrBlank()) {
+            return Result.failure(IOException("Failed to load plan!"));
+        }
+
+        try {
+            val duties = DataParserService.parseLoadPlan(JSONObject(planBody));
+            return Result.success(duties);
+        } catch (e: JSONException) {
+            Log.e(TAG, "Invalid JSON! $planBody")
+            return Result.failure(e);
+        }
+    }
+
+    suspend fun getStaff(
+        context: Context,
+        orgUnitDataGuid: OrgUnitDataGuid,
+        staffDataGuid: List<String>,
+        from: OffsetDateTime,
+        to: OffsetDateTime
+    ): Result<List<Employee>> {
+        Log.d(TAG, "Getting staff...");
+
+        if (!this.isLoggedIn()) {
+            return Result.failure(IOException("Not logged in!"));
+        }
+
+        if (this.DEBUG_MODE) {
+            return Result.success(
+                listOf(
+                    Employee("e0", "Your Name", "00001234"),
+                    Employee("e1", "John Doe", "00012345"),
+                    Employee("e2", "Jane Doe", "00023456")
+                )
+            );
+        }
+
+        val staffBody =
+            NetworkService.getStaff(incode!!, orgUnitDataGuid, staffDataGuid, from, to).getOrNull();
+        if (staffBody.isNullOrBlank()) {
+            return Result.failure(IOException("Failed to get staff!"));
+        }
+
+        try {
+            val staff = DataParserService.parseGetStaff(JSONObject(staffBody));
+            return Result.success(staff);
+        } catch (e: JSONException) {
+            Log.e(TAG, "Invalid JSON! $staffBody")
+            return Result.failure(e);
+        }
+    }
+
+    suspend fun loadTimeline(
+        context: Context,
+        orgUnitDataGuid: OrgUnitDataGuid,
+        from: OffsetDateTime,
+        to: OffsetDateTime
+    ): Result<List<TimelineItem>> {
+        val plan = this.loadPlan(context, orgUnitDataGuid, from, to).getOrNull();
+        if (plan.isNullOrEmpty()) {
+            Log.e(TAG, "Failed to load plan");
+            return Result.failure(IOException("Failed to load plan!"));
+        }
+
+        val employeeGuids = plan.flatMap { duty ->
+            val guids = mutableListOf<String>();
+            guids.addAll(duty.el.map { it.employee.guid })
+            guids.addAll(duty.tf.map { it.employee.guid })
+            guids.addAll(duty.rs.map { it.employee.guid })
+            guids
+        }.distinct();
+        val staff = this.getStaff(context, orgUnitDataGuid, employeeGuids, from, to).getOrNull();
+        if (staff.isNullOrEmpty()) {
+            Log.e(TAG, "Failed to get staff");
+            return Result.failure(IOException("Failed to get staff!"));
+        }
+        val staffMap = staff.associateBy { it.guid }
+
+        // Note: This is trash
+        plan.forEach { dutyDefinition ->
+            dutyDefinition.el.forEach { assigned ->
+                assigned.employee = staffMap[assigned.employee.guid] ?: assigned.employee
+            }
+            dutyDefinition.tf.forEach { assigned ->
+                assigned.employee = staffMap[assigned.employee.guid] ?: assigned.employee
+            }
+            dutyDefinition.rs.forEach { assigned ->
+                assigned.employee = staffMap[assigned.employee.guid] ?: assigned.employee
+            }
+        }
+
+        val sortedPlan = plan.sortedBy { it.begin };
+        val timelineItems = mutableListOf<TimelineItem>();
+
+        var previousBegin: OffsetDateTime? = null;
+        for (duty in sortedPlan) {
+            if (previousBegin == null || previousBegin.toLocalDate() != duty.begin.toLocalDate()) {
+                timelineItems.add(TimelineItem.Date(duty.begin));
+            }
+
+            timelineItems.add(TimelineItem.Duty(duty));
+            previousBegin = duty.begin;
+        }
+
+        Log.d(TAG, "Loaded ${timelineItems.size} timeline elements");
+        return Result.success(timelineItems.toList());
+    }
+
+}
+
