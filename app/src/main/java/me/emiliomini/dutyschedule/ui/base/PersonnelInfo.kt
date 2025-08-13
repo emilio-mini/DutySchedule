@@ -4,18 +4,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Badge
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,14 +18,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.graphics.shapes.rectangle
 import me.emiliomini.dutyschedule.data.models.Employee
 
 enum class PersonnelInfoState {
-    DEFAULT,
-    DISABLED,
-    HIGHLIGHTED
+    DEFAULT, DISABLED, HIGHLIGHTED
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,20 +38,22 @@ fun AppPersonnelInfo(
         PersonnelInfoState.DEFAULT -> MaterialTheme.colorScheme.onSurface
     }
 
-    var infoText = "";
+    var infoText = ""
     if (info != null) {
-        infoText = info;
+        infoText = info
     }
     if (employee.identifier != null) {
-        infoText = if (infoText.isBlank()) employee.identifier!! else "$infoText | ${employee.identifier}";
+        infoText =
+            if (infoText.isBlank()) employee.identifier!! else "$infoText | ${employee.identifier}"
     }
 
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
         if (icon != null) {
             Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = contentColor
+                imageVector = icon, contentDescription = null, tint = contentColor
             )
         } else {
             Box(modifier = Modifier.size(width = 24.dp, height = 24.dp))
@@ -74,8 +66,7 @@ fun AppPersonnelInfo(
                 fontWeight = FontWeight.Light
             )
             Text(
-                text = employee.name,
-                color = contentColor
+                text = employee.name, color = contentColor
             )
         }
     }
@@ -105,7 +96,6 @@ fun AppPersonnelInfoPreviewHighlighted() {
 @Composable
 fun AppPersonnelInfoPreviewDisabled() {
     AppPersonnelInfo(
-        employee = Employee("", "Empty Seat"),
-        state = PersonnelInfoState.DISABLED
+        employee = Employee("", "Empty Seat"), state = PersonnelInfoState.DISABLED
     )
 }

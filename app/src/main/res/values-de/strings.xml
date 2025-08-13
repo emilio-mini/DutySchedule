@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Duty Schedule</string>
+    <string name="onboarding_welcome_title">Willkommen</string>
+    <string name="onboarding_welcome_subtitle">Ganz leicht und schnell den Dienstplan durchblättern und automatische Wecker vor Dienstbeginn erhalten</string>
+    <string name="onboarding_welcome_about">Mehr erfahren</string>
+    <string name="onboarding_welcome_continue">Weiter</string>
+    <string name="onboarding_permissions_title">Berechtigungen</string>
+    <string name="onboarding_permissions_subtitle">Bevor wir starten, brauchen wir noch ein paar Berechtigungen</string>
+    <string name="onboarding_permissions_alarms_subtitle">Um automatisch einen Wecker vor deinem nächsten Dienst stellen zu können</string>
+    <string name="onboarding_permissions_skip">Überspringen</string>
+    <string name="onboarding_permissions_notification_title">Benachrichtigungen</string>
+    <string name="onboarding_permissions_notification_subtitle">Um dich über offene Dienste zu informieren und um Wecker abschalten zu können</string>
+    <string name="onboarding_permissions_continue">Weiter</string>
+    <string name="onboarding_permissions_alarms_title">Wecker</string>
+    <string name="onboarding_login_title">Anmelden</string>
+    <string name="onboarding_login_subtitle">mit deinen RK Zugangsdaten</string>
+    <string name="onboarding_login_continue">Weiter</string>
+    <string name="onboarding_login_email">Email</string>
+    <string name="onboarding_login_password">Passwort</string>
+    <string name="nav_schedule">Dienstplan</string>
+    <string name="nav_settings">Einstellungen</string>
+    <string name="main_settings_title">Einstellungen</string>
+    <string name="main_settings_section_account">Konto</string>
+    <string name="main_settings_snackbar_incode">Halten um Incode-Schlüssel zu kopieren</string>
+    <string name="main_settings_account_user_title_fallback">Anonym</string>
+    <string name="main_settings_account_user_content_fallback">Du bist derzeit nicht angemeltet</string>
+    <string name="main_settings_account_logout_title">Abmelden</string>
+    <string name="main_settings_account_logout_content">Entfernt alle Zugangsdaten vom Gerät</string>
+    <string name="base_dutycard_accessibility_requirements_issue">Anforderungen nicht erfüllt</string>
+    <string name="main_schedule_title">Dienstplan</string>
+    <string name="main_schedule_accessibility_datepicker">Klicken um einen neuen Zeitraum auszuwählen</string>
+    <string name="main_schedule_datepicker_confirm">OK</string>
+    <string name="main_schedule_datepicker_dismiss">Abbrechen</string>
+    <string name="base_dutycard_no_vehicle">Keiner zugewiesen</string>
+    <string name="base_dutycard_no_staff">Freier Platz</string>
+    <string name="base_date_ordinal">" "</string>
+</resources>

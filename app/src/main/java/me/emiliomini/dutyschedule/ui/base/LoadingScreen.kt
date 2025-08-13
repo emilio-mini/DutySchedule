@@ -14,8 +14,7 @@ import androidx.compose.ui.tooling.preview.Preview
 @Preview()
 fun LoadingScreen(modifier: Modifier = Modifier) {
     Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center
     ) {
         LoadingIndicator()
     }

@@ -10,7 +10,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import me.emiliomini.dutyschedule.MainActivity
 import me.emiliomini.dutyschedule.ui.theme.DutyScheduleTheme
 
@@ -18,7 +17,7 @@ import me.emiliomini.dutyschedule.ui.theme.DutyScheduleTheme
 class OnboardingActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState);
+        super.onCreate(savedInstanceState)
 
         setContent {
             DutyScheduleTheme {
@@ -27,15 +26,14 @@ class OnboardingActivity : ComponentActivity() {
                         val intent = Intent(this@OnboardingActivity, MainActivity::class.java)
                         startActivity(intent)
                         finish()
-                    }
-                );
+                    })
             }
         }
     }
 }
 
 @Composable
-fun OnboardingScreen(modifier: Modifier = Modifier, successAction: () -> Unit = {}) {
+fun OnboardingScreen(successAction: () -> Unit = {}) {
     var step by remember { mutableIntStateOf(0) }
 
     BackHandler(enabled = step > 0) {
@@ -43,23 +41,18 @@ fun OnboardingScreen(modifier: Modifier = Modifier, successAction: () -> Unit = 
     }
 
     when (step) {
-        0 -> AppWelcomeScreen(
-            aboutAction = {
-                // TODO: Show about screen
-            },
-            continueAction = { step++ }
-        )
-        1 -> AppPermissionScreen(
-            skipAction = {
-                // TODO: Warn user about skipping
-                step++;
-            },
-            continueAction = { step++ }
-        )
+        0 -> AppWelcomeScreen(aboutAction = {
+            // TODO: Show about screen
+        }, continueAction = { step++ })
+
+        1 -> AppPermissionScreen(skipAction = {
+            // TODO: Warn user about skipping
+            step++
+        }, continueAction = { step++ })
+
         2 -> AppLoginScreen(
             successAction = {
                 successAction()
-            }
-        )
+            })
     }
 }

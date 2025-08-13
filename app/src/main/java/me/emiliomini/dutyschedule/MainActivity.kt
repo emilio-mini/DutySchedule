@@ -22,6 +22,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.services.api.PrepService
@@ -58,8 +59,13 @@ class MainActivity : ComponentActivity() {
                     DutyScheduleTheme {
                         var selectedItemIndex by remember { mutableIntStateOf(0) }
                         val navItems = listOf(
-                            NavItem(label = "Duty Schedule", icon = Icons.Filled.Schedule),
-                            NavItem(label = "Settings", icon = Icons.Filled.Settings)
+                            NavItem(
+                                label = stringResource(R.string.nav_schedule),
+                                icon = Icons.Filled.Schedule
+                            ), NavItem(
+                                label = stringResource(R.string.nav_settings),
+                                icon = Icons.Filled.Settings
+                            )
                         )
 
                         when (selectedItemIndex) {
@@ -72,48 +78,39 @@ class MainActivity : ComponentActivity() {
                                                 onClick = { selectedItemIndex = index },
                                                 icon = {
                                                     Icon(
-                                                        item.icon,
-                                                        contentDescription = item.label
+                                                        item.icon, contentDescription = item.label
                                                     )
                                                 },
-                                                label = { Text(item.label) }
-                                            )
+                                                label = { Text(item.label) })
                                         }
                                     }
-                                }
-                            )
+                                })
 
-                            1 -> SettingsScreen(
-                                bottomBar = {
-                                    NavigationBar {
-                                        navItems.forEachIndexed { index, item ->
-                                            NavigationBarItem(
-                                                selected = selectedItemIndex == index,
-                                                onClick = { selectedItemIndex = index },
-                                                icon = {
-                                                    Icon(
-                                                        item.icon,
-                                                        contentDescription = item.label
-                                                    )
-                                                },
-                                                label = { Text(item.label) }
-                                            )
-                                        }
-                                    }
-                                },
-                                onLogout = {
-                                    lifecycleScope.launch {
-                                        PrepService.logout(applicationContext)
-                                        startActivity(
-                                            Intent(
-                                                this@MainActivity,
-                                                OnboardingActivity::class.java
-                                            )
-                                        )
-                                        finish()
+                            1 -> SettingsScreen(bottomBar = {
+                                NavigationBar {
+                                    navItems.forEachIndexed { index, item ->
+                                        NavigationBarItem(
+                                            selected = selectedItemIndex == index,
+                                            onClick = { selectedItemIndex = index },
+                                            icon = {
+                                                Icon(
+                                                    item.icon, contentDescription = item.label
+                                                )
+                                            },
+                                            label = { Text(item.label) })
                                     }
                                 }
-                            )
+                            }, onLogout = {
+                                lifecycleScope.launch {
+                                    PrepService.logout(applicationContext)
+                                    startActivity(
+                                        Intent(
+                                            this@MainActivity, OnboardingActivity::class.java
+                                        )
+                                    )
+                                    finish()
+                                }
+                            })
                         }
                     }
                 }

@@ -48,15 +48,13 @@ fun AppOnboardingBase(
     actionRight: @Composable (() -> Unit)? = null,
     content: @Composable (() -> Unit) = {}
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "rotationTransition");
+    val infiniteTransition = rememberInfiniteTransition(label = "rotationTransition")
     val rotation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
+        initialValue = 0f, targetValue = 360f, animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 36000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ), label = "rotation"
-    );
+    )
 
     Scaffold { paddingValues ->
         Box(
@@ -76,8 +74,7 @@ fun AppOnboardingBase(
                         width = 4.dp,
                         color = MaterialTheme.colorScheme.primaryContainer,
                         shape = MaterialShapes.SoftBurst.toShape()
-                    )
-            )
+                    ))
             Box(
                 modifier = Modifier
                     .aspectRatio(1f)
@@ -109,8 +106,7 @@ fun AppOnboardingBase(
                         modifier = Modifier.padding(bottom = 12.dp)
                     )
                     Text(
-                        subheaderText,
-                        style = MaterialTheme.typography.bodyLarge
+                        subheaderText, style = MaterialTheme.typography.bodyLarge
                     )
                 }
 

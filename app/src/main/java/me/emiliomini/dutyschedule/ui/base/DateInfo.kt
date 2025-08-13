@@ -16,9 +16,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.util.toOrdinalSuffix
 import java.time.OffsetDateTime
 import java.time.format.TextStyle
@@ -43,9 +45,7 @@ fun AppDateInfo(modifier: Modifier = Modifier, date: OffsetDateTime) {
             style = MaterialTheme.typography.displayMedium.copy(
                 fontWeight = FontWeight.Black,
                 drawStyle = Stroke(
-                    miter = 10f,
-                    width = 5f,
-                    join = StrokeJoin.Round
+                    miter = 10f, width = 5f, join = StrokeJoin.Round
                 ),
             )
         )
@@ -54,8 +54,9 @@ fun AppDateInfo(modifier: Modifier = Modifier, date: OffsetDateTime) {
             modifier = Modifier.paddingFromBaseline(bottom = 10.dp),
             verticalArrangement = Arrangement.Bottom
         ) {
+            val ordinal = date.dayOfMonth.toOrdinalSuffix().uppercase()
             Text(
-                date.dayOfMonth.toOrdinalSuffix().uppercase(),
+                stringResource(R.string.base_date_ordinal, ordinal),
                 modifier = Modifier.padding(start = 2.dp),
                 style = MaterialTheme.typography.labelSmallEmphasized.copy(
                     fontWeight = FontWeight.Black,

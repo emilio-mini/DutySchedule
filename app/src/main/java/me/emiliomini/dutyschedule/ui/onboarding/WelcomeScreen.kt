@@ -6,7 +6,6 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,8 +30,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import me.emiliomini.dutyschedule.R
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -43,18 +44,18 @@ fun AppWelcomeScreen(
     val infiniteTransition = rememberInfiniteTransition(label = "rotationTransition")
 
     val rotation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
+        initialValue = 0f, targetValue = 360f, animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 36000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ), label = "rotation"
     )
 
     Scaffold { paddingValues ->
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
             Box(
                 modifier = Modifier
                     .aspectRatio(1f)
@@ -67,8 +68,7 @@ fun AppWelcomeScreen(
                         width = 4.dp,
                         color = MaterialTheme.colorScheme.primaryContainer,
                         shape = MaterialShapes.SoftBurst.toShape()
-                    )
-            )
+                    ))
             Box(
                 modifier = Modifier
                     .aspectRatio(1f)
@@ -81,20 +81,34 @@ fun AppWelcomeScreen(
                     )
             )
 
-            Column(modifier = modifier.padding(start = 32.dp, end = 32.dp, top = 184.dp, bottom = 32.dp)) {
-                Text("Getting Started", style = MaterialTheme.typography.displayMedium, modifier = Modifier.padding(bottom = 12.dp))
-                Text("Quickly view your schedule at a glance and get reminders before the start of your shifts", style = MaterialTheme.typography.bodyLarge)
+            Column(
+                modifier = modifier.padding(
+                    start = 32.dp, end = 32.dp, top = 184.dp, bottom = 32.dp
+                )
+            ) {
+                Text(
+                    stringResource(R.string.onboarding_welcome_title),
+                    style = MaterialTheme.typography.displayMedium,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+                Text(
+                    stringResource(R.string.onboarding_welcome_subtitle),
+                    style = MaterialTheme.typography.bodyLarge
+                )
                 Spacer(modifier = Modifier.weight(2f))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
                     TextButton(
                         onClick = aboutAction
                     ) {
-                        Text("About")
+                        Text(stringResource(R.string.onboarding_welcome_about))
                     }
                     Button(
                         onClick = continueAction
                     ) {
-                        Text("Continue")
+                        Text(stringResource(R.string.onboarding_welcome_continue))
                     }
                 }
             }

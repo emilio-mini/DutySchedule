@@ -28,49 +28,51 @@ import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.
 import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.services.api.PrepService
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 @Preview()
-fun AppLoginScreen(modifier: Modifier = Modifier, successAction: () -> Unit = {}) {
-    val scope = rememberCoroutineScope();
-    val context = LocalContext.current;
-    val (usernameFocusRequester, passwordFocusRequester) = FocusRequester.createRefs();
+fun AppLoginScreen(successAction: () -> Unit = {}) {
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val (usernameFocusRequester, passwordFocusRequester) = FocusRequester.createRefs()
     var email by remember { mutableStateOf(if (PrepService.DEBUG_MODE) "Developer" else "") }
     var password by remember { mutableStateOf(if (PrepService.DEBUG_MODE) "password" else "") }
     var blockContinue by remember { mutableStateOf(false) }
 
     AppOnboardingBase(
         headerIcon = Icons.Rounded.ContactEmergency,
-        headerText = "Sign in",
-        subheaderText = "with your Red Cross Account",
+        headerText = stringResource(R.string.onboarding_login_title),
+        subheaderText = stringResource(R.string.onboarding_login_subtitle),
         actionRight = {
             Button(
                 enabled = email.isNotBlank() && password.isNotBlank(), onClick = {
                     if (blockContinue) {
-                        return@Button;
+                        return@Button
                     }
 
-                    blockContinue = true;
+                    blockContinue = true
                     scope.launch {
                         val result = PrepService.login(
                             context, email, password
-                        );
+                        )
                         if (result) {
-                            successAction();
+                            successAction()
                         }
 
-                        blockContinue = false;
+                        blockContinue = false
                     }
                 }) {
-                Text("Continue")
+                Text(stringResource(R.string.onboarding_login_continue))
             }
         }) {
         Column(
@@ -84,7 +86,7 @@ fun AppLoginScreen(modifier: Modifier = Modifier, successAction: () -> Unit = {}
                 value = email,
                 onValueChange = { email = it },
                 label = {
-                    Text("Email")
+                    Text(stringResource(R.string.onboarding_login_email))
                 },
                 leadingIcon = {
                     Icon(Icons.Rounded.Person, contentDescription = null)
@@ -94,9 +96,8 @@ fun AppLoginScreen(modifier: Modifier = Modifier, successAction: () -> Unit = {}
                 ),
                 keyboardActions = KeyboardActions(
                     onDone = {
-                        passwordFocusRequester.requestFocus();
-                    }
-                ),
+                        passwordFocusRequester.requestFocus()
+                    }),
                 maxLines = 1
             )
             OutlinedTextField(
@@ -105,7 +106,7 @@ fun AppLoginScreen(modifier: Modifier = Modifier, successAction: () -> Unit = {}
                     .focusRequester(passwordFocusRequester),
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("Password") },
+                label = { Text(stringResource(R.string.onboarding_login_password)) },
                 leadingIcon = { Icon(Icons.Rounded.Fingerprint, contentDescription = null) },
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(
@@ -113,19 +114,19 @@ fun AppLoginScreen(modifier: Modifier = Modifier, successAction: () -> Unit = {}
                 ),
                 keyboardActions = KeyboardActions(onDone = {
                     if (blockContinue) {
-                        return@KeyboardActions;
+                        return@KeyboardActions
                     }
 
-                    blockContinue = true;
+                    blockContinue = true
                     scope.launch {
                         val result = PrepService.login(
                             context, email, password
-                        );
+                        )
                         if (result) {
-                            successAction();
+                            successAction()
                         }
 
-                        blockContinue = false;
+                        blockContinue = false
                     }
                 }),
                 maxLines = 1

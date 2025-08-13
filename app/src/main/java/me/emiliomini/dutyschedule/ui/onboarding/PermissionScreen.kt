@@ -33,11 +33,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.currentStateAsState
+import me.emiliomini.dutyschedule.R
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -45,8 +47,8 @@ import androidx.lifecycle.compose.currentStateAsState
 fun AppPermissionScreen(
     skipAction: () -> Unit = {}, continueAction: () -> Unit = {}
 ) {
-    val context = LocalContext.current;
-    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager?;
+    val context = LocalContext.current
+    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager?
 
     var notificationPermissionCheck by remember { mutableStateOf(false) }
     var alarmPermissionCheck by remember {
@@ -60,31 +62,32 @@ fun AppPermissionScreen(
             notificationPermissionCheck = isGranted
         })
 
-    val lifecycleOwner = LocalLifecycleOwner.current;
+    val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(lifecycleOwner.lifecycle.currentStateAsState().value) {
         if (lifecycleOwner.lifecycle.currentState == Lifecycle.State.RESUMED) {
-            if (alarmManager != null) {
-                alarmPermissionCheck = alarmPermissionEnabled(alarmManager);
+            alarmPermissionCheck = if (alarmManager != null) {
+                alarmPermissionEnabled(alarmManager)
             } else {
-                alarmPermissionCheck = true;
+                true
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                notificationPermissionCheck = ContextCompat.checkSelfPermission(
-                    context, Manifest.permission.POST_NOTIFICATIONS
-                ) == PackageManager.PERMISSION_GRANTED;
-            } else {
-                notificationPermissionCheck = true;
-            }
+            notificationPermissionCheck =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    ContextCompat.checkSelfPermission(
+                        context, Manifest.permission.POST_NOTIFICATIONS
+                    ) == PackageManager.PERMISSION_GRANTED
+                } else {
+                    true
+                }
         }
     }
 
     AppOnboardingBase(
         headerIcon = Icons.Rounded.Security,
-        headerText = "Permissions",
-        subheaderText = "Before we get started, we'll need some permissions for this app to function properly",
+        headerText = stringResource(R.string.onboarding_permissions_title),
+        subheaderText = stringResource(R.string.onboarding_permissions_subtitle),
         actionLeft = {
             TextButton(onClick = skipAction) {
-                Text("Skip")
+                Text(stringResource(R.string.onboarding_permissions_skip))
             }
         },
         actionRight = {
@@ -92,16 +95,16 @@ fun AppPermissionScreen(
                 onClick = continueAction,
                 enabled = notificationPermissionCheck && alarmPermissionCheck
             ) {
-                Text("Continue")
+                Text(stringResource(R.string.onboarding_permissions_continue))
             }
         }) {
         ListItem(
             colors = ListItemDefaults.colors(
             containerColor = Color.Transparent
         ), headlineContent = {
-            Text("Send Notifications")
+            Text(stringResource(R.string.onboarding_permissions_notification_title))
         }, supportingContent = {
-            Text("To inform you of upcoming duties and dismiss alarms")
+            Text(stringResource(R.string.onboarding_permissions_notification_subtitle))
         }, trailingContent = {
             Switch(checked = notificationPermissionCheck, onCheckedChange = {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -121,7 +124,7 @@ fun AppPermissionScreen(
                         modifier = Modifier.size(
                             SwitchDefaults.IconSize
                         ),
-                    );
+                    )
                 } else {
                     null
                 }
@@ -131,16 +134,16 @@ fun AppPermissionScreen(
             colors = ListItemDefaults.colors(
             containerColor = Color.Transparent
         ), headlineContent = {
-            Text("Create Alarms")
+            Text(stringResource(R.string.onboarding_permissions_alarms_title))
         }, supportingContent = {
-            Text("To automatically schedule alarms based on your preferences")
+            Text(stringResource(R.string.onboarding_permissions_alarms_subtitle))
         }, trailingContent = {
             Switch(checked = alarmPermissionCheck, onCheckedChange = {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
-                        data = Uri.fromParts("package", context.packageName, null);
+                        data = Uri.fromParts("package", context.packageName, null)
                     }
-                    context.startActivity(intent);
+                    context.startActivity(intent)
                 }
             }, thumbContent = {
                 if (alarmPermissionCheck) {
@@ -149,7 +152,7 @@ fun AppPermissionScreen(
                         modifier = Modifier.size(
                             SwitchDefaults.IconSize
                         ),
-                    );
+                    )
                 } else {
                     null
                 }
@@ -159,5 +162,5 @@ fun AppPermissionScreen(
 }
 
 private fun alarmPermissionEnabled(alarmManager: AlarmManager): Boolean {
-    return !(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms());
+    return !(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms())
 }
