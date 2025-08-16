@@ -35,7 +35,7 @@
     <string name="main_schedule_datepicker_dismiss">Cancel</string>
     <string name="base_date_ordinal">%1$s</string>
     <string name="main_settings_section_app">About this app</string>
-    <string name="main_settings_app_version_title">Current version</string>
+    <string name="main_settings_app_version_title">Up to date</string>
     <string name="main_settings_app_update_title">New Version available!</string>
-    <string name="main_settings_app_update_title_progress">Updating...</string>
+    <string name="main_settings_app_update_title_progress">Updating…</string>
 </resources>
