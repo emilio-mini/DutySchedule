@@ -1,0 +1,128 @@
+package me.emiliomini.dutyschedule.ui.settings
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Update
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearWavyProgressIndicator
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
+import me.emiliomini.dutyschedule.BuildConfig
+import me.emiliomini.dutyschedule.R
+import me.emiliomini.dutyschedule.data.models.vc.GithubRelease
+import me.emiliomini.dutyschedule.services.api.NetworkService
+import me.emiliomini.dutyschedule.services.util.UtilService
+import okhttp3.Headers
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun VersionListItem(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var latestRelease by remember { mutableStateOf<GithubRelease?>(null) }
+    var isUpdating by remember { mutableStateOf(false) }
+    var updateProgress by remember { mutableFloatStateOf(0f) }
+
+    LaunchedEffect(Unit) {
+        latestRelease = NetworkService.getLatestVersion().getOrNull()
+    }
+
+    if (latestRelease != null && latestRelease!!.tag != BuildConfig.VERSION_NAME) {
+        ListItem(
+            modifier = Modifier
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    shape = RoundedCornerShape(4.dp)
+                )
+                .clickable(onClick = {
+                    if (isUpdating) {
+                        return@clickable
+                    }
+
+                    isUpdating = true
+                    scope.launch {
+                        val updateFile = NetworkService.downloadFileWithProgress(
+                            context, latestRelease!!.downloadUrl,
+                            Headers.Builder()
+                                .add("Authorization", "Bearer ${BuildConfig.GITHUB_API_TOKEN}")
+                                .add("Accept", "application/octet-stream")
+                                .build(), "DutySchedule.apk"
+                        ) {
+                            updateProgress = it.toFloat() / 100f
+                        }
+
+                        if (updateFile == null) {
+                            isUpdating = false
+                            updateProgress = 0f
+                            return@launch
+                        }
+
+                        UtilService.installApk(context, updateFile)
+                        isUpdating = false
+                        updateProgress = 0f
+                    }
+                }), colors = ListItemDefaults.colors(
+                containerColor = Color.Transparent
+            ), headlineContent = {
+                if (isUpdating) {
+                    Text(stringResource(R.string.main_settings_app_update_title_progress))
+                } else {
+                    Text(stringResource(R.string.main_settings_app_update_title))
+                }
+            }, supportingContent = {
+                if (isUpdating) {
+                    LinearWavyProgressIndicator(
+                        progress = {
+                            updateProgress
+                        }
+                    )
+                } else {
+                    Text(latestRelease!!.tag)
+                }
+            }, leadingContent = {
+                Icon(
+                    Icons.Rounded.Update,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            })
+    } else {
+        ListItem(
+            modifier = Modifier.background(
+                color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                shape = RoundedCornerShape(4.dp)
+            ), colors = ListItemDefaults.colors(
+                containerColor = Color.Transparent
+            ), headlineContent = {
+                Text(stringResource(R.string.main_settings_app_version_title))
+            }, supportingContent = {
+                Text(BuildConfig.VERSION_NAME)
+            }, leadingContent = {
+                Icon(
+                    Icons.Rounded.Info,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            })
+    }
+}

@@ -1,18 +1,25 @@
 package me.emiliomini.dutyschedule.services.api
 
+import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import me.emiliomini.dutyschedule.services.models.NetworkTarget
+import me.emiliomini.dutyschedule.BuildConfig
 import me.emiliomini.dutyschedule.data.models.Incode
 import me.emiliomini.dutyschedule.data.models.mapping.OrgUnitDataGuid
+import me.emiliomini.dutyschedule.data.models.vc.GithubRelease
+import me.emiliomini.dutyschedule.services.models.NetworkTarget
 import okhttp3.CookieJar
 import okhttp3.FormBody
+import okhttp3.Headers
 import okhttp3.JavaNetCookieJar
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okio.GzipSource
 import okio.buffer
+import org.json.JSONArray
+import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
 import java.net.CookieManager
 import java.net.CookiePolicy
@@ -30,6 +37,71 @@ object NetworkService {
     private val httpClient = OkHttpClient.Builder()
         .cookieJar(jar)
         .build();
+
+    suspend fun downloadFileWithProgress(
+        context: Context,
+        urlString: String,
+        headers: Headers,
+        fileName: String,
+        onProgress: (Int) -> Unit
+    ): File? {
+        return withContext(Dispatchers.IO) {
+            val request = Request.Builder().url(urlString).headers(headers).build()
+
+            try {
+                val response = httpClient.newCall(request).execute()
+
+                if (!response.isSuccessful) {
+                    Log.e(TAG, "Server returned an error: ${response.code}")
+                    response.body.close()
+                    onProgress(0)
+                    return@withContext null
+                }
+
+                val body = response.body
+                val contentLength = body.contentLength()
+                val file = File(context.filesDir, fileName)
+                val outputStream = FileOutputStream(file)
+
+                outputStream.use { output ->
+                    body.byteStream().use { input ->
+                        var bytesCopied = 0L
+                        val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+                        var bytes = input.read(buffer)
+                        while (bytes >= 0) {
+                            output.write(buffer, 0, bytes)
+                            bytesCopied += bytes
+                            val progress = ((bytesCopied * 100) / contentLength).toInt()
+                            onProgress(progress)
+                            bytes = input.read(buffer)
+                        }
+                    }
+                }
+
+                Log.d(TAG, "File downloaded successfully")
+                onProgress(100)
+                return@withContext file
+            } catch (e: IOException) {
+                Log.e(TAG, "Error downloading file", e)
+                onProgress(0)
+                return@withContext null
+            }
+        }
+    }
+
+    suspend fun getLatestVersion(): Result<GithubRelease?> {
+        val latestBody = send(
+            Request.Builder()
+                .url(NetworkTarget.LATEST_RELEASE.url)
+                .header("Authorization", "Bearer ${BuildConfig.GITHUB_API_TOKEN}")
+                .build()
+        ).getOrNull()
+
+        val releases = DataParserService.parseGithubReleases(JSONArray(latestBody))
+        val latest = releases.maxByOrNull { it.publishedAt }
+
+        return Result.success(latest)
+    }
 
     suspend fun login(username: String, password: String): Result<String?> {
         return send(
@@ -131,124 +203,3 @@ object NetworkService {
         }
     }
 }
-
-/*suspend fun loadDuties(from: Date, to: Date): Result<List<DutyDefinition>> {
-    if (incodeToken == null || incodeValue == null) {
-        return Result.failure(IOException("No incode token found!"));
-    }
-
-    val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
-        timeZone = TimeZone.getTimeZone("UTC")
-    }
-
-    val dateFromString = dateFormat.format(from)
-    val dateToString = dateFormat.format(to)
-
-    val formBodyBuilder = FormBody.Builder()
-        .add("orgUnitDataGuid", OrgUnitDataGuid.SATTLEDT.value)
-        .add("withSubOrgUnits", "1")
-        .add("dateFrom", dateFromString)
-        .add("dateTo", dateToString)
-        .add("sortPlan", "true")
-
-
-    val requestBuilder = Request.Builder()
-        .addHeader(incodeToken!!, incodeValue!!)
-        .addHeader("Content-Type", "application/x-www-form-urlencoded")
-        .addHeader("Accept-Encoding", "gzip")
-        .url("https://dienstplan.o.roteskreuz.at/StaffPortal/plan/data/loadPlan.json")
-        .post(formBodyBuilder.build())
-
-    val request = requestBuilder.build()
-
-    return withContext(Dispatchers.IO) {
-        try {
-            val response = httpClient.newCall(request).execute()
-            val responseBodyString = response.body?.string()
-
-            Log.d(TAG, "LoadDuties Response Code: ${response.code}")
-            Log.d(TAG, "LoadDuties Response Body: $responseBodyString")
-
-            if (response.isSuccessful && responseBodyString != null) {
-                try {
-                    val dutiesJson = JSONObject(responseBodyString)
-                    val data = dutiesJson.getJSONObject("data")
-                    val keys = data.keys()
-                    val result =
-                        mutableMapOf<String, DutyDefinition>() // Using start time as key for aggregation
-
-                    for (key in keys) { // 'key' here is the ID from the 'data' object, e.g., "DPP12345"
-                        val obj = data.getJSONObject(key)
-                        val start = obj.getString("begin")
-                        val end = obj.getString("end")
-
-                        // Use 'key' as the DutyDefinition ID, but aggregate by 'start' time
-                        var duty = result[start]
-                        if (duty == null) {
-                            duty = DutyDefinition(
-                                key, // Use the actual key from JSON as the Duty ID
-                                start,
-                                end
-                            )
-                        }
-
-                        val requirementGroupChildDataGuid =
-                            obj.getString("requirementGroupChildDataGuid")
-                        val additionalInfos = obj.getJSONObject("additionalInfos")
-                        val employeeName = additionalInfos.getString("ressource_name")
-
-                        val employeeId = UUID.randomUUID().toString()
-                        when (requirementGroupChildDataGuid) {
-                            RequirementGroupChildDataGuid.SEW.value -> {
-                                duty.sew = Employee(
-                                    employeeId,
-                                    employeeName,
-                                    "SEW" // Specific identifier for SEW type
-                                )
-                            }
-
-                            RequirementGroupChildDataGuid.EL.value -> {
-                                duty.el = Employee(
-                                    employeeId,
-                                    employeeName,
-                                    "0000000" // Placeholder identifier for EL
-                                )
-                            }
-
-                            RequirementGroupChildDataGuid.TF.value -> {
-                                duty.tf = Employee(
-                                    employeeId,
-                                    employeeName,
-                                    "0000000" // Placeholder identifier for TF
-                                )
-                            }
-
-                            RequirementGroupChildDataGuid.RS.value -> {
-                                duty.rs = Employee(
-                                    employeeId,
-                                    employeeName,
-                                    "0000000" // Placeholder identifier for RS
-                                )
-                            }
-                        }
-                        result[start] = duty // Store/update duty aggregated by start time
-                    }
-                    Result.success(result.values.toList())
-                } catch (e: Exception) {
-                    Log.e(TAG, "JSON Parsing error: ${e.message}", e)
-                    Result.failure(IOException("Failed to parse duties response: ${e.message}", e))
-                }
-            } else {
-                Log.e(
-                    TAG,
-                    "Failed to load duties: HTTP error ${response.code} - $responseBodyString"
-                )
-                Result.failure(IOException("Failed to load duties: HTTP error ${response.code}"))
-            }
-        } catch (e: IOException) {
-            Log.e(TAG, "IOException during loadDuties: ${e.message}", e)
-            Result.failure(e)
-        }
-    }
-}*/
-

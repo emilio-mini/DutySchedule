@@ -194,10 +194,12 @@ fun AppDutyCard(
                                     duty.end
                                 )
                             ) {
-                                "${assigned.begin.format(timeFormatter)} - ${
-                                    assigned.end.format(
-                                        timeFormatter
-                                    )
+                                "${
+                                    assigned.begin.atZoneSameInstant(localZoneId)
+                                        .format(timeFormatter)
+                                } - ${
+                                    assigned.end.atZoneSameInstant(localZoneId)
+                                        .format(timeFormatter)
                                 }"
                             } else {
                                 null

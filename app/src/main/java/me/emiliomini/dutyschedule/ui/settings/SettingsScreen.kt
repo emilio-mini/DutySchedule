@@ -8,6 +8,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -93,26 +95,26 @@ fun SettingsScreen(
                                 )
                                 clipboardManager.setPrimaryClip(clipData)
                             }), colors = ListItemDefaults.colors(
-                        containerColor = Color.Transparent
-                    ), headlineContent = {
-                        Text(
-                            PrepService.getSelf()?.name
-                                ?: stringResource(R.string.main_settings_account_user_title_fallback)
-                        )
-                    }, supportingContent = {
-                        val incode = PrepService.getIncode()
+                            containerColor = Color.Transparent
+                        ), headlineContent = {
+                            Text(
+                                PrepService.getSelf()?.name
+                                    ?: stringResource(R.string.main_settings_account_user_title_fallback)
+                            )
+                        }, supportingContent = {
+                            val incode = PrepService.getIncode()
                             if (incode != null) {
-                            Text(incode.token)
-                        } else {
-                            Text(stringResource(R.string.main_settings_account_user_content_fallback))
-                        }
-                    }, leadingContent = {
-                        Icon(
-                            Icons.Rounded.Person,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    })
+                                Text(incode.token)
+                            } else {
+                                Text(stringResource(R.string.main_settings_account_user_content_fallback))
+                            }
+                        }, leadingContent = {
+                            Icon(
+                                Icons.Rounded.Person,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        })
                     ListItem(
                         modifier = Modifier
                             .background(
@@ -137,6 +139,16 @@ fun SettingsScreen(
                             )
                         },
                     )
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                stringResource(R.string.main_settings_section_app),
+                color = MaterialTheme.colorScheme.primary
+            )
+            Card(colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    VersionListItem()
                 }
             }
         }

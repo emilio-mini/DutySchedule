@@ -35,4 +35,8 @@
     <string name="base_dutycard_no_vehicle">Keiner zugewiesen</string>
     <string name="base_dutycard_no_staff">Freier Platz</string>
     <string name="base_date_ordinal">" "</string>
+    <string name="main_settings_section_app">Über diese App</string>
+    <string name="main_settings_app_version_title">Installierte Version</string>
+    <string name="main_settings_app_update_title">Neue Version verfügbar!</string>
+    <string name="main_settings_app_update_title_progress">Aktualisiert...</string>
 </resources>

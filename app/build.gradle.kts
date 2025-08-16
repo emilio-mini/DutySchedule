@@ -1,4 +1,6 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.io.FileInputStream
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -11,11 +13,20 @@ android {
     compileSdk = 36
 
     defaultConfig {
+        val properties = Properties()
+        val secretsFile = rootProject.file("secrets.properties")
+        if (secretsFile.exists()) {
+            properties.load(FileInputStream(secretsFile))
+        }
+
+        val githubToken = properties.getProperty("github_token", "")
+        buildConfigField("String", "GITHUB_API_TOKEN", "\"$githubToken\"")
+
         applicationId = "me.emiliomini.dutyschedule"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
-        versionName = "1.0"
+        versionName = "v1.0-beta.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -40,6 +51,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

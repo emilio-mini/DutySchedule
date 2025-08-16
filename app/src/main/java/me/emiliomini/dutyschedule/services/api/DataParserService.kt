@@ -5,29 +5,64 @@ import me.emiliomini.dutyschedule.data.models.AssignedEmployee
 import me.emiliomini.dutyschedule.data.models.DutyDefinition
 import me.emiliomini.dutyschedule.data.models.Employee
 import me.emiliomini.dutyschedule.data.models.mapping.Requirement
+import me.emiliomini.dutyschedule.data.models.vc.GithubRelease
+import org.json.JSONArray
 import org.json.JSONObject
 import java.time.OffsetDateTime
 import kotlin.collections.iterator
 
 object DataParserService {
-    private val TAG = "DataParserService";
-    private val DATA_ROOT_POSITION = "data";
+    private const val TAG = "DataParserService"
+    private const val DATA_ROOT_POSITION = "data"
+
+    fun parseGithubReleases(root: JSONArray): List<GithubRelease> {
+        val releases = mutableListOf<GithubRelease>()
+
+        for (i in 0 until root.length()) {
+            val obj = root.getJSONObject(i)
+
+            var downloadUrl = obj.getString("html_url")
+            val assets = obj.getJSONArray("assets")
+            for (j in 0 until assets.length()) {
+                val asset = assets.getJSONObject(j)
+                val url = asset.getString("browser_download_url")
+
+                if (url.endsWith(".apk")) {
+                    downloadUrl = asset.getString("url")
+                    break
+                }
+            }
+
+            releases.add(
+                GithubRelease(
+                    obj.getString("tag_name"),
+                    obj.getBoolean("prerelease"),
+                    OffsetDateTime.parse(obj.getString("published_at")),
+                    OffsetDateTime.parse(obj.getString("updated_at")),
+                    obj.getString("body"),
+                    downloadUrl
+                )
+            )
+        }
+
+        return releases
+    }
 
     fun parseLoadPlan(root: JSONObject): List<DutyDefinition> {
-        val data = root.getJSONObject(this.DATA_ROOT_POSITION);
-        val keys = data.keys();
+        val data = root.getJSONObject(this.DATA_ROOT_POSITION)
+        val keys = data.keys()
 
-        val duties = mutableListOf<DutyDefinition>();
-        val assignments = mutableListOf<AssignedEmployee>();
+        val duties = mutableListOf<DutyDefinition>()
+        val assignments = mutableListOf<AssignedEmployee>()
 
         for (key in keys) {
-            val obj = data.getJSONObject(key);
+            val obj = data.getJSONObject(key)
             val requirement =
-                obj.getString(Requirement.Companion.POSITION);
-            val begin = obj.getString(DutyDefinition.Companion.BEGIN_POSITION);
-            val end = obj.getString(DutyDefinition.Companion.END_POSITION);
-            val beginTime = OffsetDateTime.parse(begin);
-            val endTime = OffsetDateTime.parse(end);
+                obj.getString(Requirement.Companion.POSITION)
+            val begin = obj.getString(DutyDefinition.Companion.BEGIN_POSITION)
+            val end = obj.getString(DutyDefinition.Companion.END_POSITION)
+            val beginTime = OffsetDateTime.parse(begin)
+            val endTime = OffsetDateTime.parse(end)
 
             if (requirement == Requirement.SEW.value) {
                 duties.add(
@@ -36,27 +71,27 @@ object DataParserService {
                         beginTime,
                         endTime
                     )
-                );
+                )
             }
             if (requirement == Requirement.SEW.value || requirement == Requirement.EL.value || requirement == Requirement.TF.value || requirement == Requirement.RS.value) {
-                val employeeGuid = obj.getString(Employee.Companion.GUID_POSITION);
+                val employeeGuid = obj.getString(Employee.Companion.GUID_POSITION)
                 var employeeName = obj.getJSONObject(Employee.Companion.ADDITIONAL_INFOS_POSITION)
-                    .getString(Employee.Companion.ADDITIONAL_INFOS_NAME_POSITION);
+                    .getString(Employee.Companion.ADDITIONAL_INFOS_NAME_POSITION)
                 if (employeeName.isBlank()) {
                     // Using INFO Tag as fallback
-                    employeeName = obj.getString(Employee.Companion.INFO_POSITION);
+                    employeeName = obj.getString(Employee.Companion.INFO_POSITION)
                 }
 
                 if (employeeName.isBlank()) {
                     // Skip empty fields; TODO: Figure out why they are there to begin with
-                    continue;
+                    continue
                 }
 
                 val employee = Employee(
                     employeeGuid,
                     employeeName,
                     if (requirement == Requirement.SEW.value) Employee.Companion.SEW_NAME else null
-                );
+                )
 
                 assignments.add(
                     AssignedEmployee(
@@ -65,67 +100,72 @@ object DataParserService {
                         beginTime,
                         endTime
                     )
-                );
+                )
             }
         }
 
-        val sortedDuties = duties.sortedBy { it.begin };
-        val sortedAssignments = assignments.sortedBy { it.begin };
+        val sortedDuties = duties.sortedBy { it.begin }
+        val sortedAssignments = assignments.sortedBy { it.begin }
 
-        var dutyIndex = 0;
-        var assignmentIndex = 0;
+        var dutyIndex = 0
+        var assignmentIndex = 0
         while (dutyIndex < sortedDuties.size && assignmentIndex < sortedAssignments.size) {
-            val duty = sortedDuties[dutyIndex];
-            val assignment = sortedAssignments[assignmentIndex];
+            val duty = sortedDuties[dutyIndex]
+            val assignment = sortedAssignments[assignmentIndex]
 
             if (!assignment.begin.isBefore(duty.begin) && assignment.begin.isBefore(duty.end)) {
                 when (assignment.requirement) {
                     Requirement.SEW -> {
-                        duty.sew.add(assignment);
+                        duty.sew.add(assignment)
                     }
                     Requirement.EL -> {
-                        duty.el.add(assignment);
+                        duty.el.add(assignment)
                     }
                     Requirement.TF -> {
-                        duty.tf.add(assignment);
+                        duty.tf.add(assignment)
                     }
                     Requirement.RS -> {
-                        duty.rs.add(assignment);
+                        duty.rs.add(assignment)
                     }
                     else -> {
-                        Log.w(TAG, "Encountered invalid object while trying to parse duties");
+                        Log.w(TAG, "Encountered invalid object while trying to parse duties")
                     }
                 }
-                assignmentIndex++;
+                assignmentIndex++
             } else if (assignment.begin.isBefore(duty.begin)) {
-                Log.w(TAG, "Assignment out of bounds while trying to parse duties");
-                assignmentIndex++;
+                Log.w(TAG, "Assignment out of bounds while trying to parse duties")
+                assignmentIndex++
             } else {
-                dutyIndex++;
+                dutyIndex++
             }
         }
 
-        Log.d(TAG, "Parsed ${sortedDuties.size} duties");
+        Log.d(TAG, "Parsed ${sortedDuties.size} duties")
 
-        return sortedDuties;
+        return sortedDuties
     }
 
     fun parseGetStaff(root: JSONObject): List<Employee> {
-        val data = root.getJSONArray(this.DATA_ROOT_POSITION);
-        val employees = mutableListOf<Employee>();
+        val data = root.getJSONArray(this.DATA_ROOT_POSITION)
+        val employees = mutableListOf<Employee>()
 
         for (i in 0 until data.length()) {
-            val obj = data.getJSONObject(i);
+            val obj = data.getJSONObject(i)
 
             employees.add(
                 Employee(
                     obj.getString(Employee.Companion.STAFF_GUID_POSITION),
                     obj.getString(Employee.Companion.STAFF_NAME_POSITION),
-                    obj.getString(Employee.Companion.STAFF_IDENTIFIER_POSITION),
+                    this.removeLeadingZeros(obj.getString(Employee.Companion.STAFF_IDENTIFIER_POSITION)),
                 )
-            );
+            )
         }
 
-        return employees;
+        return employees
+    }
+
+    private fun removeLeadingZeros(input: String): String {
+        val regex = "^0+".toRegex()
+        return input.replace(regex, "")
     }
 }
