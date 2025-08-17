@@ -12,6 +12,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -29,7 +30,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.jeziellago.compose.markdowntext.MarkdownText
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import me.emiliomini.dutyschedule.BuildConfig
 import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.data.models.vc.GithubRelease
@@ -39,7 +42,7 @@ import okhttp3.Headers
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun VersionListItem(modifier: Modifier = Modifier) {
+fun VersionListItem() {
     var showDetails by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -48,7 +51,9 @@ fun VersionListItem(modifier: Modifier = Modifier) {
     var updateProgress by remember { mutableFloatStateOf(0f) }
 
     LaunchedEffect(Unit) {
-        latestRelease = NetworkService.getLatestVersion().getOrNull()
+        latestRelease = withContext(Dispatchers.IO) {
+            NetworkService.getLatestVersion().getOrNull()
+        }
     }
 
     if (showDetails && latestRelease != null) {
@@ -95,9 +100,9 @@ fun VersionListItem(modifier: Modifier = Modifier) {
                     }
                 ) {
                     if (latestRelease!!.tag != BuildConfig.VERSION_NAME) {
-                        Text("Update")
+                        Text(stringResource(R.string.main_settings_app_update_action_update))
                     } else {
-                        Text("Okay")
+                        Text(stringResource(R.string.main_settings_app_update_action_confirm))
                     }
                 }
             }
@@ -141,15 +146,23 @@ fun VersionListItem(modifier: Modifier = Modifier) {
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary
                 )
+            }, trailingContent = {
+                if (latestRelease == null) {
+                    LoadingIndicator()
+                }
             })
     } else {
         ListItem(
-            modifier = Modifier.background(
-                color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                shape = RoundedCornerShape(4.dp)
-            ).clickable(onClick = {
-                showDetails = true
-            }), colors = ListItemDefaults.colors(
+            modifier = Modifier
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    shape = RoundedCornerShape(4.dp)
+                )
+                .clickable(onClick = {
+                    if (latestRelease != null) {
+                        showDetails = true
+                    }
+                }), colors = ListItemDefaults.colors(
                 containerColor = Color.Transparent
             ), headlineContent = {
                 Text(stringResource(R.string.main_settings_app_version_title))
@@ -161,6 +174,10 @@ fun VersionListItem(modifier: Modifier = Modifier) {
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary
                 )
+            }, trailingContent = {
+                if (latestRelease == null) {
+                    LoadingIndicator()
+                }
             })
     }
 }

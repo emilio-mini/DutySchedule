@@ -12,9 +12,12 @@ import me.emiliomini.dutyschedule.services.models.NetworkTarget
 import okhttp3.CookieJar
 import okhttp3.FormBody
 import okhttp3.Headers
-import okhttp3.JavaNetCookieJar
+import okhttp3.Headers.Companion.headersOf
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.java.net.cookiejar.JavaNetCookieJar
+import okhttp3.logging.HttpLoggingInterceptor
 import okio.GzipSource
 import okio.buffer
 import org.json.JSONArray
@@ -26,17 +29,21 @@ import java.net.CookiePolicy
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
+
 object NetworkService {
-    private val TAG = "NetworkService";
-    private val DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+    private const val TAG = "NetworkService"
+    private val DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
 
     private val cookieManager = CookieManager().apply {
         setCookiePolicy(CookiePolicy.ACCEPT_ALL)
     }
-    private val jar: CookieJar = JavaNetCookieJar(cookieManager);
+    private val jar: CookieJar = JavaNetCookieJar(cookieManager)
+    private val interceptor =
+        HttpLoggingInterceptor().apply { setLevel(HttpLoggingInterceptor.Level.BODY) }
     private val httpClient = OkHttpClient.Builder()
+        .addInterceptor(interceptor)
         .cookieJar(jar)
-        .build();
+        .build()
 
     suspend fun downloadFileWithProgress(
         context: Context,
@@ -46,7 +53,10 @@ object NetworkService {
         onProgress: (Int) -> Unit
     ): File? {
         return withContext(Dispatchers.IO) {
-            val request = Request.Builder().url(urlString).headers(headers).build()
+            val request = Request(
+                url = urlString.toHttpUrl(),
+                headers = headers
+            )
 
             try {
                 val response = httpClient.newCall(request).execute()
@@ -79,6 +89,7 @@ object NetworkService {
                 }
 
                 Log.d(TAG, "File downloaded successfully")
+                response.body.close()
                 onProgress(100)
                 return@withContext file
             } catch (e: IOException) {
@@ -90,12 +101,19 @@ object NetworkService {
     }
 
     suspend fun getLatestVersion(): Result<GithubRelease?> {
-        val latestBody = send(
-            Request.Builder()
-                .url(NetworkTarget.LATEST_RELEASE.url)
-                .header("Authorization", "Bearer ${BuildConfig.GITHUB_API_TOKEN}")
-                .build()
-        ).getOrNull()
+        Log.d(TAG, "Trying to get latest version")
+
+        val request = Request(
+            url = NetworkTarget.LATEST_RELEASE.httpUrl(),
+            headers = headersOf(
+                "Authorization", "Bearer ${BuildConfig.GITHUB_API_TOKEN}"
+            )
+        )
+        val latestBody = send(request).getOrNull()
+
+        if (latestBody == null) {
+            return Result.failure(IOException("Failed to get latest version!"))
+        }
 
         val releases = DataParserService.parseGithubReleases(JSONArray(latestBody))
         val latest = releases.maxByOrNull { it.publishedAt }
@@ -104,27 +122,24 @@ object NetworkService {
     }
 
     suspend fun login(username: String, password: String): Result<String?> {
-        return send(
-            Request.Builder()
-                .url(NetworkTarget.LOGIN.url)
-                .post(
-                    FormBody.Builder()
-                        .add("client", "RKOOE")
-                        .add("login", username)
-                        .add("password", password)
-                        .add("remember", "1")
-                        .build()
-                )
-                .build()
-        );
+        val form = FormBody.Builder()
+            .add("client", "RKOOE")
+            .add("login", username)
+            .add("password", password)
+            .add("remember", "1")
+
+        val request = Request(
+            url = NetworkTarget.LOGIN.httpUrl(),
+            body = form.build()
+        )
+        return send(request)
     }
 
     suspend fun keepAlive(): Result<String?> {
-        return send(
-            Request.Builder()
-                .url(NetworkTarget.KEEP_ALIVE.url)
-                .build()
-        );
+        val request = Request(
+            url = NetworkTarget.KEEP_ALIVE.httpUrl(),
+        )
+        return send(request)
     }
 
     suspend fun loadPlan(
@@ -133,23 +148,23 @@ object NetworkService {
         from: OffsetDateTime,
         to: OffsetDateTime
     ): Result<String?> {
-        return send(
-            Request.Builder()
-                .url(NetworkTarget.LOAD_PLAN.url)
-                .addHeader(incode.token, incode.value)
-                .addHeader("Content-Type", "application/x-www-form-urlencoded")
-                .addHeader("Accept-Encoding", "gzip")
-                .post(
-                    FormBody.Builder()
-                        .add("orgUnitDataGuid", orgUnitDataGuid.value)
-                        .add("dateFrom", from.format(DATE_FORMATTER))
-                        .add("dateTo", to.format(DATE_FORMATTER))
-                        .add("withSubOrgUnits", "1")
-                        .add("sortPlan", "false")
-                        .build()
-                )
-                .build()
-        );
+        val form = FormBody.Builder()
+            .add("orgUnitDataGuid", orgUnitDataGuid.value)
+            .add("dateFrom", from.format(DATE_FORMATTER))
+            .add("dateTo", to.format(DATE_FORMATTER))
+            .add("withSubOrgUnits", "1")
+            .add("sortPlan", "false")
+
+        val request = Request(
+            url = NetworkTarget.LOAD_PLAN.httpUrl(),
+            headers = headersOf(
+                incode.token, incode.value,
+                "Content-Type", "application/x-www-form-urlencoded",
+                "Accept-Encoding", "gzip"
+            ),
+            body = form.build()
+        )
+        return send(request)
     }
 
     suspend fun getStaff(
@@ -164,41 +179,39 @@ object NetworkService {
             .add("dateFrom", from.format(DATE_FORMATTER))
             .add("dateTo", to.format(DATE_FORMATTER))
             .add("withSubOrgUnits", "1")
-            .add("loadModelData", "1");
+            .add("loadModelData", "1")
 
         for (guid in staffDataGuid) {
-            form.addEncoded("staffDataGuid[]", guid);
+            form.addEncoded("staffDataGuid[]", guid)
         }
 
-        return send(
-            Request.Builder()
-                .url(NetworkTarget.GET_STAFF.url)
-                .addHeader(incode.token, incode.value)
-                .addHeader("Content-Type", "application/x-www-form-urlencoded")
-                .addHeader("Accept-Encoding", "gzip")
-                .post(form.build())
-                .build()
-        );
+        val request = Request(
+            url = NetworkTarget.GET_STAFF.httpUrl(),
+            headers = headersOf(
+                incode.token, incode.value,
+                "Content-Type", "application/x-www-form-urlencoded",
+                "Accept-Encoding", "gzip"
+            ),
+            body = form.build()
+        )
+        return send(request)
     }
 
     private suspend fun send(request: Request): Result<String?> {
         return withContext(Dispatchers.IO) {
-            try {
-                val response = httpClient.newCall(request).execute();
-                val responseBody = response.body;
-                if (response.isSuccessful && responseBody != null) {
-                    if (request.header("Accept-Encoding") == "gzip") {
-                        Log.d(TAG, "Trying to decode GZIP response...");
-                        val inputStream = GzipSource(responseBody.source()).buffer();
-                        Result.success(inputStream.readUtf8());
-                    } else {
-                        Result.success(response.body?.string());
-                    }
+
+            httpClient.newCall(request).execute().use { response ->
+                if (request.header("Accept-Encoding") == "gzip") {
+                    Log.d(TAG, "Trying to decode GZIP response...")
+                    val inputStream = GzipSource(response.body.source()).buffer()
+                    val result = inputStream.readUtf8()
+                    response.body.close()
+                    Result.success(result)
                 } else {
-                    Result.failure(IOException("HTTP error ${response.code} - ${response.body?.string()}"))
+                    val result = response.body.string()
+                    response.body.close()
+                    Result.success(result)
                 }
-            } catch (e: IOException) {
-                Result.failure(e)
             }
         }
     }

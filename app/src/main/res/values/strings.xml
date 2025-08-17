@@ -38,4 +38,6 @@
     <string name="main_settings_app_version_title">Up to date</string>
     <string name="main_settings_app_update_title">New Version available!</string>
     <string name="main_settings_app_update_title_progress">Updating…</string>
+    <string name="main_settings_app_update_action_update">Update</string>
+    <string name="main_settings_app_update_action_confirm">OK</string>
 </resources>
