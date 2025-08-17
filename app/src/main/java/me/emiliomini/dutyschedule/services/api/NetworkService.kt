@@ -8,6 +8,7 @@ import me.emiliomini.dutyschedule.BuildConfig
 import me.emiliomini.dutyschedule.data.models.Incode
 import me.emiliomini.dutyschedule.data.models.mapping.OrgUnitDataGuid
 import me.emiliomini.dutyschedule.data.models.vc.GithubRelease
+import me.emiliomini.dutyschedule.data.networking.NetworkCacheData
 import me.emiliomini.dutyschedule.services.models.NetworkTarget
 import okhttp3.CookieJar
 import okhttp3.FormBody
@@ -26,6 +27,7 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.net.CookieManager
 import java.net.CookiePolicy
+import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
@@ -44,6 +46,8 @@ object NetworkService {
         .addInterceptor(interceptor)
         .cookieJar(jar)
         .build()
+
+    private val networkCache = mutableMapOf<String, NetworkCacheData<Any>>()
 
     suspend fun downloadFileWithProgress(
         context: Context,
@@ -100,8 +104,13 @@ object NetworkService {
         }
     }
 
-    suspend fun getLatestVersion(): Result<GithubRelease?> {
-        Log.d(TAG, "Trying to get latest version")
+    suspend fun getLatestVersion(force: Boolean = false): Result<GithubRelease?> {
+        if (!force) {
+            val cached = getCached<GithubRelease>(NetworkTarget.LATEST_RELEASE.url, 10)
+            if (cached != null) {
+                return Result.success(cached)
+            }
+        }
 
         val request = Request(
             url = NetworkTarget.LATEST_RELEASE.httpUrl(),
@@ -117,7 +126,11 @@ object NetworkService {
 
         val releases = DataParserService.parseGithubReleases(JSONArray(latestBody))
         val latest = releases.maxByOrNull { it.publishedAt }
+        if (latest == null) {
+            return Result.failure(IOException("Failed to parse latest version!"))
+        }
 
+        addCache(NetworkTarget.LATEST_RELEASE.url, latest)
         return Result.success(latest)
     }
 
@@ -213,5 +226,22 @@ object NetworkService {
                 }
             }
         }
+    }
+
+    private inline fun <reified T> getCached(url: String, maxAgeMinutes: Long = -1): T? {
+        val cached = networkCache[url]
+        if (cached == null || cached.data !is T) {
+            return null
+        }
+
+        if (maxAgeMinutes <= 0 || cached.timestamp.plusSeconds(maxAgeMinutes * 60).isAfter(Instant.now())) {
+            return cached.data as T
+        }
+
+        return null
+    }
+
+    private fun addCache(url: String, data: Any) {
+        networkCache[url] = NetworkCacheData(data, Instant.now())
     }
 }
