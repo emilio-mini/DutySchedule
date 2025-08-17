@@ -40,5 +40,5 @@
     <string name="main_settings_app_update_title_progress">Updating…</string>
     <string name="main_settings_app_update_action_update">Update</string>
     <string name="main_settings_app_update_action_confirm">OK</string>
-    <string name="main_settings_app_version_title_checking">Checking for updates...</string>
+    <string name="main_settings_app_version_title_checking">Checking for updates…</string>
 </resources>
