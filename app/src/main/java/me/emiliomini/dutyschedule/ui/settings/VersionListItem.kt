@@ -2,6 +2,7 @@ package me.emiliomini.dutyschedule.ui.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -158,9 +159,15 @@ fun VersionListItem() {
                     color = MaterialTheme.colorScheme.surfaceContainerHighest,
                     shape = RoundedCornerShape(4.dp)
                 )
-                .clickable(onClick = {
+                .combinedClickable(onClick = {
                     if (latestRelease != null) {
                         showDetails = true
+                    }
+                }, onLongClick = {
+                    scope.launch {
+                        isCheckingLatest = true
+                        latestRelease = NetworkService.getLatestVersion(true).getOrNull()
+                        isCheckingLatest = false
                     }
                 }), colors = ListItemDefaults.colors(
                 containerColor = Color.Transparent
