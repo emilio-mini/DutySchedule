@@ -199,7 +199,6 @@ object NetworkService {
 
     private suspend fun send(request: Request): Result<String?> {
         return withContext(Dispatchers.IO) {
-
             httpClient.newCall(request).execute().use { response ->
                 if (request.header("Accept-Encoding") == "gzip") {
                     Log.d(TAG, "Trying to decode GZIP response...")

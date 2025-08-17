@@ -2,6 +2,7 @@ package me.emiliomini.dutyschedule.ui.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Info
@@ -25,14 +26,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.jeziellago.compose.markdowntext.MarkdownText
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import me.emiliomini.dutyschedule.BuildConfig
 import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.data.models.vc.GithubRelease
@@ -47,13 +47,13 @@ fun VersionListItem() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var latestRelease by remember { mutableStateOf<GithubRelease?>(null) }
+    var isCheckingLatest by remember { mutableStateOf(true) }
     var isUpdating by remember { mutableStateOf(false) }
     var updateProgress by remember { mutableFloatStateOf(0f) }
 
     LaunchedEffect(Unit) {
-        latestRelease = withContext(Dispatchers.IO) {
-            NetworkService.getLatestVersion().getOrNull()
-        }
+        latestRelease = NetworkService.getLatestVersion().getOrNull()
+        isCheckingLatest = false
     }
 
     if (showDetails && latestRelease != null) {
@@ -165,18 +165,22 @@ fun VersionListItem() {
                 }), colors = ListItemDefaults.colors(
                 containerColor = Color.Transparent
             ), headlineContent = {
-                Text(stringResource(R.string.main_settings_app_version_title))
+                if (isCheckingLatest) {
+                    Text(stringResource(R.string.main_settings_app_version_title_checking))
+                } else {
+                    Text(stringResource(R.string.main_settings_app_version_title))
+                }
             }, supportingContent = {
                 Text(BuildConfig.VERSION_NAME)
             }, leadingContent = {
-                Icon(
-                    Icons.Rounded.Info,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }, trailingContent = {
-                if (latestRelease == null) {
-                    LoadingIndicator()
+                if (isCheckingLatest) {
+                    LoadingIndicator(modifier = Modifier.scale(1.4f).width(24.dp))
+                } else {
+                    Icon(
+                        Icons.Rounded.Info,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
                 }
             })
     }
