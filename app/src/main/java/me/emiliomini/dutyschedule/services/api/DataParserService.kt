@@ -153,11 +153,18 @@ object DataParserService {
         for (i in 0 until data.length()) {
             val obj = data.getJSONObject(i)
 
+            val birthdateTimestamp = obj.getString("birthdate")
+            val birthdate = if (birthdateTimestamp.isNotBlank()) OffsetDateTime.parse(birthdateTimestamp) else null
+
             employees.add(
                 Employee(
                     obj.getString(Employee.Companion.STAFF_GUID_POSITION),
                     obj.getString(Employee.Companion.STAFF_NAME_POSITION),
                     this.removeLeadingZeros(obj.getString(Employee.Companion.STAFF_IDENTIFIER_POSITION)),
+                    obj.getString("telefon"),
+                    obj.getString("email"),
+                    obj.getString("externalIsRegularOrgUnit"),
+                    birthdate
                 )
             )
         }

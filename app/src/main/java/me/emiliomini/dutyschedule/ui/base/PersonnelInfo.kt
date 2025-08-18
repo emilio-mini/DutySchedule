@@ -27,6 +27,7 @@ enum class PersonnelInfoState {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppPersonnelInfo(
+    modifier: Modifier = Modifier,
     icon: ImageVector? = null,
     employee: Employee,
     info: String? = null,
@@ -48,6 +49,7 @@ fun AppPersonnelInfo(
     }
 
     Row(
+        modifier,
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {

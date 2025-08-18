@@ -1,10 +1,15 @@
 package me.emiliomini.dutyschedule.data.models
 
+import java.time.OffsetDateTime
+
 data class Employee(
     val guid: String,
     val name: String,
     var identifier: String? = null,
-    var phone: String? = null
+    var phone: String = "",
+    var email: String = "",
+    var defaultOrg: String = "",
+    var birthdate: OffsetDateTime? = null
 ) {
     companion object {
         val SEW_NAME = "SEW";

@@ -1,6 +1,7 @@
 package me.emiliomini.dutyschedule.ui.base
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import me.emiliomini.dutyschedule.R
+import me.emiliomini.dutyschedule.data.models.AssignedEmployee
 import me.emiliomini.dutyschedule.data.models.DutyDefinition
 import me.emiliomini.dutyschedule.data.models.Employee
 import me.emiliomini.dutyschedule.icons.Ambulance
@@ -42,7 +44,7 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppDutyCard(
-    modifier: Modifier = Modifier, duty: DutyDefinition, selfId: String? = null
+    modifier: Modifier = Modifier, duty: DutyDefinition, selfId: String? = null, onEmployeeClick: (AssignedEmployee) -> Unit = {}
 ) {
     val emptyCar = Employee("", stringResource(R.string.base_dutycard_no_vehicle), "SEW")
     val emptySeat = Employee("", stringResource(R.string.base_dutycard_no_staff), "0000000")
@@ -97,6 +99,7 @@ fun AppDutyCard(
                 } else {
                     duty.sew.forEachIndexed { index, assigned ->
                         AppPersonnelInfo(
+                            modifier = Modifier.clickable(onClick = {onEmployeeClick(assigned)}),
                             icon = if (index == 0) Ambulance else null,
                             employee = assigned.employee,
                             state = PersonnelInfoState.DEFAULT,
@@ -127,6 +130,7 @@ fun AppDutyCard(
                 } else {
                     duty.el.forEachIndexed { index, assigned ->
                         AppPersonnelInfo(
+                            modifier = Modifier.clickable(onClick = {onEmployeeClick(assigned)}),
                             icon = if (index == 0) SteeringWheel else null,
                             employee = assigned.employee,
                             state = if (selfId != null && assigned.employee.identifier == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
@@ -157,6 +161,7 @@ fun AppDutyCard(
                 } else {
                     duty.tf.forEachIndexed { index, assigned ->
                         AppPersonnelInfo(
+                            modifier = Modifier.clickable(onClick = {onEmployeeClick(assigned)}),
                             icon = if (index == 0) Icons.Rounded.MedicalInformation else null,
                             employee = assigned.employee,
                             state = if (selfId != null && assigned.employee.identifier == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
@@ -187,6 +192,7 @@ fun AppDutyCard(
                 } else {
                     duty.rs.forEachIndexed { index, assigned ->
                         AppPersonnelInfo(
+                            modifier = Modifier.clickable(onClick = {onEmployeeClick(assigned)}),
                             icon = if (index == 0) Icons.Rounded.Badge else null,
                             employee = assigned.employee,
                             state = if (selfId != null && assigned.employee.identifier == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,

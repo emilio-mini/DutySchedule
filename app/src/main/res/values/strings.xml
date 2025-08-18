@@ -47,4 +47,15 @@
     <string name="data_station_training_wels">Training Wels</string>
     <string name="data_station_haend_wels_city">HÄND Wels</string>
     <string name="data_station_haend_wels_surroundings">HÄND Wels-Surroundings</string>
+    <string name="data_requirement_sew">Emergency Vehicle</string>
+    <string name="data_requirement_el">Driver</string>
+    <string name="data_requirement_tf">Medic</string>
+    <string name="data_requirement_rs">Teammember</string>
+    <string name="data_requirement_none">None</string>
+    <string name="main_schedule_infobox_assigned_role">Assigned role</string>
+    <string name="main_schedule_infobox_birthday">Birthday</string>
+    <string name="main_schedule_infobox_actions_call">Call</string>
+    <string name="main_schedule_infobox_actions_sms">SMS</string>
+    <string name="main_schedule_infobox_actions_whatsapp">Message</string>
+    <string name="main_schedule_infobox_actions_mail">Mail</string>
 </resources>
