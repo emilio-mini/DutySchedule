@@ -44,7 +44,10 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppDutyCard(
-    modifier: Modifier = Modifier, duty: DutyDefinition, selfId: String? = null, onEmployeeClick: (AssignedEmployee) -> Unit = {}
+    modifier: Modifier = Modifier,
+    duty: DutyDefinition,
+    selfId: String? = null,
+    onEmployeeClick: (AssignedEmployee) -> Unit = {}
 ) {
     val emptyCar = Employee("", stringResource(R.string.base_dutycard_no_vehicle), "SEW")
     val emptySeat = Employee("", stringResource(R.string.base_dutycard_no_staff), "0000000")
@@ -99,10 +102,11 @@ fun AppDutyCard(
                 } else {
                     duty.sew.forEachIndexed { index, assigned ->
                         AppPersonnelInfo(
-                            modifier = Modifier.clickable(onClick = {onEmployeeClick(assigned)}),
+                            modifier = Modifier.clickable(onClick = { onEmployeeClick(assigned) }),
                             icon = if (index == 0) Ambulance else null,
                             employee = assigned.employee,
                             state = PersonnelInfoState.DEFAULT,
+                            showInfoBadge = assigned.info.isNotEmpty(),
                             info = if (!assigned.begin.isEqual(duty.begin) || !assigned.end.isEqual(
                                     duty.end
                                 )
@@ -130,10 +134,11 @@ fun AppDutyCard(
                 } else {
                     duty.el.forEachIndexed { index, assigned ->
                         AppPersonnelInfo(
-                            modifier = Modifier.clickable(onClick = {onEmployeeClick(assigned)}),
+                            modifier = Modifier.clickable(onClick = { onEmployeeClick(assigned) }),
                             icon = if (index == 0) SteeringWheel else null,
                             employee = assigned.employee,
                             state = if (selfId != null && assigned.employee.identifier == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
+                            showInfoBadge = assigned.info.isNotEmpty(),
                             info = if (!assigned.begin.isEqual(duty.begin) || !assigned.end.isEqual(
                                     duty.end
                                 )
@@ -161,10 +166,11 @@ fun AppDutyCard(
                 } else {
                     duty.tf.forEachIndexed { index, assigned ->
                         AppPersonnelInfo(
-                            modifier = Modifier.clickable(onClick = {onEmployeeClick(assigned)}),
+                            modifier = Modifier.clickable(onClick = { onEmployeeClick(assigned) }),
                             icon = if (index == 0) Icons.Rounded.MedicalInformation else null,
                             employee = assigned.employee,
                             state = if (selfId != null && assigned.employee.identifier == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
+                            showInfoBadge = assigned.info.isNotEmpty(),
                             info = if (!assigned.begin.isEqual(duty.begin) || !assigned.end.isEqual(
                                     duty.end
                                 )
@@ -192,10 +198,11 @@ fun AppDutyCard(
                 } else {
                     duty.rs.forEachIndexed { index, assigned ->
                         AppPersonnelInfo(
-                            modifier = Modifier.clickable(onClick = {onEmployeeClick(assigned)}),
+                            modifier = Modifier.clickable(onClick = { onEmployeeClick(assigned) }),
                             icon = if (index == 0) Icons.Rounded.Badge else null,
                             employee = assigned.employee,
                             state = if (selfId != null && assigned.employee.identifier == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
+                            showInfoBadge = assigned.info.isNotEmpty(),
                             info = if (!assigned.begin.isEqual(duty.begin) || !assigned.end.isEqual(
                                     duty.end
                                 )

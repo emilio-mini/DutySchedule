@@ -23,6 +23,7 @@ import androidx.compose.material.icons.rounded.Badge
 import androidx.compose.material.icons.rounded.Business
 import androidx.compose.material.icons.rounded.Cake
 import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.MedicalInformation
 import androidx.compose.material.icons.rounded.Phone
 import androidx.compose.material.icons.rounded.Schedule
@@ -95,7 +96,7 @@ fun HomeScreen(
     bottomBar: @Composable (() -> Unit) = {},
 ) {
     val defaultDateSpacing = 5 * 24 * 60 * 60 * 1000L
-    val currentMillis = OffsetDateTime.of(2025, 8, 16, 0, 0, 0, 0, ZoneOffset.UTC)
+    val currentMillis = OffsetDateTime.now()
         .withHour(0)
         .withMinute(0)
         .withSecond(0)
@@ -298,6 +299,30 @@ fun HomeScreen(
                 )
                 Card(colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        if (detailViewEmployee!!.info.isNotBlank()) {
+                            ListItem(
+                                modifier = Modifier
+                                    .background(
+                                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                        shape = RoundedCornerShape(4.dp)
+                                    ),
+                                leadingContent = {
+                                    Icon(
+                                        Icons.Rounded.Info,
+                                        contentDescription = null
+                                    )
+                                },
+                                headlineContent = {
+                                    Text(detailViewEmployee!!.info)
+                                },
+                                supportingContent = {
+                                    Text(stringResource(R.string.main_schedule_infobox_info))
+                                },
+                                colors = ListItemDefaults.colors(
+                                    containerColor = Color.Transparent
+                                )
+                            )
+                        }
                         ListItem(
                             modifier = Modifier
                                 .background(

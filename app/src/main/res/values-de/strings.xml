@@ -59,4 +59,5 @@
     <string name="main_schedule_infobox_actions_sms">SMS</string>
     <string name="main_schedule_infobox_actions_whatsapp">Nachricht</string>
     <string name="main_schedule_infobox_actions_mail">E-Mail</string>
+    <string name="main_schedule_infobox_info">Info</string>
 </resources>

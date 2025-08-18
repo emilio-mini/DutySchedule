@@ -97,11 +97,12 @@ object DataParserService {
             val begin = OffsetDateTime.parse(beginTimestamp)
             val end = OffsetDateTime.parse(endTimestamp)
             val requirement = obj.getString(Requirement.Companion.POSITION)
+            val info = obj.getString(Employee.Companion.INFO_POSITION)
             var employeeName = obj.getJSONObject(Employee.Companion.ADDITIONAL_INFOS_POSITION)
                 .getString(Employee.Companion.ADDITIONAL_INFOS_NAME_POSITION)
             if (employeeName.isBlank() || employeeName == "Verplant") {
                 // Using INFO Tag as fallback
-                employeeName = obj.getString(Employee.Companion.INFO_POSITION)
+                employeeName = info
             }
 
             val employee = Employee(
@@ -114,7 +115,8 @@ object DataParserService {
                 employee,
                 Requirement.Companion.parse(requirement),
                 begin,
-                end
+                end,
+                info
             )
 
             if (duties[guid] == null || duties[guid]?.el == null) {

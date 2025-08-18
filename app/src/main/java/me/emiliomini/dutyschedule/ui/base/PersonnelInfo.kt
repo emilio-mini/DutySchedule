@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Badge
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -31,7 +33,8 @@ fun AppPersonnelInfo(
     icon: ImageVector? = null,
     employee: Employee,
     info: String? = null,
-    state: PersonnelInfoState = PersonnelInfoState.DEFAULT
+    state: PersonnelInfoState = PersonnelInfoState.DEFAULT,
+    showInfoBadge: Boolean = false
 ) {
     val contentColor = when (state) {
         PersonnelInfoState.HIGHLIGHTED -> MaterialTheme.colorScheme.primary
@@ -54,11 +57,19 @@ fun AppPersonnelInfo(
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         if (icon != null) {
-            Icon(
-                imageVector = icon, contentDescription = null, tint = contentColor
-            )
+            BadgedBox(badge = { if (showInfoBadge) Badge() }) {
+                Icon(
+                    imageVector = icon, contentDescription = null, tint = contentColor
+                )
+            }
         } else {
-            Box(modifier = Modifier.size(width = 24.dp, height = 24.dp))
+            BadgedBox(
+                badge = {
+                    if (showInfoBadge) Badge()
+                }
+            ) {
+                Box(modifier = Modifier.size(width = 24.dp, height = 24.dp))
+            }
         }
         Column {
             Text(
