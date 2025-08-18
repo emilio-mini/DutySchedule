@@ -1,5 +1,7 @@
 package me.emiliomini.dutyschedule.ui.home
 
+import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -8,8 +10,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material3.ButtonGroupDefaults
@@ -39,11 +43,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import me.emiliomini.dutyschedule.R
@@ -100,8 +106,9 @@ fun HomeScreen(
         ).getOrNull()
     }
 
-    val stationOptions = listOf("Sattledt", "Wels")
-    var selectedStationIndex by remember { mutableIntStateOf(0) }
+    val stationScrollState = rememberScrollState()
+    val stationOptions = OrgUnitDataGuid.entries
+    var selectedStation by remember { mutableStateOf(OrgUnitDataGuid.EMS_SATTLEDT.value) } // TODO: Read from user profile
 
     Scaffold(modifier = modifier, topBar = {
         TopAppBar(
@@ -116,14 +123,15 @@ fun HomeScreen(
                 .padding(horizontal = 20.dp)
                 .padding(top = 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row {
+            Row(horizontalArrangement = Arrangement.SpaceBetween) {
                 Row(
+                    modifier = Modifier.weight(2f).horizontalScroll(stationScrollState),
                     horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
                 ) {
-                    stationOptions.forEachIndexed { index, label ->
+                    stationOptions.forEachIndexed { index, option ->
                         ToggleButton(
-                            checked = selectedStationIndex == index,
-                            onCheckedChange = { selectedStationIndex = index },
+                            checked = selectedStation == option.value,
+                            onCheckedChange = { selectedStation = option.value },
                             modifier = Modifier.semantics { role = Role.RadioButton },
                             shapes = when (index) {
                                 0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
@@ -133,14 +141,14 @@ fun HomeScreen(
                             colors = ToggleButtonDefaults.toggleButtonColors(
                                 containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
                             ),
-                            enabled = selectedStationIndex == index
+                            enabled = selectedStation == option.value
                         ) {
-                            Text(label)
+                            Text(stringResource(option.getResourceString()))
                         }
                     }
                 }
-                Spacer(modifier = Modifier.weight(2f))
                 IconButton(
+                    modifier = Modifier.width(48.dp),
                     onClick = {
                         dateRangePickerState.setSelection(
                             selectedStartDate, selectedEndDate

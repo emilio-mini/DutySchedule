@@ -42,4 +42,10 @@
     <string name="main_settings_app_update_action_update">Aktualisieren</string>
     <string name="main_settings_app_update_action_confirm">OK</string>
     <string name="main_settings_app_version_title_checking">Suche nach updates…</string>
+    <string name="data_station_ambulances_upper_austria">Ambulanzen OÖ</string>
+    <string name="data_station_sattledt">RD Sattledt</string>
+    <string name="data_station_wels">RD Wels</string>
+    <string name="data_station_training_wels">Schulung Wels</string>
+    <string name="data_station_haend_wels_city">HÄND Wels</string>
+    <string name="data_station_haend_wels_surroundings">HÄND Wels-Land</string>
 </resources>
