@@ -60,4 +60,6 @@
     <string name="main_schedule_infobox_actions_whatsapp">Nachricht</string>
     <string name="main_schedule_infobox_actions_mail">E-Mail</string>
     <string name="main_schedule_infobox_info">Info</string>
+    <string name="notification_update_title">Update verfügbar!</string>
+    <string name="notification_update_content">%1$s -> %2$s</string>
 </resources>

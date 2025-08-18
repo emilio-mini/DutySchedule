@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.pm.PackageManager
 import androidx.core.app.NotificationCompat
@@ -48,13 +49,21 @@ object NotificationService {
         title: String,
         text: String,
         priority: Int = NotificationCompat.PRIORITY_DEFAULT,
-        actions: List<NotificationCompat.Action> = emptyList()
+        actions: List<NotificationCompat.Action> = emptyList(),
+        pendingIntent: PendingIntent? = null,
+        autoCancel: Boolean = true
+
     ): Notification {
         val builder = NotificationCompat.Builder(context, channel.id)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(text)
             .setPriority(priority)
+            .setAutoCancel(autoCancel)
+
+        if (pendingIntent != null) {
+            builder.setContentIntent(pendingIntent)
+        }
 
         for (action in actions) {
             builder.addAction(action)

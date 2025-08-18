@@ -32,6 +32,7 @@ import me.emiliomini.dutyschedule.ui.home.HomeScreen
 import me.emiliomini.dutyschedule.ui.onboarding.OnboardingActivity
 import me.emiliomini.dutyschedule.ui.settings.SettingsScreen
 import me.emiliomini.dutyschedule.ui.theme.DutyScheduleTheme
+import me.emiliomini.dutyschedule.workers.WorkerService
 
 class MainActivity : ComponentActivity() {
 
@@ -41,6 +42,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         NotificationService.initialize(applicationContext)
+        WorkerService.scheduleUpdateCheckWorker(applicationContext)
 
         setContent {
             DutyScheduleTheme {
