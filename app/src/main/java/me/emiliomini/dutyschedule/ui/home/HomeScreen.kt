@@ -64,7 +64,13 @@ fun HomeScreen(
     bottomBar: @Composable (() -> Unit) = {},
 ) {
     val defaultDateSpacing = 5 * 24 * 60 * 60 * 1000L
-    val currentMillis = System.currentTimeMillis()
+    val currentMillis = OffsetDateTime.now()
+        .withHour(0)
+        .withMinute(0)
+        .withSecond(0)
+        .withNano(0)
+        .toInstant()
+        .toEpochMilli()
 
     val dateRangePickerState = rememberDateRangePickerState()
 
@@ -84,7 +90,7 @@ fun HomeScreen(
         timeline = null
         timeline = PrepService.loadTimeline(
             context,
-            OrgUnitDataGuid.SATTLEDT,
+            OrgUnitDataGuid.EMS_SATTLEDT,
             OffsetDateTime.ofInstant(
                 Instant.ofEpochMilli(selectedStartDate!!), ZoneId.systemDefault()
             ),

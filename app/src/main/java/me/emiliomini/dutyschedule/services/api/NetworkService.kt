@@ -41,7 +41,7 @@ object NetworkService {
     }
     private val jar: CookieJar = JavaNetCookieJar(cookieManager)
     private val interceptor =
-        HttpLoggingInterceptor().apply { setLevel(HttpLoggingInterceptor.Level.BODY) }
+        HttpLoggingInterceptor().apply { setLevel(HttpLoggingInterceptor.Level.BASIC) }
     private val httpClient = OkHttpClient.Builder()
         .addInterceptor(interceptor)
         .cookieJar(jar)
@@ -108,7 +108,7 @@ object NetworkService {
         if (!force) {
             val cached = getCached<GithubRelease>(NetworkTarget.LATEST_RELEASE.url, 10)
             if (cached != null) {
-                return Result.success(cached)
+                return Result.success(cached.data)
             }
         }
 
@@ -118,7 +118,7 @@ object NetworkService {
                 "Authorization", "Bearer ${BuildConfig.GITHUB_API_TOKEN}"
             )
         )
-        val latestBody = send(request).getOrNull()
+        val latestBody = send(request, true).getOrNull()
 
         if (latestBody == null) {
             return Result.failure(IOException("Failed to get latest version!"))
@@ -130,7 +130,7 @@ object NetworkService {
             return Result.failure(IOException("Failed to parse latest version!"))
         }
 
-        addCache(NetworkTarget.LATEST_RELEASE.url, latest)
+        addCache(request, latest)
         return Result.success(latest)
     }
 
@@ -161,10 +161,12 @@ object NetworkService {
         from: OffsetDateTime,
         to: OffsetDateTime
     ): Result<String?> {
+        val formattedFrom = from.format(DATE_FORMATTER)
+        val formattedTo = to.format(DATE_FORMATTER)
         val form = FormBody.Builder()
             .add("orgUnitDataGuid", orgUnitDataGuid.value)
-            .add("dateFrom", from.format(DATE_FORMATTER))
-            .add("dateTo", to.format(DATE_FORMATTER))
+            .add("dateFrom", formattedFrom)
+            .add("dateTo", formattedTo)
             .add("withSubOrgUnits", "1")
             .add("sortPlan", "false")
 
@@ -177,7 +179,7 @@ object NetworkService {
             ),
             body = form.build()
         )
-        return send(request)
+        return send(request, identifier = "$formattedFrom:$formattedTo")
     }
 
     suspend fun getStaff(
@@ -207,10 +209,27 @@ object NetworkService {
             ),
             body = form.build()
         )
-        return send(request)
+        return send(request, identifier = staffDataGuid.joinToString())
     }
 
-    private suspend fun send(request: Request): Result<String?> {
+    private suspend fun send(
+        request: Request,
+        ignoreCache: Boolean = false,
+        identifier: String = ""
+    ): Result<String?> {
+        if (!ignoreCache) {
+            val cached = getCached<String>(request.url.toString(), 5)
+            if (
+                cached != null &&
+                cached.request.url == request.url &&
+                cached.request.headers == request.headers &&
+                cached.identifier == identifier
+            ) {
+                Log.d(TAG, "Using cached response for request: ${request.url}")
+                return Result.success(cached.data)
+            }
+        }
+
         return withContext(Dispatchers.IO) {
             httpClient.newCall(request).execute().use { response ->
                 if (request.header("Accept-Encoding") == "gzip") {
@@ -218,30 +237,39 @@ object NetworkService {
                     val inputStream = GzipSource(response.body.source()).buffer()
                     val result = inputStream.readUtf8()
                     response.body.close()
+                    addCache(request, result, identifier)
                     Result.success(result)
                 } else {
                     val result = response.body.string()
                     response.body.close()
+                    addCache(request, result, identifier)
                     Result.success(result)
                 }
             }
         }
     }
 
-    private inline fun <reified T> getCached(url: String, maxAgeMinutes: Long = -1): T? {
+    private inline fun <reified T> getCached(
+        url: String,
+        maxAgeMinutes: Long = -1
+    ): NetworkCacheData<T>? {
         val cached = networkCache[url]
         if (cached == null || cached.data !is T) {
             return null
         }
 
-        if (maxAgeMinutes <= 0 || cached.timestamp.plusSeconds(maxAgeMinutes * 60).isAfter(Instant.now())) {
-            return cached.data as T
+        if (maxAgeMinutes <= 0 || cached.timestamp.plusSeconds(maxAgeMinutes * 60)
+                .isAfter(Instant.now())
+        ) {
+            @Suppress("UNCHECKED_CAST")
+            return cached as NetworkCacheData<T>
         }
 
         return null
     }
 
-    private fun addCache(url: String, data: Any) {
-        networkCache[url] = NetworkCacheData(data, Instant.now())
+    private fun addCache(request: Request, data: Any, identifier: String = "") {
+        networkCache[request.url.toString()] =
+            NetworkCacheData(identifier, request, data, Instant.now())
     }
 }

@@ -79,7 +79,7 @@ object PrepService {
                 return false
             }
 
-            val staffResult = this.getStaff(context, OrgUnitDataGuid.SATTLEDT, listOf(guid), OffsetDateTime.now(), OffsetDateTime.now()).getOrNull()
+            val staffResult = this.getStaff(context, OrgUnitDataGuid.EMS_SATTLEDT, listOf(guid), OffsetDateTime.now(), OffsetDateTime.now()).getOrNull()
             if (staffResult != null && staffResult.isNotEmpty()) {
                 this.self = staffResult.firstOrNull { it.guid == guid }
             }

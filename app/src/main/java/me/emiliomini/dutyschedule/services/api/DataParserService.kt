@@ -5,11 +5,11 @@ import me.emiliomini.dutyschedule.data.models.AssignedEmployee
 import me.emiliomini.dutyschedule.data.models.DutyDefinition
 import me.emiliomini.dutyschedule.data.models.Employee
 import me.emiliomini.dutyschedule.data.models.mapping.Requirement
+import me.emiliomini.dutyschedule.data.models.mapping.Type
 import me.emiliomini.dutyschedule.data.models.vc.GithubRelease
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.OffsetDateTime
-import kotlin.collections.iterator
 
 object DataParserService {
     private const val TAG = "DataParserService"
@@ -50,96 +50,97 @@ object DataParserService {
 
     fun parseLoadPlan(root: JSONObject): List<DutyDefinition> {
         val data = root.getJSONObject(this.DATA_ROOT_POSITION)
-        val keys = data.keys()
+        val duties = mutableMapOf<String, DutyDefinition>()
 
-        val duties = mutableListOf<DutyDefinition>()
-        val assignments = mutableListOf<AssignedEmployee>()
-
-        for (key in keys) {
+        // Establish shifts
+        for (key in data.keys()) {
             val obj = data.getJSONObject(key)
-            val requirement =
-                obj.getString(Requirement.Companion.POSITION)
-            val begin = obj.getString(DutyDefinition.Companion.BEGIN_POSITION)
-            val end = obj.getString(DutyDefinition.Companion.END_POSITION)
-            val beginTime = OffsetDateTime.parse(begin)
-            val endTime = OffsetDateTime.parse(end)
-
-            if (requirement == Requirement.SEW.value) {
-                duties.add(
-                    DutyDefinition(
-                        key, // Might need to revisit at a later point: Figure out what the actual guid of the duty is
-                        beginTime,
-                        endTime
-                    )
-                )
+            val type = obj.getInt(Type.Companion.POSITION)
+            if (type != Type.TIMESLOT.value) {
+                continue
             }
-            if (requirement == Requirement.SEW.value || requirement == Requirement.EL.value || requirement == Requirement.TF.value || requirement == Requirement.RS.value) {
-                val employeeGuid = obj.getString(Employee.Companion.GUID_POSITION)
-                var employeeName = obj.getJSONObject(Employee.Companion.ADDITIONAL_INFOS_POSITION)
-                    .getString(Employee.Companion.ADDITIONAL_INFOS_NAME_POSITION)
-                if (employeeName.isBlank()) {
-                    // Using INFO Tag as fallback
-                    employeeName = obj.getString(Employee.Companion.INFO_POSITION)
-                }
 
-                if (employeeName.isBlank()) {
-                    // Skip empty fields; TODO: Figure out why they are there to begin with
+            val guid = obj.getString("dataGuid")
+            val beginTimestamp = obj.getString(DutyDefinition.Companion.BEGIN_POSITION)
+            val endTimestamp = obj.getString(DutyDefinition.Companion.END_POSITION)
+            val begin = OffsetDateTime.parse(beginTimestamp)
+            val end = OffsetDateTime.parse(endTimestamp)
+
+            duties[guid] = DutyDefinition(
+                guid,
+                begin,
+                end,
+                mutableListOf(),
+                mutableListOf(),
+                mutableListOf(),
+                mutableListOf()
+            )
+        }
+        Log.d(TAG, "Established ${duties.size} shifts")
+
+        // Assign staff
+        for (key in data.keys()) {
+            val obj = data.getJSONObject(key)
+            val type = obj.getInt(Type.Companion.POSITION)
+            if (type == Type.TIMESLOT.value) {
+                continue
+            }
+
+            val employeeGuid = obj.getString(Employee.Companion.GUID_POSITION)
+            if (employeeGuid.isBlank()) {
+                continue
+            }
+
+            val guid = obj.getString("parentDataGuid")
+            val beginTimestamp = obj.getString(DutyDefinition.Companion.BEGIN_POSITION)
+            val endTimestamp = obj.getString(DutyDefinition.Companion.END_POSITION)
+            val begin = OffsetDateTime.parse(beginTimestamp)
+            val end = OffsetDateTime.parse(endTimestamp)
+            val requirement = obj.getString(Requirement.Companion.POSITION)
+            var employeeName = obj.getJSONObject(Employee.Companion.ADDITIONAL_INFOS_POSITION)
+                .getString(Employee.Companion.ADDITIONAL_INFOS_NAME_POSITION)
+            if (employeeName.isBlank() || employeeName == "Verplant") {
+                // Using INFO Tag as fallback
+                employeeName = obj.getString(Employee.Companion.INFO_POSITION)
+            }
+
+            val employee = Employee(
+                employeeGuid,
+                employeeName,
+                if (requirement == Requirement.SEW.value) Employee.Companion.SEW_NAME else null
+            )
+
+            val assignedEmployee = AssignedEmployee(
+                employee,
+                Requirement.Companion.parse(requirement),
+                begin,
+                end
+            )
+
+            if (duties[guid] == null || duties[guid]?.el == null) {
+                Log.e(TAG, "No duties found for $guid")
+            }
+
+            when (requirement) {
+                Requirement.SEW.value -> {
+                    duties[guid]?.sew?.add(assignedEmployee)
+                }
+                Requirement.EL.value -> {
+                    duties[guid]?.el?.add(assignedEmployee)
+                }
+                Requirement.TF.value -> {
+                    duties[guid]?.tf?.add(assignedEmployee)
+                }
+                Requirement.RS.value -> {
+                    duties[guid]?.rs?.add(assignedEmployee)
+                }
+                else -> {
                     continue
                 }
-
-                val employee = Employee(
-                    employeeGuid,
-                    employeeName,
-                    if (requirement == Requirement.SEW.value) Employee.Companion.SEW_NAME else null
-                )
-
-                assignments.add(
-                    AssignedEmployee(
-                        employee,
-                        Requirement.Companion.parse(requirement),
-                        beginTime,
-                        endTime
-                    )
-                )
             }
         }
 
-        val sortedDuties = duties.sortedBy { it.begin }
-        val sortedAssignments = assignments.sortedBy { it.begin }
-
-        var dutyIndex = 0
-        var assignmentIndex = 0
-        while (dutyIndex < sortedDuties.size && assignmentIndex < sortedAssignments.size) {
-            val duty = sortedDuties[dutyIndex]
-            val assignment = sortedAssignments[assignmentIndex]
-
-            if (!assignment.begin.isBefore(duty.begin) && assignment.begin.isBefore(duty.end)) {
-                when (assignment.requirement) {
-                    Requirement.SEW -> {
-                        duty.sew.add(assignment)
-                    }
-                    Requirement.EL -> {
-                        duty.el.add(assignment)
-                    }
-                    Requirement.TF -> {
-                        duty.tf.add(assignment)
-                    }
-                    Requirement.RS -> {
-                        duty.rs.add(assignment)
-                    }
-                    else -> {
-                        Log.w(TAG, "Encountered invalid object while trying to parse duties")
-                    }
-                }
-                assignmentIndex++
-            } else if (assignment.begin.isBefore(duty.begin)) {
-                Log.w(TAG, "Assignment out of bounds while trying to parse duties")
-                assignmentIndex++
-            } else {
-                dutyIndex++
-            }
-        }
-
+        val sortedDuties = duties.values.sortedBy { it.begin }
         Log.d(TAG, "Parsed ${sortedDuties.size} duties")
 
         return sortedDuties
