@@ -1,0 +1,82 @@
+### Login
+# This endpoints acts as a login and returns cookies as well as an
+# incode token and value that can be extracted from the response
+# body and is needed as a header in most authenticated requests
+#
+# @no-log
+POST {{hosts.dutySchedule.url}}/login.php
+Content-Type: application/x-www-form-urlencoded
+
+client = RKOOE &
+login = {{auth.dutySchedule.username}} &
+password = {{auth.dutySchedule.password}} &
+remember = 1
+
+> {%
+if (response.status === 200 && response.body) {
+  const regex = /'(x-incode-[^']+)': '([^']+)'/;
+
+  const match = response.body.match(regex);
+
+  if (match && match.length >= 3) {
+    const incodeToken = match[1];
+    const incodeValue = match[2];
+
+    client.global.set("incodeToken", incodeToken);
+    client.global.set("incodeValue", incodeValue);
+
+    console.log("Incode set:", incodeToken, incodeValue)
+  } else {
+    console.log("Incode not found in response");
+  }
+}
+%}
+
+### Keep Alive
+# This endpoint keeps the session alive and should be called after
+# 5 minutes of inactivity. Uses cookies to verify and does NOT
+# need incode headers
+#
+# @no-log
+GET {{hosts.dutySchedule.url}}/keepAlive.php
+
+### Load Plan
+# This endpoint loads the entire schedule for an organization
+# within a given time period. It is recommended to keep that
+# timeframe as small as possible, especially for larger
+# organizations
+#
+# [incodeToken]: [incodeValue] required as dynamic header
+#
+# [orgUnitDataGuid] represents the GUID of the organization
+# [dateFrom], [dateTo] are formatted as yyyy-MM-ddThh:mm:ss.SSSZ
+POST {{hosts.dutySchedule.url}}/StaffPortal/plan/data/loadPlan.json
+Content-Type: application/x-www-form-urlencoded
+Accept-Encoding: gzip
+x-incode-XXXXXXXXXX: {{incodeValue}}
+
+orgUnitDataGuid = {{sampleValues.orgUnitDataGuid}} &
+dateFrom = {{sampleValues.timestampFrom}} &
+dateTo = {{sampleValues.timestampTo}} &
+withSubOrgUnits = 1 &
+sortPlan = false
+
+### Get Staff
+# This endpoint loads details for the given staff GUIDs.
+#
+# [incodeToken]: [incodeValue] required as dynamic header
+#
+# [orgUnitDataGuid] represents the GUID of the organization
+# [dateFrom], [dateTo] are formatted as yyyy-MM-ddThh:mm:ss.SSSZ
+# [staffDataGuid[]] can be added multiple times; GUID of staff
+POST {{hosts.dutySchedule.url}}/StaffPortal/staff/data/getStaff.json
+Content-Type: application/x-www-form-urlencoded
+Accept-Encoding: gzip
+x-incode-XXXXXXXXXX: {{incodeValue}}
+
+orgUnitDataGuid = {{sampleValues.orgUnitDataGuid}} &
+dateFrom = {{sampleValues.dateFrom}} &
+dateTo = {{sampleValues.dateTo}} &
+withSubOrgUnits = 1 &
+loadModelData = 1 &
+staffDataGuid[] = {{sampleValues.staffDataGuid}}

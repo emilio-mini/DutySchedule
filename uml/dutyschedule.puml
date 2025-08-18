@@ -1,0 +1,259 @@
+@startuml
+object PlanCellGuid
+object PlanCellDataGuid
+object OrgUnitDataGuid
+object SkillDataGuid
+object StaffType
+object StaffGuid
+object StaffIdentifier
+object OrgIdentifier
+object Requirement
+object JSON
+object AdditionalInfos {
+    ressource_name: String
+}
+
+map PlanCell {
+    guid => PlanCellGuid
+    client => String
+    dataGuid => PlanCellData
+    originalDataGuid => PlanCellDataGuid
+    orgUnitDataGuid => OrgUnitDataGuid
+    parentDataGuid => PlanCellDataGuid
+    week => Int
+    date => Timestamp
+    begin => Timestamp
+    end => Timestamp
+    type => StaffType
+    requirementGroupDataGuid => String
+    requirementGroupChildDataGuid => Requirement
+    ressourceTypeDataGuid => String
+    requirementDataGuid => String
+    skillDataGuid => SkillDataGuid
+    tagDataGuid => String
+    skillCharacterisationDataGuid => String
+    timeRequirement => Int
+    mandatoryType => Int
+    costCenterDataGuid => String
+    dutyTypeDataGuids => Array<?>
+    description => String
+    info => String
+    shiftDataGuid => String
+    planBaseDataGuid => String
+    planBaseEntryDataGuid => String
+    allocationDataGuid => String
+    allocationRessourceDataGuid => StaffGuid
+    actionGuid => String
+    projectDataGuid => String
+    istPlan => Array<?>
+    istApprovalData => Array<?>
+    released => Int
+    bookable => Int
+    badges => Array<?>
+    list_position => Int
+    list_position_manuell => Int
+    syncMessages => Array<?>
+    syncState => Int
+    dynamicDataJson => Array<?>
+    isValid => Int
+    created => String
+    updated => String
+    deleted => String
+    externalId => String
+    origin => String
+    validFrom => Timestamp
+    validTo => Timestamp
+    __objectTypeName => String
+    additionalInfos *--> AdditionalInfos
+}
+
+map Staff {
+    guid => StaffGuid
+    dataGuid => String
+    client => String
+    created => String
+    updated => String
+    deleted => String
+    externalId => StaffIdentifier
+    origin => String
+    validFrom => Timestamp
+    validTo => Timestamp
+    ressourceTypeDataGuid => String
+    personalnummer => StaffIdentifier
+    personDataGuid => String
+    info => String
+    list_position => Int
+    saldo_gueltigkeit => Timestamp
+    saldo_za => Int
+    saldo_urlaub => Int
+    saldoArray => String
+    workingTimeModelDataGuid => String
+    workingTimeModelBAM => Array<?>
+    externalIsRegularOrgUnit *--> OrgIdentifier
+    badges => Array<?>
+    maportal_manualName => String
+    maportal_role => String
+    maportal_suspended => Int
+    maportal_activated => Int
+    maportal_agbCode => String
+    maportal_forcePasswordChange => Int
+    maportal_lastLogin => Timestamp
+    maportal_lastActivity => Timestamp
+    name => String
+    vorname => String
+    nachname => String
+    titelVor => String
+    titelMitte => String
+    titelNach => String
+    sex => Int
+    strasse => String
+    plz => String
+    ort => String
+    telefon => String
+    telefon_privat => String
+    telefon_beruf => String
+    email => String
+    birthdate => Timestamp
+    svnr => String
+    zusatz1 => String
+    zusatz2 => String
+    freedayCalendarDataGuid => String
+    anonymize => Int
+    privacyFlag => Int
+    pictureVersion => Int
+    isValid => Int
+    __objectTypeName => String
+}
+
+map DutyRow {
+    guid => String
+    client => String
+    dataGuid => String
+    ressourceDataGuid => String
+    shiftDataGuid => String
+    week => Int
+    date => Timestamp
+    begin => Timestamp
+    end => Timestamp
+    duration => Int
+    overtimeFront => Int
+    overtimeBack => Int
+    isCompleteOvertime => Int
+    occupationDataGuid => String
+    dutyTypeDataGuid => String
+    orgUnitDataGuid => OrgUnitDataGuid
+    costCenterDataGuid => String
+    info => String
+    attendances => JSON
+    sollAttendances => Array<?>
+    sollData => Array<?>
+    istAttendances => Array<?>
+    istApprovalData => Array<?>
+    istDuration => Int
+    plannedForDataGuid => String
+    projectDataGuid => String
+    actionGuid => String
+    actionOrigin => String
+    badges => Array<?>
+    dynamicDataJson => ?
+    color => String
+    released => Int
+    isValid => Int
+    isDeleted => Int
+    created => String
+    updated => String
+    deleted => String
+    externalId => String
+    origin => String
+    validFrom => Timestamp
+    validTo => Timestamp
+    __objectTypeName => String
+    restrictions => ?
+    ressourceTypeDataGuid => String
+    shiftName => String
+    shiftColor => String
+    orgUnitName => String
+    dutyTypeName => String
+    allocationInfo => Map<String, Array<String>>
+}
+
+map Shift {
+    guid => String
+    client => String
+    dataGuid => String
+    name => String
+    color => String
+    abbreviation => String
+    shiftData => String
+    dutyData => Array<?>
+    planData => Array<?>
+    favored => Int
+    list_position => Int
+    created => String
+    updated => String
+    deleted => String
+    externalId => String
+    origin => String
+    validFrom => Timestamp
+    validTo => Timestamp
+    __objectTypeName => String
+}
+
+map LoadPlanResponse {
+    errorMessages => Array<String>
+    successMessage => String
+    alertMessage => String
+    changedDataId => String
+    data => Map<StaffGuid, Staff>
+}
+
+map GetStaffResponse {
+    errorMessages => Array<String>
+    successMessage => String
+    alertMessage => String
+    changedDataId => String
+    dataIsArray => Boolean
+    dataCount => Int
+    data => Array<Staff>
+}
+
+map LoadResponse {
+    errorMessages => Array<String>
+    successMessage => String
+    alertMessage => String
+    changedDataId => String
+    dataIsArray => Boolean
+    dataCount => Int
+    data => Array<DutyRow>
+}
+
+map GetShiftsResponse {
+    errorMessages => Array<String>
+    successMessage => String
+    alertMessage => String
+    changedDataId => String
+    dataIsArray => Boolean
+    dataCount => Int
+    data => Array<Shift>
+}
+
+map Requests {
+    loadPlan.json *--> LoadPlanResponse
+    getStaff.json *--> GetStaffResponse
+    load.json *--> LoadResponse
+    getShifts.json *--> GetShiftsResponse
+}
+
+LoadPlanResponse::data --> PlanCell
+LoadPlanResponse::data --> PlanCell::guid
+
+GetStaffResponse::data --> Staff
+
+LoadResponse::data --> DutyRow
+
+GetShiftsResponse::data --> Shift
+
+PlanCell::parentDataGuid -> PlanCell::dataGuid
+PlanCell::allocationRessourceDataGuid -> Staff::guid
+
+@enduml
