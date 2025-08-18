@@ -257,8 +257,8 @@ fun HomeScreen(
                     DateRangePickerDefaults.DateRangePickerTitle(
                         dateRangePickerState.displayMode,
                         modifier = Modifier
-                            .padding(horizontal = 24.dp)
-                            .padding(top = 24.dp)
+                            .padding(horizontal = 16.dp)
+                            .padding(top = 36.dp)
                     )
                 },
                 headline = {
@@ -267,7 +267,7 @@ fun HomeScreen(
                         selectedEndDateMillis = dateRangePickerState.selectedEndDateMillis,
                         displayMode = dateRangePickerState.displayMode,
                         DatePickerDefaults.dateFormatter(),
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                         contentColor = MaterialTheme.colorScheme.onSurface,
                     )
                 })

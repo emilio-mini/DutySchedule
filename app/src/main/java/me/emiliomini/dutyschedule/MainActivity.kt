@@ -26,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.services.api.PrepService
+import me.emiliomini.dutyschedule.services.notifications.NotificationService
 import me.emiliomini.dutyschedule.ui.base.LoadingScreen
 import me.emiliomini.dutyschedule.ui.home.HomeScreen
 import me.emiliomini.dutyschedule.ui.onboarding.OnboardingActivity
@@ -38,6 +39,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        NotificationService.initialize(applicationContext)
 
         setContent {
             DutyScheduleTheme {
