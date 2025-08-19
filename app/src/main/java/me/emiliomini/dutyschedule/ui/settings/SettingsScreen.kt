@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Logout
+import androidx.compose.material.icons.rounded.Alarm
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -65,6 +66,16 @@ fun SettingsScreen(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            Text(
+                stringResource(R.string.main_settings_section_alarms),
+                color = MaterialTheme.colorScheme.primary
+            )
+            Card(colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    DutyAlarmListItem()
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 stringResource(R.string.main_settings_section_account),
                 color = MaterialTheme.colorScheme.primary

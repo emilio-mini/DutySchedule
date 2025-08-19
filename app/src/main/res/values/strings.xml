@@ -61,4 +61,12 @@
     <string name="main_schedule_infobox_info">Info</string>
     <string name="notification_update_title">Update available!</string>
     <string name="notification_update_content">%1$s -> %2$s</string>
+    <string name="main_settings_section_alarms">Alarms</string>
+    <string name="main_settings_alarms_pre_event_begin_title">Duty Alarm</string>
+    <string name="main_settings_alarms_pre_event_begin_content">%1$s before a duty starts</string>
+    <string name="main_settings_alarms_pre_event_begin_dialog_title">Select a time</string>
+    <string name="main_settings_alarms_pre_event_begin_dialog_hour">Hours</string>
+    <string name="main_settings_alarms_pre_event_begin_dialog_minute">Minutes</string>
+    <string name="main_settings_alarms_pre_event_begin_dialog_confirm">Confirm</string>
+    <string name="main_settings_alarms_pre_event_begin_dialog_dismiss">Dismiss</string>
 </resources>

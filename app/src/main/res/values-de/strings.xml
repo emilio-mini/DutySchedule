@@ -62,4 +62,12 @@
     <string name="main_schedule_infobox_info">Info</string>
     <string name="notification_update_title">Update verfügbar!</string>
     <string name="notification_update_content">%1$s -> %2$s</string>
+    <string name="main_settings_section_alarms">Wecker</string>
+    <string name="main_settings_alarms_pre_event_begin_title">Dienst Wecker</string>
+    <string name="main_settings_alarms_pre_event_begin_content">%1$s vor Dienstbeginn</string>
+    <string name="main_settings_alarms_pre_event_begin_dialog_title">Zeit auswählen</string>
+    <string name="main_settings_alarms_pre_event_begin_dialog_hour">Stunden</string>
+    <string name="main_settings_alarms_pre_event_begin_dialog_minute">Minuten</string>
+    <string name="main_settings_alarms_pre_event_begin_dialog_confirm">Bestätigen</string>
+    <string name="main_settings_alarms_pre_event_begin_dialog_dismiss">Abbrechen</string>
 </resources>
