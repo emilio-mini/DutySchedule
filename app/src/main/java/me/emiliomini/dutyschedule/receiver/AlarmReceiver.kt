@@ -9,9 +9,8 @@ import me.emiliomini.dutyschedule.services.alarm.AlarmSoundService
 class AlarmReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent?) {
-        val serviceIntent = Intent(context, AlarmSoundService::class.java);
-        serviceIntent.putExtra("ALARM_MESSAGE", "It's time!");
-        ContextCompat.startForegroundService(context, serviceIntent);
+        val serviceIntent = Intent(context, AlarmSoundService::class.java)
+        ContextCompat.startForegroundService(context, serviceIntent)
     }
 
 }

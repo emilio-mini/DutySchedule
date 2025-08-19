@@ -69,4 +69,7 @@
     <string name="main_settings_alarms_pre_event_begin_dialog_minute">Minutes</string>
     <string name="main_settings_alarms_pre_event_begin_dialog_confirm">Confirm</string>
     <string name="main_settings_alarms_pre_event_begin_dialog_dismiss">Dismiss</string>
+    <string name="notifications_alarms_duty_title">Duty alarm</string>
+    <string name="notifications_alarms_duty_content">Swipe to dismiss</string>
+    <string name="notifications_alarms_duty_action_dismiss">Dismiss</string>
 </resources>

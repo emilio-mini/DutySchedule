@@ -38,7 +38,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.R
-import me.emiliomini.dutyschedule.services.models.LocalStorageKey
+import me.emiliomini.dutyschedule.services.storage.LocalStorageKey
 import me.emiliomini.dutyschedule.services.storage.LocalStorageService
 import kotlin.math.abs
 
@@ -98,8 +98,8 @@ fun DutyAlarmListItem(modifier: Modifier = Modifier) {
     )
 
     if (showDialog) {
-        var hour by remember { mutableStateOf("${abs(selectedDurationMin / 60)}") };
-        var minute by remember { mutableStateOf("${selectedDurationMin % 60}") };
+        var hour by remember { mutableStateOf("${abs(selectedDurationMin / 60)}") }
+        var minute by remember { mutableStateOf("${selectedDurationMin % 60}") }
 
         AlertDialog(
             onDismissRequest = { showDialog = false },

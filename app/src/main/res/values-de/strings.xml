@@ -70,4 +70,7 @@
     <string name="main_settings_alarms_pre_event_begin_dialog_minute">Minuten</string>
     <string name="main_settings_alarms_pre_event_begin_dialog_confirm">Bestätigen</string>
     <string name="main_settings_alarms_pre_event_begin_dialog_dismiss">Abbrechen</string>
+    <string name="notifications_alarms_duty_title">Dienst Wecker</string>
+    <string name="notifications_alarms_duty_content">Wischen zum stoppen</string>
+    <string name="notifications_alarms_duty_action_dismiss">Stoppen</string>
 </resources>

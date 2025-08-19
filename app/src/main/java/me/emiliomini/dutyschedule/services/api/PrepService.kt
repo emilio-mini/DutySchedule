@@ -3,7 +3,7 @@ package me.emiliomini.dutyschedule.services.api
 import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.delay
-import me.emiliomini.dutyschedule.services.models.LocalStorageKey
+import me.emiliomini.dutyschedule.services.storage.LocalStorageKey
 import me.emiliomini.dutyschedule.data.models.TimelineItem
 import me.emiliomini.dutyschedule.data.models.DutyDefinition
 import me.emiliomini.dutyschedule.data.models.Employee
@@ -17,8 +17,8 @@ import java.time.OffsetDateTime
 import java.util.regex.Pattern
 
 object PrepService {
-    const val DEBUG_MODE = false;
-    private const val TAG = "PrepService";
+    const val DEBUG_MODE = false
+    private const val TAG = "PrepService"
 
     private var incode: Incode? = null
     private var self: Employee? = null

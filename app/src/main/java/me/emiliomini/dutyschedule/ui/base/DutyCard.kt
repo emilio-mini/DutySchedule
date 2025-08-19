@@ -1,5 +1,6 @@
 package me.emiliomini.dutyschedule.ui.base
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AlarmAdd
+import androidx.compose.material.icons.outlined.AlarmOn
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material.icons.rounded.Badge
 import androidx.compose.material.icons.rounded.MedicalInformation
@@ -25,21 +27,32 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.data.models.AssignedEmployee
 import me.emiliomini.dutyschedule.data.models.DutyDefinition
 import me.emiliomini.dutyschedule.data.models.Employee
 import me.emiliomini.dutyschedule.icons.Ambulance
 import me.emiliomini.dutyschedule.icons.SteeringWheel
+import me.emiliomini.dutyschedule.services.alarm.AlarmService
+import me.emiliomini.dutyschedule.services.storage.LocalStorageKey
+import me.emiliomini.dutyschedule.services.storage.LocalStorageService
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,6 +62,9 @@ fun AppDutyCard(
     selfId: String? = null,
     onEmployeeClick: (AssignedEmployee) -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
     val emptyCar = Employee("", stringResource(R.string.base_dutycard_no_vehicle), "SEW")
     val emptySeat = Employee("", stringResource(R.string.base_dutycard_no_staff), "0000000")
 
@@ -60,6 +76,9 @@ fun AppDutyCard(
 
     val startTime = duty.begin.atZoneSameInstant(localZoneId).format(timeFormatter)
     val endTime = duty.end.atZoneSameInstant(localZoneId).format(timeFormatter)
+
+    var alarmBlocked by remember { mutableStateOf(false) }
+    var alarmSet by remember { mutableStateOf(AlarmService.isAlarmSet(context, duty.guid.hashCode())) }
 
     Card(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(8.dp)) {
         Row(
@@ -81,7 +100,7 @@ fun AppDutyCard(
                 Box(
                     modifier = Modifier
                         .width(1.dp)
-                        .fillMaxHeight(0.8f) // Adjust fraction for line length
+                        .fillMaxHeight(0.8f)
                         .background(color = MaterialTheme.colorScheme.outline)
                 )
                 Text(
@@ -223,9 +242,42 @@ fun AppDutyCard(
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 IconButton(onClick = {
-                    // AlarmService.scheduleAlarm(context, duty.begin.toInstant().toEpochMilli());
-                }, enabled = false) {
-                    Icon(Icons.Outlined.AlarmAdd, contentDescription = "Set Reminder")
+                    alarmBlocked = true
+                    if (alarmSet) {
+                        AlarmService.cancelAlarm(context, duty.guid.hashCode())
+                        alarmSet = false
+                        alarmBlocked = false
+                    } else {
+                        scope.launch {
+                            val alarmOffset =
+                                LocalStorageService.loadValue(context, LocalStorageKey.ALARM_OFFSET)
+                            var alarmOffsetMillis = 0L
+                            if (alarmOffset != null && alarmOffset.isNotBlank()) {
+                                try {
+                                    alarmOffsetMillis =
+                                        TimeUnit.MINUTES.toMillis(alarmOffset.toLong())
+                                } catch (e: NumberFormatException) {
+                                }
+                            }
+
+                            val dutyBeginMillis = duty.begin.toInstant().toEpochMilli()
+                            val timestamp = dutyBeginMillis - alarmOffsetMillis
+                            Log.d("Alarm", "Setting alarm for $timestamp, which is $alarmOffsetMillis before begin at ${dutyBeginMillis}")
+                            AlarmService.scheduleAlarm(
+                                context,
+                                timestamp,
+                                duty.guid.hashCode()
+                            )
+                            alarmBlocked = false
+                            alarmSet = true
+                        }
+                    }
+                }, enabled = !alarmBlocked) {
+                    if (alarmSet) {
+                        Icon(Icons.Outlined.AlarmOn, contentDescription = "Reminder set")
+                    } else {
+                        Icon(Icons.Outlined.AlarmAdd, contentDescription = "Set Reminder")
+                    }
                 }
                 if (!requirementsMet) {
                     Icon(

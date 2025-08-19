@@ -9,6 +9,7 @@ import me.emiliomini.dutyschedule.data.models.Incode
 import me.emiliomini.dutyschedule.data.models.mapping.OrgUnitDataGuid
 import me.emiliomini.dutyschedule.data.models.vc.GithubRelease
 import me.emiliomini.dutyschedule.data.networking.NetworkCacheData
+import me.emiliomini.dutyschedule.debug.DebugFlags
 import me.emiliomini.dutyschedule.services.models.NetworkTarget
 import okhttp3.CookieJar
 import okhttp3.FormBody
@@ -217,7 +218,7 @@ object NetworkService {
         ignoreCache: Boolean = false,
         identifier: String = ""
     ): Result<String?> {
-        if (!ignoreCache) {
+        if (!DebugFlags.BYPASS_CACHE && !ignoreCache) {
             val cached = getCached<String>(request.url.toString(), 5)
             if (
                 cached != null &&
