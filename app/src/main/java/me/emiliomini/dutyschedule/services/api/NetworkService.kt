@@ -231,20 +231,25 @@ object NetworkService {
         }
 
         return withContext(Dispatchers.IO) {
-            httpClient.newCall(request).execute().use { response ->
-                if (request.header("Accept-Encoding") == "gzip") {
-                    Log.d(TAG, "Trying to decode GZIP response...")
-                    val inputStream = GzipSource(response.body.source()).buffer()
-                    val result = inputStream.readUtf8()
-                    response.body.close()
-                    addCache(request, result, identifier)
-                    Result.success(result)
-                } else {
-                    val result = response.body.string()
-                    response.body.close()
-                    addCache(request, result, identifier)
-                    Result.success(result)
+            try {
+                httpClient.newCall(request).execute().use { response ->
+                    Log.d(TAG, "Received response of type ${response.body.contentType()}")
+                    if (response.header("Content-Encoding") == "gzip") {
+                        Log.d(TAG, "Trying to decode GZIP response...")
+                        val inputStream = GzipSource(response.body.source()).buffer()
+                        val result = inputStream.readUtf8()
+                        response.body.close()
+                        addCache(request, result, identifier)
+                        Result.success(result)
+                    } else {
+                        val result = response.body.string()
+                        response.body.close()
+                        addCache(request, result, identifier)
+                        Result.success(result)
+                    }
                 }
+            } catch (e: Exception) {
+                Result.failure(e)
             }
         }
     }
