@@ -3,13 +3,13 @@ package me.emiliomini.dutyschedule.services.api
 import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.delay
-import me.emiliomini.dutyschedule.services.storage.LocalStorageKey
 import me.emiliomini.dutyschedule.data.models.TimelineItem
 import me.emiliomini.dutyschedule.data.models.DutyDefinition
 import me.emiliomini.dutyschedule.data.models.Employee
 import me.emiliomini.dutyschedule.data.models.Incode
 import me.emiliomini.dutyschedule.data.models.mapping.OrgUnitDataGuid
-import me.emiliomini.dutyschedule.services.storage.LocalStorageService
+import me.emiliomini.dutyschedule.services.storage.DataKeys
+import me.emiliomini.dutyschedule.services.storage.StorageService
 import okio.IOException
 import org.json.JSONException
 import org.json.JSONObject
@@ -62,8 +62,8 @@ object PrepService {
 
             this.incode = Incode(incodeToken, incodeValue)
 
-            LocalStorageService.save(context, LocalStorageKey.USERNAME, username)
-            LocalStorageService.save(context, LocalStorageKey.PASSWORD, password)
+            StorageService.save(DataKeys.USERNAME, username)
+            StorageService.save(DataKeys.PASSWORD, password)
 
             Log.d(TAG, "Logged in!")
         } else {
@@ -93,15 +93,15 @@ object PrepService {
     }
 
     suspend fun previouslyLoggedIn(context: Context): Boolean {
-        val username = LocalStorageService.loadValue(context, LocalStorageKey.USERNAME)
-        val password = LocalStorageService.loadValue(context, LocalStorageKey.PASSWORD)
+        val username = StorageService.load(DataKeys.USERNAME)
+        val password = StorageService.load(DataKeys.PASSWORD)
 
         return username != null && password != null
     }
 
     suspend fun restoreLogin(context: Context): Boolean {
-        val username = LocalStorageService.loadValue(context, LocalStorageKey.USERNAME)
-        val password = LocalStorageService.loadValue(context, LocalStorageKey.PASSWORD)
+        val username = StorageService.load(DataKeys.USERNAME)
+        val password = StorageService.load(DataKeys.PASSWORD)
 
         if (username.isNullOrBlank() || password.isNullOrBlank()) {
             return false
@@ -122,8 +122,8 @@ object PrepService {
 
     suspend fun logout(context: Context) {
         this.incode = null
-        LocalStorageService.clear(context, LocalStorageKey.USERNAME)
-        LocalStorageService.clear(context, LocalStorageKey.PASSWORD)
+        StorageService.clear(DataKeys.USERNAME)
+        StorageService.clear(DataKeys.PASSWORD)
     }
 
     suspend fun loadPlan(

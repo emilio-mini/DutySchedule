@@ -38,8 +38,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.R
-import me.emiliomini.dutyschedule.services.storage.LocalStorageKey
-import me.emiliomini.dutyschedule.services.storage.LocalStorageService
+import me.emiliomini.dutyschedule.services.storage.DataKeys
+import me.emiliomini.dutyschedule.services.storage.StorageService
 import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,16 +51,12 @@ fun DutyAlarmListItem(modifier: Modifier = Modifier) {
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
-        val value = LocalStorageService.loadValue(context, LocalStorageKey.ALARM_OFFSET)
+        val value = StorageService.load(DataKeys.ALARM_OFFSET)
         if (value == null) {
             return@LaunchedEffect
         }
 
-        try {
-            selectedDurationMin = value.toLong()
-        } catch (e: NumberFormatException) {
-            return@LaunchedEffect
-        }
+        selectedDurationMin = value
     }
 
     ListItem(
@@ -171,10 +167,9 @@ fun DutyAlarmListItem(modifier: Modifier = Modifier) {
                         showDialog = false
 
                         scope.launch {
-                            LocalStorageService.save(
-                                context,
-                                LocalStorageKey.ALARM_OFFSET,
-                                selectedDurationMin.toString()
+                            StorageService.save(
+                                DataKeys.ALARM_OFFSET,
+                                selectedDurationMin
                             )
                         }
                     }

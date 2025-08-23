@@ -47,8 +47,8 @@ import me.emiliomini.dutyschedule.data.models.Employee
 import me.emiliomini.dutyschedule.icons.Ambulance
 import me.emiliomini.dutyschedule.icons.SteeringWheel
 import me.emiliomini.dutyschedule.services.alarm.AlarmService
-import me.emiliomini.dutyschedule.services.storage.LocalStorageKey
-import me.emiliomini.dutyschedule.services.storage.LocalStorageService
+import me.emiliomini.dutyschedule.services.storage.DataKeys
+import me.emiliomini.dutyschedule.services.storage.StorageService
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -249,13 +249,11 @@ fun AppDutyCard(
                         alarmBlocked = false
                     } else {
                         scope.launch {
-                            val alarmOffset =
-                                LocalStorageService.loadValue(context, LocalStorageKey.ALARM_OFFSET)
+                            val alarmOffset = StorageService.load(DataKeys.ALARM_OFFSET)
                             var alarmOffsetMillis = 0L
-                            if (alarmOffset != null && alarmOffset.isNotBlank()) {
+                            if (alarmOffset != null) {
                                 try {
-                                    alarmOffsetMillis =
-                                        TimeUnit.MINUTES.toMillis(alarmOffset.toLong())
+                                    alarmOffsetMillis = TimeUnit.MINUTES.toMillis(alarmOffset)
                                 } catch (e: NumberFormatException) {
                                 }
                             }
