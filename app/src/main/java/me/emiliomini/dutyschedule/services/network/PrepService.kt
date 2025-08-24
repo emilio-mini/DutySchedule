@@ -36,12 +36,10 @@ object PrepService {
 
 
     suspend fun login(username: String, password: String): Boolean {
-        var loginResult: Result<String?>
-        if (AVOID_PREP_API) {
-            loginResult =
-                Result.success("...{ headers: { 'x-incode-EXAMPLEKEY': 'EXAMPLEVALUE' } }...")
+        val loginResult: Result<String?> = if (AVOID_PREP_API.active()) {
+            Result.success("...{ headers: { 'x-incode-EXAMPLEKEY': 'EXAMPLEVALUE' } }...")
         } else {
-            loginResult = NetworkService.login(username, password)
+            NetworkService.login(username, password)
         }
 
         val responseBody = loginResult.getOrNull()
@@ -111,7 +109,7 @@ object PrepService {
             return false
         }
 
-        if (AVOID_PREP_API) {
+        if (AVOID_PREP_API.active()) {
             return this.login(username, password)
         }
 
@@ -141,7 +139,7 @@ object PrepService {
             return Result.failure(IOException("Not logged in!"))
         }
 
-        if (AVOID_PREP_API) {
+        if (AVOID_PREP_API.active()) {
             delay(2000)
             return Result.success(
                 listOf(
@@ -176,7 +174,7 @@ object PrepService {
             return Result.failure(IOException("Not logged in!"))
         }
 
-        if (AVOID_PREP_API) {
+        if (AVOID_PREP_API.active()) {
             return Result.success(
                 listOf(
                     Employee("e0", "Your Name", "00001234"),

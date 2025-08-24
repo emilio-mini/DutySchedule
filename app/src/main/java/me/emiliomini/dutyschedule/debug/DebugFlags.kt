@@ -1,6 +1,14 @@
 package me.emiliomini.dutyschedule.debug
 
-object DebugFlags {
-    const val BYPASS_CACHE = false
-    const val AVOID_PREP_API = false
+enum class DebugFlags(private val value: Boolean) {
+    BYPASS_CACHE(false),
+    AVOID_PREP_API(false);
+
+    fun active(): Boolean {
+        return this.value
+    }
+
+    fun inactive(): Boolean {
+        return !this.value
+    }
 }

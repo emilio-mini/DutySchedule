@@ -218,7 +218,7 @@ object NetworkService {
         ignoreCache: Boolean = false,
         identifier: String = ""
     ): Result<String?> {
-        if (!DebugFlags.BYPASS_CACHE && !ignoreCache) {
+        if (DebugFlags.BYPASS_CACHE.inactive() && !ignoreCache) {
             val cached = getCached<String>(request.url.toString(), 5)
             if (
                 cached != null &&

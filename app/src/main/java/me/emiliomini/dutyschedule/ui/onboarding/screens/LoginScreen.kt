@@ -46,8 +46,8 @@ import me.emiliomini.dutyschedule.ui.onboarding.components.OnboardingBaseCompone
 fun LoginScreen(successAction: () -> Unit = {}) {
     val scope = rememberCoroutineScope()
     val (usernameFocusRequester, passwordFocusRequester) = FocusRequester.createRefs()
-    var email by remember { mutableStateOf(if (DebugFlags.AVOID_PREP_API) "Developer" else "") }
-    var password by remember { mutableStateOf(if (DebugFlags.AVOID_PREP_API) "password" else "") }
+    var email by remember { mutableStateOf(if (DebugFlags.AVOID_PREP_API.active()) "Developer" else "") }
+    var password by remember { mutableStateOf(if (DebugFlags.AVOID_PREP_API.active()) "password" else "") }
     var blockContinue by remember { mutableStateOf(false) }
 
     OnboardingBaseComponent(
