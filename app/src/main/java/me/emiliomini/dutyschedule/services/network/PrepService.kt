@@ -1,13 +1,13 @@
 package me.emiliomini.dutyschedule.services.network
 
-import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.delay
-import me.emiliomini.dutyschedule.models.prep.TimelineItem
+import me.emiliomini.dutyschedule.debug.DebugFlags.AVOID_PREP_API
 import me.emiliomini.dutyschedule.models.prep.DutyDefinition
 import me.emiliomini.dutyschedule.models.prep.Employee
 import me.emiliomini.dutyschedule.models.prep.Incode
 import me.emiliomini.dutyschedule.models.prep.OrgUnitDataGuid
+import me.emiliomini.dutyschedule.models.prep.TimelineItem
 import me.emiliomini.dutyschedule.services.storage.DataKeys
 import me.emiliomini.dutyschedule.services.storage.StorageService
 import okio.IOException
@@ -17,7 +17,6 @@ import java.time.OffsetDateTime
 import java.util.regex.Pattern
 
 object PrepService {
-    const val DEBUG_MODE = false
     private const val TAG = "PrepService"
 
     private var incode: Incode? = null
@@ -36,9 +35,9 @@ object PrepService {
     }
 
 
-    suspend fun login(context: Context, username: String, password: String): Boolean {
+    suspend fun login(username: String, password: String): Boolean {
         var loginResult: Result<String?>
-        if (this.DEBUG_MODE) {
+        if (AVOID_PREP_API) {
             loginResult =
                 Result.success("...{ headers: { 'x-incode-EXAMPLEKEY': 'EXAMPLEVALUE' } }...")
         } else {
@@ -79,7 +78,12 @@ object PrepService {
                 return false
             }
 
-            val staffResult = this.getStaff(context, OrgUnitDataGuid.EMS_SATTLEDT, listOf(guid), OffsetDateTime.now(), OffsetDateTime.now()).getOrNull()
+            val staffResult = this.getStaff(
+                OrgUnitDataGuid.EMS_SATTLEDT,
+                listOf(guid),
+                OffsetDateTime.now(),
+                OffsetDateTime.now()
+            ).getOrNull()
             if (staffResult != null && staffResult.isNotEmpty()) {
                 this.self = staffResult.firstOrNull { it.guid == guid }
             }
@@ -92,14 +96,14 @@ object PrepService {
         return true
     }
 
-    suspend fun previouslyLoggedIn(context: Context): Boolean {
+    suspend fun previouslyLoggedIn(): Boolean {
         val username = StorageService.load(DataKeys.USERNAME)
         val password = StorageService.load(DataKeys.PASSWORD)
 
         return username != null && password != null
     }
 
-    suspend fun restoreLogin(context: Context): Boolean {
+    suspend fun restoreLogin(): Boolean {
         val username = StorageService.load(DataKeys.USERNAME)
         val password = StorageService.load(DataKeys.PASSWORD)
 
@@ -107,8 +111,8 @@ object PrepService {
             return false
         }
 
-        if (this.DEBUG_MODE) {
-            return this.login(context, username, password)
+        if (AVOID_PREP_API) {
+            return this.login(username, password)
         }
 
         // Try restoring using keepalive
@@ -117,17 +121,16 @@ object PrepService {
             return true
         }
 
-        return this.login(context, username, password)
+        return this.login(username, password)
     }
 
-    suspend fun logout(context: Context) {
+    suspend fun logout() {
         this.incode = null
         StorageService.clear(DataKeys.USERNAME)
         StorageService.clear(DataKeys.PASSWORD)
     }
 
     suspend fun loadPlan(
-        context: Context,
         orgUnitDataGuid: OrgUnitDataGuid,
         from: OffsetDateTime,
         to: OffsetDateTime
@@ -138,7 +141,7 @@ object PrepService {
             return Result.failure(IOException("Not logged in!"))
         }
 
-        if (this.DEBUG_MODE) {
+        if (AVOID_PREP_API) {
             delay(2000)
             return Result.success(
                 listOf(
@@ -162,7 +165,6 @@ object PrepService {
     }
 
     suspend fun getStaff(
-        context: Context,
         orgUnitDataGuid: OrgUnitDataGuid,
         staffDataGuid: List<String>,
         from: OffsetDateTime,
@@ -174,7 +176,7 @@ object PrepService {
             return Result.failure(IOException("Not logged in!"))
         }
 
-        if (this.DEBUG_MODE) {
+        if (AVOID_PREP_API) {
             return Result.success(
                 listOf(
                     Employee("e0", "Your Name", "00001234"),
@@ -200,12 +202,11 @@ object PrepService {
     }
 
     suspend fun loadTimeline(
-        context: Context,
         orgUnitDataGuid: OrgUnitDataGuid,
         from: OffsetDateTime,
         to: OffsetDateTime
     ): Result<List<TimelineItem>> {
-        val plan = this.loadPlan(context, orgUnitDataGuid, from, to).getOrNull()
+        val plan = this.loadPlan(orgUnitDataGuid, from, to).getOrNull()
         if (plan.isNullOrEmpty()) {
             Log.e(TAG, "Failed to load plan")
             return Result.failure(IOException("Failed to load plan!"))
@@ -218,7 +219,7 @@ object PrepService {
             guids.addAll(duty.rs.map { it.employee.guid })
             guids
         }.distinct()
-        val staff = this.getStaff(context, orgUnitDataGuid, employeeGuids, from, to).getOrNull()
+        val staff = this.getStaff(orgUnitDataGuid, employeeGuids, from, to).getOrNull()
         if (staff.isNullOrEmpty()) {
             Log.e(TAG, "Failed to get staff")
             return Result.failure(IOException("Failed to get staff!"))

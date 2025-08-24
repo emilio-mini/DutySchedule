@@ -56,10 +56,7 @@ class MainActivity : ComponentActivity() {
         }
 
         lifecycleScope.launch {
-            if (!PrepService.previouslyLoggedIn(applicationContext) || !PrepService.restoreLogin(
-                    applicationContext
-                )
-            ) {
+            if (!PrepService.previouslyLoggedIn() || !PrepService.restoreLogin()) {
                 startActivity(Intent(this@MainActivity, OnboardingActivity::class.java))
                 finish()
             } else {
@@ -110,7 +107,7 @@ class MainActivity : ComponentActivity() {
                                 }
                             }, onLogout = {
                                 lifecycleScope.launch {
-                                    PrepService.logout(applicationContext)
+                                    PrepService.logout()
                                     startActivity(
                                         Intent(
                                             this@MainActivity, OnboardingActivity::class.java

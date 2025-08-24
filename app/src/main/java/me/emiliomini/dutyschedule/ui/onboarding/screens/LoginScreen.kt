@@ -36,6 +36,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.R
+import me.emiliomini.dutyschedule.debug.DebugFlags
 import me.emiliomini.dutyschedule.services.network.PrepService
 import me.emiliomini.dutyschedule.ui.onboarding.components.OnboardingBaseComponent
 
@@ -46,8 +47,8 @@ fun LoginScreen(successAction: () -> Unit = {}) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val (usernameFocusRequester, passwordFocusRequester) = FocusRequester.createRefs()
-    var email by remember { mutableStateOf(if (PrepService.DEBUG_MODE) "Developer" else "") }
-    var password by remember { mutableStateOf(if (PrepService.DEBUG_MODE) "password" else "") }
+    var email by remember { mutableStateOf(if (DebugFlags.AVOID_PREP_API) "Developer" else "") }
+    var password by remember { mutableStateOf(if (DebugFlags.AVOID_PREP_API) "password" else "") }
     var blockContinue by remember { mutableStateOf(false) }
 
     OnboardingBaseComponent(
@@ -64,7 +65,7 @@ fun LoginScreen(successAction: () -> Unit = {}) {
                     blockContinue = true
                     scope.launch {
                         val result = PrepService.login(
-                            context, email, password
+                            email, password
                         )
                         if (result) {
                             successAction()
@@ -121,7 +122,7 @@ fun LoginScreen(successAction: () -> Unit = {}) {
                     blockContinue = true
                     scope.launch {
                         val result = PrepService.login(
-                            context, email, password
+                            email, password
                         )
                         if (result) {
                             successAction()

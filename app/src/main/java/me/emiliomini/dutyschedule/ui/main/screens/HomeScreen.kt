@@ -120,7 +120,6 @@ fun HomeScreen(
 
         timeline = null
         timeline = PrepService.loadTimeline(
-            context,
             OrgUnitDataGuid.EMS_SATTLEDT,
             OffsetDateTime.ofInstant(
                 Instant.ofEpochMilli(selectedStartDate!!), ZoneId.systemDefault()
