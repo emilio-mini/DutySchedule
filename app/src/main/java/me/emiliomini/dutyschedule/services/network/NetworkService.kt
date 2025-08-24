@@ -5,12 +5,12 @@ import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import me.emiliomini.dutyschedule.BuildConfig
-import me.emiliomini.dutyschedule.models.prep.Incode
-import me.emiliomini.dutyschedule.models.prep.OrgUnitDataGuid
-import me.emiliomini.dutyschedule.models.github.GithubRelease
-import me.emiliomini.dutyschedule.models.network.NetworkCacheData
 import me.emiliomini.dutyschedule.debug.DebugFlags
 import me.emiliomini.dutyschedule.enums.NetworkTarget
+import me.emiliomini.dutyschedule.models.github.GithubRelease
+import me.emiliomini.dutyschedule.models.network.NetworkCacheData
+import me.emiliomini.dutyschedule.models.prep.Incode
+import me.emiliomini.dutyschedule.models.prep.OrgUnitDataGuid
 import okhttp3.CookieJar
 import okhttp3.FormBody
 import okhttp3.Headers
@@ -35,6 +35,7 @@ import java.time.format.DateTimeFormatter
 
 object NetworkService {
     private const val TAG = "NetworkService"
+    private const val UNAUTHORIZED_MESSAGE = "Error 401: Unauthorized API Call"
     private val DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
 
     private val cookieManager = CookieManager().apply {
@@ -153,7 +154,7 @@ object NetworkService {
         val request = Request(
             url = NetworkTarget.KEEP_ALIVE.httpUrl(),
         )
-        return send(request)
+        return send(request, true)
     }
 
     suspend fun loadPlan(
@@ -180,7 +181,7 @@ object NetworkService {
             ),
             body = form.build()
         )
-        return send(request, identifier = "$formattedFrom:$formattedTo")
+        return verifiedSend(request, identifier = "$formattedFrom:$formattedTo")
     }
 
     suspend fun getStaff(
@@ -210,7 +211,7 @@ object NetworkService {
             ),
             body = form.build()
         )
-        return send(request, identifier = staffDataGuid.joinToString())
+        return verifiedSend(request, identifier = staffDataGuid.joinToString())
     }
 
     private suspend fun send(
@@ -240,11 +241,19 @@ object NetworkService {
                         val inputStream = GzipSource(response.body.source()).buffer()
                         val result = inputStream.readUtf8()
                         response.body.close()
+                        if (isUnauthorized(result)) {
+                            return@use Result.failure(IOException(UNAUTHORIZED_MESSAGE))
+                        }
+
                         addCache(request, result, identifier)
                         Result.success(result)
                     } else {
                         val result = response.body.string()
                         response.body.close()
+                        if (isUnauthorized(result)) {
+                            return@use Result.failure(IOException(UNAUTHORIZED_MESSAGE))
+                        }
+
                         addCache(request, result, identifier)
                         Result.success(result)
                     }
@@ -253,6 +262,31 @@ object NetworkService {
                 Result.failure(e)
             }
         }
+    }
+
+    private suspend fun verifiedSend(
+        request: Request,
+        ignoreCache: Boolean = false,
+        identifier: String = ""
+    ): Result<String?> {
+        var response = this.send(request, ignoreCache, identifier)
+
+        if (response.isFailure && response.exceptionOrNull()?.message == this.UNAUTHORIZED_MESSAGE) {
+            PrepService.restoreLogin()
+        } else {
+            return response
+        }
+
+        response = this.send(request, ignoreCache, identifier)
+        if (response.isFailure && response.exceptionOrNull()?.message == this.UNAUTHORIZED_MESSAGE) {
+            PrepService.logout()
+        }
+
+        return response
+    }
+
+    private fun isUnauthorized(response: String): Boolean {
+        return response.contains("\"${this.UNAUTHORIZED_MESSAGE}\"")
     }
 
     private inline fun <reified T> getCached(

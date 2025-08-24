@@ -16,6 +16,19 @@ import me.emiliomini.dutyschedule.services.storage.DataStores
 object AlarmService {
     private const val TAG = "AlarmService"
 
+    suspend fun clean() {
+        val currentTimestamp = System.currentTimeMillis()
+
+        DataStores.ALARM_ITEMS.updateData { alarmItems ->
+            val updatedAlarms = alarmItems.alarmsList.filter { alarm -> currentTimestamp < alarm.timestamp }
+
+            alarmItems.toBuilder()
+                .clearAlarms()
+                .addAllAlarms(updatedAlarms)
+                .build()
+        }
+    }
+
     suspend fun scheduleAlarm(context: Context, timestamp: Long, code: Int) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
@@ -57,6 +70,7 @@ object AlarmService {
                 alarms[alarmIndex] = updatedAlarm
             } else {
                 val alarm = AlarmProto.newBuilder()
+                    .setActive(true)
                     .setTimestamp(timestamp)
                     .setCode(code)
                     .build()
@@ -83,6 +97,7 @@ object AlarmService {
             PendingIntent.FLAG_IMMUTABLE
         )
         alarmManager.cancel(pendingAlarmIntent)
+        pendingAlarmIntent.cancel()
         Log.d(TAG, "Alarm $code cancelled")
 
         DataStores.ALARM_ITEMS.updateData { alarmItems ->

@@ -78,7 +78,7 @@ fun AppDutyCard(
     val endTime = duty.end.atZoneSameInstant(localZoneId).format(timeFormatter)
 
     var alarmBlocked by remember { mutableStateOf(false) }
-    var alarmSet by remember { mutableStateOf(AlarmService.isAlarmSet(context, duty.guid.hashCode())) }
+    var alarmSet by remember { mutableStateOf(AlarmService.isAlarmSet(context.applicationContext, duty.guid.hashCode())) }
 
     Card(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(8.dp)) {
         Row(
@@ -245,7 +245,7 @@ fun AppDutyCard(
                     alarmBlocked = true
                     if (alarmSet) {
                         scope.launch {
-                            AlarmService.cancelAlarm(context, duty.guid.hashCode())
+                            AlarmService.deleteAlarm(context.applicationContext, duty.guid.hashCode())
                             alarmSet = false
                             alarmBlocked = false
                         }
@@ -264,7 +264,7 @@ fun AppDutyCard(
                             val timestamp = dutyBeginMillis - alarmOffsetMillis
                             Log.d("Alarm", "Setting alarm for $timestamp, which is $alarmOffsetMillis before begin at ${dutyBeginMillis}")
                             AlarmService.scheduleAlarm(
-                                context,
+                                context.applicationContext,
                                 timestamp,
                                 duty.guid.hashCode()
                             )

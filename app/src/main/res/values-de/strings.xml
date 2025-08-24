@@ -73,4 +73,8 @@
     <string name="notifications_alarms_duty_title">Dienst Wecker</string>
     <string name="notifications_alarms_duty_content">Wischen zum stoppen</string>
     <string name="notifications_alarms_duty_action_dismiss">Stoppen</string>
+    <string name="nav_alarms">Wecker</string>
+    <string name="main_alarms_title">Wecker</string>
+    <string name="main_alarms_none">Keine Wecker gesetzt</string>
+    <string name="main_alarms_upcoming">Nächste Wecker</string>
 </resources>
