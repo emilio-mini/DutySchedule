@@ -256,7 +256,7 @@ fun AppDutyCard(
                             if (alarmOffset != null) {
                                 try {
                                     alarmOffsetMillis = TimeUnit.MINUTES.toMillis(alarmOffset)
-                                } catch (e: NumberFormatException) {
+                                } catch (_: NumberFormatException) {
                                 }
                             }
 
