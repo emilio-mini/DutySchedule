@@ -1,4 +1,4 @@
-package me.emiliomini.dutyschedule.ui.onboarding
+package me.emiliomini.dutyschedule.ui.onboarding.activity
 
 import android.content.Intent
 import android.os.Bundle
@@ -10,7 +10,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import me.emiliomini.dutyschedule.MainActivity
+import me.emiliomini.dutyschedule.ui.main.activity.MainActivity
+import me.emiliomini.dutyschedule.ui.onboarding.screens.LoginScreen
+import me.emiliomini.dutyschedule.ui.onboarding.screens.PermissionScreen
+import me.emiliomini.dutyschedule.ui.onboarding.screens.WelcomeScreen
 import me.emiliomini.dutyschedule.ui.theme.DutyScheduleTheme
 
 
@@ -41,16 +44,16 @@ fun OnboardingScreen(successAction: () -> Unit = {}) {
     }
 
     when (step) {
-        0 -> AppWelcomeScreen(aboutAction = {
+        0 -> WelcomeScreen(aboutAction = {
             // TODO: Show about screen
         }, continueAction = { step++ })
 
-        1 -> AppPermissionScreen(skipAction = {
+        1 -> PermissionScreen(skipAction = {
             // TODO: Warn user about skipping
             step++
         }, continueAction = { step++ })
 
-        2 -> AppLoginScreen(
+        2 -> LoginScreen(
             successAction = {
                 successAction()
             })

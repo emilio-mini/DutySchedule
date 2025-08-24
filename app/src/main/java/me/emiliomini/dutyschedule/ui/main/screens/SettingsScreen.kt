@@ -1,4 +1,4 @@
-package me.emiliomini.dutyschedule.ui.settings
+package me.emiliomini.dutyschedule.ui.main.screens
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Logout
-import androidx.compose.material.icons.rounded.Alarm
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -41,6 +40,8 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.services.api.PrepService
+import me.emiliomini.dutyschedule.ui.main.components.DutyAlarmListItem
+import me.emiliomini.dutyschedule.ui.main.components.VersionListItem
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable

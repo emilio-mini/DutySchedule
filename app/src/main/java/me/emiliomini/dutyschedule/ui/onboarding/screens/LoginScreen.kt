@@ -1,4 +1,4 @@
-package me.emiliomini.dutyschedule.ui.onboarding
+package me.emiliomini.dutyschedule.ui.onboarding.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -37,11 +37,12 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.services.api.PrepService
+import me.emiliomini.dutyschedule.ui.onboarding.components.OnboardingBaseComponent
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 @Preview()
-fun AppLoginScreen(successAction: () -> Unit = {}) {
+fun LoginScreen(successAction: () -> Unit = {}) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val (usernameFocusRequester, passwordFocusRequester) = FocusRequester.createRefs()
@@ -49,7 +50,7 @@ fun AppLoginScreen(successAction: () -> Unit = {}) {
     var password by remember { mutableStateOf(if (PrepService.DEBUG_MODE) "password" else "") }
     var blockContinue by remember { mutableStateOf(false) }
 
-    AppOnboardingBase(
+    OnboardingBaseComponent(
         headerIcon = Icons.Rounded.ContactEmergency,
         headerText = stringResource(R.string.onboarding_login_title),
         subheaderText = stringResource(R.string.onboarding_login_subtitle),

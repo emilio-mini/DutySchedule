@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
 
-package me.emiliomini.dutyschedule
+package me.emiliomini.dutyschedule.ui.main.activity
 
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -25,13 +25,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.services.api.PrepService
 import me.emiliomini.dutyschedule.services.notifications.NotificationService
 import me.emiliomini.dutyschedule.services.storage.DataStores
-import me.emiliomini.dutyschedule.ui.base.LoadingScreen
-import me.emiliomini.dutyschedule.ui.home.HomeScreen
-import me.emiliomini.dutyschedule.ui.onboarding.OnboardingActivity
-import me.emiliomini.dutyschedule.ui.settings.SettingsScreen
+import me.emiliomini.dutyschedule.ui.main.screens.LoadingScreen
+import me.emiliomini.dutyschedule.ui.main.screens.HomeScreen
+import me.emiliomini.dutyschedule.ui.onboarding.activity.OnboardingActivity
+import me.emiliomini.dutyschedule.ui.main.screens.SettingsScreen
 import me.emiliomini.dutyschedule.ui.theme.DutyScheduleTheme
 import me.emiliomini.dutyschedule.workers.WorkerService
 

@@ -1,4 +1,4 @@
-package me.emiliomini.dutyschedule.ui.base
+package me.emiliomini.dutyschedule.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

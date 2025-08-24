@@ -1,4 +1,4 @@
-package me.emiliomini.dutyschedule.ui.base
+package me.emiliomini.dutyschedule.ui.main.screens
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize

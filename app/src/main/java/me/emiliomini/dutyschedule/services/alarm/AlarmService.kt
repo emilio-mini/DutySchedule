@@ -8,7 +8,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import android.util.Log
-import me.emiliomini.dutyschedule.MainActivity
+import me.emiliomini.dutyschedule.ui.main.activity.MainActivity
 import me.emiliomini.dutyschedule.datastore.AlarmProto
 import me.emiliomini.dutyschedule.receiver.AlarmReceiver
 import me.emiliomini.dutyschedule.services.storage.DataStores

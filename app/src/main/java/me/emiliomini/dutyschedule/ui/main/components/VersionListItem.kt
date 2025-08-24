@@ -1,4 +1,4 @@
-package me.emiliomini.dutyschedule.ui.settings
+package me.emiliomini.dutyschedule.ui.main.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

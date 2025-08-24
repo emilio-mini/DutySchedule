@@ -1,4 +1,4 @@
-package me.emiliomini.dutyschedule.ui.home
+package me.emiliomini.dutyschedule.ui.main.screens
 
 import android.content.Intent
 import androidx.compose.foundation.background
@@ -80,8 +80,8 @@ import me.emiliomini.dutyschedule.data.models.mapping.Requirement
 import me.emiliomini.dutyschedule.icons.Ambulance
 import me.emiliomini.dutyschedule.icons.SteeringWheel
 import me.emiliomini.dutyschedule.services.api.PrepService
-import me.emiliomini.dutyschedule.ui.base.AppDateInfo
-import me.emiliomini.dutyschedule.ui.base.AppDutyCard
+import me.emiliomini.dutyschedule.ui.components.AppDateInfo
+import me.emiliomini.dutyschedule.ui.components.AppDutyCard
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneId

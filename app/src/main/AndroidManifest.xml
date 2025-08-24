@@ -25,7 +25,7 @@
         tools:targetApi="36">
 
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.main.activity.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.DutySchedule">
             <intent-filter>
@@ -36,7 +36,7 @@
         </activity>
 
         <activity
-            android:name=".ui.onboarding.OnboardingActivity"
+            android:name=".ui.onboarding.activity.OnboardingActivity"
             android:exported="true"
             android:label="Login" />
 

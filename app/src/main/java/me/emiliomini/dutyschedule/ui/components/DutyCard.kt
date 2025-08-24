@@ -1,4 +1,4 @@
-package me.emiliomini.dutyschedule.ui.base
+package me.emiliomini.dutyschedule.ui.components
 
 import android.util.Log
 import androidx.compose.foundation.background

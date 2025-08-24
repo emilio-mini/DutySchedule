@@ -1,4 +1,4 @@
-package me.emiliomini.dutyschedule.ui.onboarding
+package me.emiliomini.dutyschedule.ui.onboarding.screens
 
 import android.Manifest
 import android.app.AlarmManager
@@ -40,11 +40,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.currentStateAsState
 import me.emiliomini.dutyschedule.R
+import me.emiliomini.dutyschedule.ui.onboarding.components.OnboardingBaseComponent
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 @Preview()
-fun AppPermissionScreen(
+fun PermissionScreen(
     skipAction: () -> Unit = {}, continueAction: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -81,7 +82,7 @@ fun AppPermissionScreen(
         }
     }
 
-    AppOnboardingBase(
+    OnboardingBaseComponent(
         headerIcon = Icons.Rounded.Security,
         headerText = stringResource(R.string.onboarding_permissions_title),
         subheaderText = stringResource(R.string.onboarding_permissions_subtitle),
@@ -100,64 +101,64 @@ fun AppPermissionScreen(
         }) {
         ListItem(
             colors = ListItemDefaults.colors(
-            containerColor = Color.Transparent
-        ), headlineContent = {
-            Text(stringResource(R.string.onboarding_permissions_notification_title))
-        }, supportingContent = {
-            Text(stringResource(R.string.onboarding_permissions_notification_subtitle))
-        }, trailingContent = {
-            Switch(checked = notificationPermissionCheck, onCheckedChange = {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    val isPermissionGranted = ContextCompat.checkSelfPermission(
-                        context, Manifest.permission.POST_NOTIFICATIONS
-                    ) == PackageManager.PERMISSION_GRANTED
+                containerColor = Color.Transparent
+            ), headlineContent = {
+                Text(stringResource(R.string.onboarding_permissions_notification_title))
+            }, supportingContent = {
+                Text(stringResource(R.string.onboarding_permissions_notification_subtitle))
+            }, trailingContent = {
+                Switch(checked = notificationPermissionCheck, onCheckedChange = {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        val isPermissionGranted = ContextCompat.checkSelfPermission(
+                            context, Manifest.permission.POST_NOTIFICATIONS
+                        ) == PackageManager.PERMISSION_GRANTED
 
-                    if (!isPermissionGranted) {
-                        permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        if (!isPermissionGranted) {
+                            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                        notificationPermissionCheck = isPermissionGranted
                     }
-                    notificationPermissionCheck = isPermissionGranted
-                }
-            }, thumbContent = {
-                if (notificationPermissionCheck) {
-                    Icon(
-                        Icons.Rounded.Check, contentDescription = null,
-                        modifier = Modifier.size(
-                            SwitchDefaults.IconSize
-                        ),
-                    )
-                } else {
-                    null
-                }
+                }, thumbContent = {
+                    if (notificationPermissionCheck) {
+                        Icon(
+                            Icons.Rounded.Check, contentDescription = null,
+                            modifier = Modifier.size(
+                                SwitchDefaults.IconSize
+                            ),
+                        )
+                    } else {
+                        null
+                    }
+                })
             })
-        })
         ListItem(
             colors = ListItemDefaults.colors(
-            containerColor = Color.Transparent
-        ), headlineContent = {
-            Text(stringResource(R.string.onboarding_permissions_alarms_title))
-        }, supportingContent = {
-            Text(stringResource(R.string.onboarding_permissions_alarms_subtitle))
-        }, trailingContent = {
-            Switch(checked = alarmPermissionCheck, onCheckedChange = {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
-                        data = Uri.fromParts("package", context.packageName, null)
+                containerColor = Color.Transparent
+            ), headlineContent = {
+                Text(stringResource(R.string.onboarding_permissions_alarms_title))
+            }, supportingContent = {
+                Text(stringResource(R.string.onboarding_permissions_alarms_subtitle))
+            }, trailingContent = {
+                Switch(checked = alarmPermissionCheck, onCheckedChange = {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                            data = Uri.fromParts("package", context.packageName, null)
+                        }
+                        context.startActivity(intent)
                     }
-                    context.startActivity(intent)
-                }
-            }, thumbContent = {
-                if (alarmPermissionCheck) {
-                    Icon(
-                        Icons.Rounded.Check, contentDescription = null,
-                        modifier = Modifier.size(
-                            SwitchDefaults.IconSize
-                        ),
-                    )
-                } else {
-                    null
-                }
+                }, thumbContent = {
+                    if (alarmPermissionCheck) {
+                        Icon(
+                            Icons.Rounded.Check, contentDescription = null,
+                            modifier = Modifier.size(
+                                SwitchDefaults.IconSize
+                            ),
+                        )
+                    } else {
+                        null
+                    }
+                })
             })
-        })
     }
 }
 
