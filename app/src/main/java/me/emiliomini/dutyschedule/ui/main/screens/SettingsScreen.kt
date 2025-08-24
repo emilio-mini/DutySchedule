@@ -39,7 +39,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.R
-import me.emiliomini.dutyschedule.services.api.PrepService
+import me.emiliomini.dutyschedule.services.network.PrepService
 import me.emiliomini.dutyschedule.ui.main.components.DutyAlarmListItem
 import me.emiliomini.dutyschedule.ui.main.components.VersionListItem
 

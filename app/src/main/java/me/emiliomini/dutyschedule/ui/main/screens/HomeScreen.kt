@@ -79,7 +79,7 @@ import me.emiliomini.dutyschedule.models.prep.OrgUnitDataGuid
 import me.emiliomini.dutyschedule.models.prep.Requirement
 import me.emiliomini.dutyschedule.ui.components.icons.Ambulance
 import me.emiliomini.dutyschedule.ui.components.icons.SteeringWheel
-import me.emiliomini.dutyschedule.services.api.PrepService
+import me.emiliomini.dutyschedule.services.network.PrepService
 import me.emiliomini.dutyschedule.ui.components.AppDateInfo
 import me.emiliomini.dutyschedule.ui.components.AppDutyCard
 import java.time.Instant

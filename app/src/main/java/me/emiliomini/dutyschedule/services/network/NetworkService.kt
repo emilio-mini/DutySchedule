@@ -1,4 +1,4 @@
-package me.emiliomini.dutyschedule.services.api
+package me.emiliomini.dutyschedule.services.network
 
 import android.content.Context
 import android.util.Log

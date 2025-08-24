@@ -1,4 +1,4 @@
-package me.emiliomini.dutyschedule.services.api
+package me.emiliomini.dutyschedule.services.network
 
 import android.util.Log
 import me.emiliomini.dutyschedule.models.prep.AssignedEmployee

@@ -26,7 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.R
-import me.emiliomini.dutyschedule.services.api.PrepService
+import me.emiliomini.dutyschedule.services.network.PrepService
 import me.emiliomini.dutyschedule.services.notifications.NotificationService
 import me.emiliomini.dutyschedule.services.storage.DataStores
 import me.emiliomini.dutyschedule.ui.main.screens.LoadingScreen

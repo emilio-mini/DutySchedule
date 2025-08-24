@@ -5,7 +5,7 @@ import android.content.Context
 import androidx.work.ListenableWorker
 import me.emiliomini.dutyschedule.BuildConfig
 import me.emiliomini.dutyschedule.R
-import me.emiliomini.dutyschedule.services.api.NetworkService
+import me.emiliomini.dutyschedule.services.network.NetworkService
 import me.emiliomini.dutyschedule.enums.AppNotificationChannel
 import me.emiliomini.dutyschedule.services.notifications.NotificationService
 import me.emiliomini.dutyschedule.util.IntentUtil
