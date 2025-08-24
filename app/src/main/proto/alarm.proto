@@ -8,5 +8,6 @@ message AlarmItemsProto {
 
 message AlarmProto {
   bool active = 1;
-  string timestamp = 2;
+  int64 timestamp = 2;
+  int32 code = 3;
 }

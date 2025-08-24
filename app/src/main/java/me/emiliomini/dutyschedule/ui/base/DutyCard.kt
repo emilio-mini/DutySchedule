@@ -244,9 +244,11 @@ fun AppDutyCard(
                 IconButton(onClick = {
                     alarmBlocked = true
                     if (alarmSet) {
-                        AlarmService.cancelAlarm(context, duty.guid.hashCode())
-                        alarmSet = false
-                        alarmBlocked = false
+                        scope.launch {
+                            AlarmService.cancelAlarm(context, duty.guid.hashCode())
+                            alarmSet = false
+                            alarmBlocked = false
+                        }
                     } else {
                         scope.launch {
                             val alarmOffset = StorageService.load(DataKeys.ALARM_OFFSET)

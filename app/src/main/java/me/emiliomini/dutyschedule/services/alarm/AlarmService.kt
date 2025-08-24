@@ -9,12 +9,14 @@ import android.os.Build
 import android.provider.Settings
 import android.util.Log
 import me.emiliomini.dutyschedule.MainActivity
+import me.emiliomini.dutyschedule.datastore.AlarmProto
 import me.emiliomini.dutyschedule.receiver.AlarmReceiver
+import me.emiliomini.dutyschedule.services.storage.DataStores
 
 object AlarmService {
     private const val TAG = "AlarmService"
 
-    fun scheduleAlarm(context: Context, timestamp: Long, code: Int) {
+    suspend fun scheduleAlarm(context: Context, timestamp: Long, code: Int) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
             Log.w(TAG, "Missing permission for scheduling alarms! Requesting...")
@@ -42,10 +44,36 @@ object AlarmService {
 
         val info = AlarmManager.AlarmClockInfo(timestamp, pendingOpenAppIntent)
         alarmManager.setAlarmClock(info, pendingAlarmIntent)
+
+        DataStores.ALARM_ITEMS.updateData { alarmItems ->
+            val alarms = alarmItems.alarmsList.toMutableList()
+            val alarmIndex = alarms.indexOfFirst { it.code == code }
+
+            if (alarmIndex != -1) {
+                val alarmToUpdate = alarms[alarmIndex]
+                val updatedAlarm = alarmToUpdate.toBuilder()
+                    .setActive(true)
+                    .build()
+                alarms[alarmIndex] = updatedAlarm
+            } else {
+                val alarm = AlarmProto.newBuilder()
+                    .setTimestamp(timestamp)
+                    .setCode(code)
+                    .build()
+
+                alarms.add(alarm)
+            }
+
+            alarmItems.toBuilder()
+                .clearAlarms()
+                .addAllAlarms(alarms)
+                .build()
+        }
+
         Log.d(TAG, "Alarm $code set for $timestamp")
     }
 
-    fun cancelAlarm(context: Context, code: Int) {
+    suspend fun cancelAlarm(context: Context, code: Int) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val alarmIntent = Intent(context, AlarmReceiver::class.java)
         val pendingAlarmIntent = PendingIntent.getBroadcast(
@@ -56,6 +84,37 @@ object AlarmService {
         )
         alarmManager.cancel(pendingAlarmIntent)
         Log.d(TAG, "Alarm $code cancelled")
+
+        DataStores.ALARM_ITEMS.updateData { alarmItems ->
+            val alarms = alarmItems.alarmsList.toMutableList()
+            val alarmIndex = alarms.indexOfFirst { it.code == code }
+
+            if (alarmIndex != -1) {
+                val alarmToUpdate = alarms[alarmIndex]
+                val updatedAlarm = alarmToUpdate.toBuilder()
+                    .setActive(false)
+                    .build()
+                alarms[alarmIndex] = updatedAlarm
+            }
+
+            alarmItems.toBuilder()
+                .clearAlarms()
+                .addAllAlarms(alarms)
+                .build()
+        }
+    }
+
+    suspend fun deleteAlarm(context: Context, code: Int) {
+        this.cancelAlarm(context, code)
+
+        DataStores.ALARM_ITEMS.updateData { alarmItems ->
+            val updatedAlarms = alarmItems.alarmsList.filter { alarm -> alarm.code != code }
+
+            alarmItems.toBuilder()
+                .clearAlarms()
+                .addAllAlarms(updatedAlarms)
+                .build()
+        }
     }
 
     fun isAlarmSet(context: Context, code: Int): Boolean {
