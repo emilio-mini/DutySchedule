@@ -1,4 +1,4 @@
-package me.emiliomini.dutyschedule.services.notifications
+package me.emiliomini.dutyschedule.enums
 
 import android.app.NotificationManager
 

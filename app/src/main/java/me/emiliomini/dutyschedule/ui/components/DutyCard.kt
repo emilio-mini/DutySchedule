@@ -41,11 +41,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.R
-import me.emiliomini.dutyschedule.data.models.AssignedEmployee
-import me.emiliomini.dutyschedule.data.models.DutyDefinition
-import me.emiliomini.dutyschedule.data.models.Employee
-import me.emiliomini.dutyschedule.icons.Ambulance
-import me.emiliomini.dutyschedule.icons.SteeringWheel
+import me.emiliomini.dutyschedule.models.prep.AssignedEmployee
+import me.emiliomini.dutyschedule.models.prep.DutyDefinition
+import me.emiliomini.dutyschedule.models.prep.Employee
+import me.emiliomini.dutyschedule.ui.components.icons.Ambulance
+import me.emiliomini.dutyschedule.ui.components.icons.SteeringWheel
 import me.emiliomini.dutyschedule.services.alarm.AlarmService
 import me.emiliomini.dutyschedule.services.storage.DataKeys
 import me.emiliomini.dutyschedule.services.storage.StorageService

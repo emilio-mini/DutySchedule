@@ -1,4 +1,4 @@
-package me.emiliomini.dutyschedule.data.models
+package me.emiliomini.dutyschedule.models.prep
 
 import java.time.OffsetDateTime
 

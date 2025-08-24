@@ -1,4 +1,4 @@
-package me.emiliomini.dutyschedule.data.models.mapping
+package me.emiliomini.dutyschedule.models.prep
 
 enum class Type(val value: Int) {
     WORKER(2),
@@ -6,10 +6,10 @@ enum class Type(val value: Int) {
     TIMESLOT(4);
 
     companion object {
-        val POSITION = "type";
+        const val POSITION = "type"
 
         fun parse(value: Int): Type {
-            return Type.entries.find { it.value == value } ?: TIMESLOT;
+            return entries.find { it.value == value } ?: TIMESLOT
         }
     }
 }

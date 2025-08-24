@@ -1,4 +1,4 @@
-package me.emiliomini.dutyschedule.services.models
+package me.emiliomini.dutyschedule.enums
 
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl

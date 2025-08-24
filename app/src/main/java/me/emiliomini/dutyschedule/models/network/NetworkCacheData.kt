@@ -1,4 +1,4 @@
-package me.emiliomini.dutyschedule.data.networking
+package me.emiliomini.dutyschedule.models.network
 
 import okhttp3.Request
 import java.time.Instant

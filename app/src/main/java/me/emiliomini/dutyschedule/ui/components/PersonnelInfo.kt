@@ -20,7 +20,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import me.emiliomini.dutyschedule.data.models.Employee
+import me.emiliomini.dutyschedule.models.prep.Employee
 
 enum class PersonnelInfoState {
     DEFAULT, DISABLED, HIGHLIGHTED

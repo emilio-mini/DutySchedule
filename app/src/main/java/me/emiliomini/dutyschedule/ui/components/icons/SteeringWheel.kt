@@ -1,4 +1,4 @@
-package me.emiliomini.dutyschedule.icons
+package me.emiliomini.dutyschedule.ui.components.icons
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor

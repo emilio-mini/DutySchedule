@@ -1,4 +1,4 @@
-package me.emiliomini.dutyschedule.receiver
+package me.emiliomini.dutyschedule.receivers
 
 import android.content.BroadcastReceiver
 import android.content.Context

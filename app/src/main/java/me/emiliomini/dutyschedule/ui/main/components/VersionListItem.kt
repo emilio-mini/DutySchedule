@@ -36,7 +36,7 @@ import dev.jeziellago.compose.markdowntext.MarkdownText
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.BuildConfig
 import me.emiliomini.dutyschedule.R
-import me.emiliomini.dutyschedule.data.models.vc.GithubRelease
+import me.emiliomini.dutyschedule.models.github.GithubRelease
 import me.emiliomini.dutyschedule.services.api.NetworkService
 import me.emiliomini.dutyschedule.services.util.UtilService
 import okhttp3.Headers

@@ -10,7 +10,7 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.net.toUri
 import me.emiliomini.dutyschedule.R
-import me.emiliomini.dutyschedule.services.notifications.AppNotificationChannel
+import me.emiliomini.dutyschedule.enums.AppNotificationChannel
 
 class AlarmSoundService : Service() {
     private lateinit var mediaPlayer: MediaPlayer

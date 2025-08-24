@@ -1,4 +1,4 @@
-package me.emiliomini.dutyschedule.data.models.mapping
+package me.emiliomini.dutyschedule.models.prep
 
 import me.emiliomini.dutyschedule.R
 

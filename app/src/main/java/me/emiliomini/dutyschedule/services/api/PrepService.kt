@@ -3,11 +3,11 @@ package me.emiliomini.dutyschedule.services.api
 import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.delay
-import me.emiliomini.dutyschedule.data.models.TimelineItem
-import me.emiliomini.dutyschedule.data.models.DutyDefinition
-import me.emiliomini.dutyschedule.data.models.Employee
-import me.emiliomini.dutyschedule.data.models.Incode
-import me.emiliomini.dutyschedule.data.models.mapping.OrgUnitDataGuid
+import me.emiliomini.dutyschedule.models.prep.TimelineItem
+import me.emiliomini.dutyschedule.models.prep.DutyDefinition
+import me.emiliomini.dutyschedule.models.prep.Employee
+import me.emiliomini.dutyschedule.models.prep.Incode
+import me.emiliomini.dutyschedule.models.prep.OrgUnitDataGuid
 import me.emiliomini.dutyschedule.services.storage.DataKeys
 import me.emiliomini.dutyschedule.services.storage.StorageService
 import okio.IOException

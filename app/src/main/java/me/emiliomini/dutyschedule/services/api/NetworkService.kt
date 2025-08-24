@@ -5,12 +5,12 @@ import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import me.emiliomini.dutyschedule.BuildConfig
-import me.emiliomini.dutyschedule.data.models.Incode
-import me.emiliomini.dutyschedule.data.models.mapping.OrgUnitDataGuid
-import me.emiliomini.dutyschedule.data.models.vc.GithubRelease
-import me.emiliomini.dutyschedule.data.networking.NetworkCacheData
+import me.emiliomini.dutyschedule.models.prep.Incode
+import me.emiliomini.dutyschedule.models.prep.OrgUnitDataGuid
+import me.emiliomini.dutyschedule.models.github.GithubRelease
+import me.emiliomini.dutyschedule.models.network.NetworkCacheData
 import me.emiliomini.dutyschedule.debug.DebugFlags
-import me.emiliomini.dutyschedule.services.models.NetworkTarget
+import me.emiliomini.dutyschedule.enums.NetworkTarget
 import okhttp3.CookieJar
 import okhttp3.FormBody
 import okhttp3.Headers

@@ -1,6 +1,5 @@
-package me.emiliomini.dutyschedule.data.models
+package me.emiliomini.dutyschedule.models.prep
 
-import me.emiliomini.dutyschedule.data.models.mapping.Requirement
 import java.time.OffsetDateTime
 
 data class AssignedEmployee(

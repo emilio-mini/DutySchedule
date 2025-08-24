@@ -41,7 +41,7 @@
             android:label="Login" />
 
         <receiver
-            android:name=".receiver.AlarmReceiver"
+            android:name=".receivers.AlarmReceiver"
             android:enabled="true"
             android:exported="false" />
 

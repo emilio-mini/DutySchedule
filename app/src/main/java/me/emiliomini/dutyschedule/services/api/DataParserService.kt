@@ -1,12 +1,12 @@
 package me.emiliomini.dutyschedule.services.api
 
 import android.util.Log
-import me.emiliomini.dutyschedule.data.models.AssignedEmployee
-import me.emiliomini.dutyschedule.data.models.DutyDefinition
-import me.emiliomini.dutyschedule.data.models.Employee
-import me.emiliomini.dutyschedule.data.models.mapping.Requirement
-import me.emiliomini.dutyschedule.data.models.mapping.Type
-import me.emiliomini.dutyschedule.data.models.vc.GithubRelease
+import me.emiliomini.dutyschedule.models.prep.AssignedEmployee
+import me.emiliomini.dutyschedule.models.prep.DutyDefinition
+import me.emiliomini.dutyschedule.models.prep.Employee
+import me.emiliomini.dutyschedule.models.prep.Requirement
+import me.emiliomini.dutyschedule.models.prep.Type
+import me.emiliomini.dutyschedule.models.github.GithubRelease
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.OffsetDateTime

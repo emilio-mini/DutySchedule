@@ -11,6 +11,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import me.emiliomini.dutyschedule.R
+import me.emiliomini.dutyschedule.enums.AppNotificationChannel
 import java.util.concurrent.atomic.AtomicInteger
 
 object NotificationService {
