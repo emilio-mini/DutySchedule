@@ -14,8 +14,6 @@ data class Employee(
     companion object {
         val SEW_NAME = "SEW"
 
-        val DEFAULT_IDENTIFIER = "00000000"
-
         val STAFF_GUID_POSITION = "dataGuid"
         val STAFF_NAME_POSITION = "name"
         val STAFF_IDENTIFIER_POSITION = "personalnummer"

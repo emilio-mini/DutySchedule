@@ -7,9 +7,5 @@ enum class Type(val value: Int) {
 
     companion object {
         const val POSITION = "type"
-
-        fun parse(value: Int): Type {
-            return entries.find { it.value == value } ?: TIMESLOT
-        }
     }
 }
