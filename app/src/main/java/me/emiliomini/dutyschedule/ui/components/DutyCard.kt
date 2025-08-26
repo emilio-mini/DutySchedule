@@ -136,9 +136,11 @@ fun AppDutyCard(
                                 } - ${
                                     assigned.end.atZoneSameInstant(localZoneId)
                                         .format(timeFormatter)
+                                }${
+                                    if (assigned.employee.identifier == null) " | " + assigned.info else ""
                                 }"
                             } else {
-                                null
+                                if (assigned.employee.identifier == null) assigned.info else null
                             }
                         )
                     }
@@ -168,9 +170,11 @@ fun AppDutyCard(
                                 } - ${
                                     assigned.end.atZoneSameInstant(localZoneId)
                                         .format(timeFormatter)
+                                }${
+                                    if (assigned.employee.identifier == null) " | " + assigned.info else ""
                                 }"
                             } else {
-                                null
+                                if (assigned.employee.identifier == null) assigned.info else null
                             }
                         )
                     }
@@ -200,9 +204,11 @@ fun AppDutyCard(
                                 } - ${
                                     assigned.end.atZoneSameInstant(localZoneId)
                                         .format(timeFormatter)
+                                }${
+                                    if (assigned.employee.identifier == null) " | " + assigned.info else ""
                                 }"
                             } else {
-                                null
+                                if (assigned.employee.identifier == null) assigned.info else null
                             }
                         )
                     }
@@ -232,9 +238,11 @@ fun AppDutyCard(
                                 } - ${
                                     assigned.end.atZoneSameInstant(localZoneId)
                                         .format(timeFormatter)
+                                }${
+                                    if (assigned.employee.identifier == null) " | " + assigned.info else ""
                                 }"
                             } else {
-                                null
+                                if (assigned.employee.identifier == null) assigned.info else null
                             }
                         )
                     }
