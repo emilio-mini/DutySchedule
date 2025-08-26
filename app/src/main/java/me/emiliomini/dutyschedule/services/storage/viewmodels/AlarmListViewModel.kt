@@ -4,8 +4,8 @@ import androidx.datastore.core.DataStore
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import me.emiliomini.dutyschedule.datastore.AlarmItemsProto
-import me.emiliomini.dutyschedule.datastore.AlarmProto
+import me.emiliomini.dutyschedule.datastore.alarm.AlarmItemsProto
+import me.emiliomini.dutyschedule.datastore.alarm.AlarmProto
 
 class AlarmListViewModel(
     private val dataStore: DataStore<AlarmItemsProto>

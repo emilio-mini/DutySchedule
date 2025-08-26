@@ -72,16 +72,24 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import me.emiliomini.dutyschedule.R
+import me.emiliomini.dutyschedule.datastore.alarm.AlarmProto
+import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
 import me.emiliomini.dutyschedule.models.prep.AssignedEmployee
-import me.emiliomini.dutyschedule.models.prep.TimelineItem
-import me.emiliomini.dutyschedule.models.prep.OrgUnitDataGuid
 import me.emiliomini.dutyschedule.models.prep.Requirement
-import me.emiliomini.dutyschedule.ui.components.icons.Ambulance
-import me.emiliomini.dutyschedule.ui.components.icons.SteeringWheel
+import me.emiliomini.dutyschedule.models.prep.TimelineItem
 import me.emiliomini.dutyschedule.services.network.PrepService
+import me.emiliomini.dutyschedule.services.storage.DataKeys
+import me.emiliomini.dutyschedule.services.storage.DataStores
+import me.emiliomini.dutyschedule.services.storage.StorageService
+import me.emiliomini.dutyschedule.services.storage.viewmodels.OrgListViewModel
+import me.emiliomini.dutyschedule.services.storage.viewmodels.OrgListViewModelFactory
 import me.emiliomini.dutyschedule.ui.components.AppDateInfo
 import me.emiliomini.dutyschedule.ui.components.AppDutyCard
+import me.emiliomini.dutyschedule.ui.components.icons.Ambulance
+import me.emiliomini.dutyschedule.ui.components.icons.SteeringWheel
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneId
@@ -93,6 +101,9 @@ import java.time.format.DateTimeFormatter
 fun HomeScreen(
     modifier: Modifier = Modifier,
     bottomBar: @Composable (() -> Unit) = {},
+    viewModel: OrgListViewModel = viewModel(
+        factory = OrgListViewModelFactory(DataStores.ORG_ITEMS)
+    )
 ) {
     val defaultDateSpacing = 5 * 24 * 60 * 60 * 1000L
     val currentMillis = OffsetDateTime.now()
@@ -112,7 +123,27 @@ fun HomeScreen(
     val context = LocalContext.current
     var timeline by remember { mutableStateOf<List<TimelineItem>?>(null) }
 
-    LaunchedEffect(selectedStartDate, selectedEndDate) {
+    var allowedOrgs by remember { mutableStateOf<List<String>?>(null) }
+    var selectedOrg by remember { mutableStateOf<String?>(null) }
+    val orgs by viewModel.orgsFlow.collectAsStateWithLifecycle(
+        initialValue = emptyList<OrgProto>()
+    )
+
+    LaunchedEffect(Unit) {
+        val orgs = StorageService.load(DataKeys.ALLOWED_ORGS)
+        if (orgs == null) {
+            return@LaunchedEffect
+        }
+
+        allowedOrgs = orgs.split(StorageService.DEFAULT_SEPARATOR)
+        selectedOrg = allowedOrgs?.first()
+    }
+
+    LaunchedEffect(selectedStartDate, selectedEndDate, selectedOrg) {
+        if (selectedOrg == null) {
+            return@LaunchedEffect
+        }
+
         if (selectedStartDate == null || selectedEndDate == null) {
             selectedStartDate = currentMillis
             selectedEndDate = currentMillis + defaultDateSpacing
@@ -120,7 +151,7 @@ fun HomeScreen(
 
         timeline = null
         timeline = PrepService.loadTimeline(
-            OrgUnitDataGuid.EMS_SATTLEDT,
+            selectedOrg!!,
             OffsetDateTime.ofInstant(
                 Instant.ofEpochMilli(selectedStartDate!!), ZoneId.systemDefault()
             ),
@@ -131,8 +162,6 @@ fun HomeScreen(
     }
 
     val stationScrollState = rememberScrollState()
-    val stationOptions = OrgUnitDataGuid.entries
-    var selectedStation by remember { mutableStateOf(OrgUnitDataGuid.EMS_SATTLEDT.value) } // TODO: Read from user profile
 
     val detailActionsScrollState = rememberScrollState()
     val detailViewState = rememberModalBottomSheetState()
@@ -158,22 +187,21 @@ fun HomeScreen(
                         .horizontalScroll(stationScrollState),
                     horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
                 ) {
-                    stationOptions.forEachIndexed { index, option ->
+                    orgs.filter { allowedOrgs?.contains(it.guid) ?: false }.forEachIndexed { index, proto ->
                         ToggleButton(
-                            checked = selectedStation == option.value,
-                            onCheckedChange = { selectedStation = option.value },
+                            checked = selectedOrg == proto.guid,
+                            onCheckedChange = { selectedOrg = proto.guid },
                             modifier = Modifier.semantics { role = Role.RadioButton },
                             shapes = when (index) {
                                 0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                                stationOptions.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                                allowedOrgs?.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
                                 else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
                             },
                             colors = ToggleButtonDefaults.toggleButtonColors(
                                 containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                            ),
-                            enabled = selectedStation == option.value
+                            )
                         ) {
-                            Text(stringResource(option.getResourceString()))
+                            Text(proto.title)
                         }
                     }
                 }

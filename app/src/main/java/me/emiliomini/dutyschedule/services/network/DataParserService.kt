@@ -1,6 +1,8 @@
 package me.emiliomini.dutyschedule.services.network
 
 import android.util.Log
+import me.emiliomini.dutyschedule.datastore.prep.org.OrgItemsProto
+import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
 import me.emiliomini.dutyschedule.models.prep.AssignedEmployee
 import me.emiliomini.dutyschedule.models.prep.DutyDefinition
 import me.emiliomini.dutyschedule.models.prep.Employee
@@ -46,6 +48,31 @@ object DataParserService {
         }
 
         return releases
+    }
+
+    fun parseOrgTree(root: JSONObject): OrgItemsProto? {
+        val orgItemsProto = OrgItemsProto.newBuilder()
+
+        for (key in root.keys()) {
+            val obj = root.getJSONObject(key)
+            val additionalInfos = obj.getJSONObject("additionalInfos")
+
+            val guid = key
+            val title = additionalInfos.getString("orgUnitName")
+            val abbreviation = additionalInfos.getString("orgUnitAbbreviation")
+            val identifier = additionalInfos.getString("externalId")
+
+            orgItemsProto.addOrgs(
+                OrgProto.newBuilder()
+                    .setGuid(guid)
+                    .setTitle(title)
+                    .setAbbreviation(abbreviation)
+                    .setIdentifier(identifier)
+                    .build()
+            )
+        }
+
+        return orgItemsProto.build()
     }
 
     fun parseLoadPlan(root: JSONObject): List<DutyDefinition> {

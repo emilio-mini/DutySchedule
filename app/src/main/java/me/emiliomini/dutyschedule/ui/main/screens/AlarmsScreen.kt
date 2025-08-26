@@ -54,7 +54,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.R
-import me.emiliomini.dutyschedule.datastore.AlarmProto
+import me.emiliomini.dutyschedule.datastore.alarm.AlarmProto
 import me.emiliomini.dutyschedule.services.alarm.AlarmService
 import me.emiliomini.dutyschedule.services.storage.DataStores
 import me.emiliomini.dutyschedule.services.storage.viewmodels.AlarmListViewModel

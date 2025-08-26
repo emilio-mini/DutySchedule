@@ -2,19 +2,22 @@ package me.emiliomini.dutyschedule.services.network
 
 import android.util.Log
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.firstOrNull
+import me.emiliomini.dutyschedule.datastore.prep.org.OrgItemsProto
 import me.emiliomini.dutyschedule.debug.DebugFlags.AVOID_PREP_API
+import me.emiliomini.dutyschedule.enums.NetworkTarget
 import me.emiliomini.dutyschedule.models.prep.DutyDefinition
 import me.emiliomini.dutyschedule.models.prep.Employee
 import me.emiliomini.dutyschedule.models.prep.Incode
-import me.emiliomini.dutyschedule.models.prep.OrgUnitDataGuid
 import me.emiliomini.dutyschedule.models.prep.TimelineItem
 import me.emiliomini.dutyschedule.services.storage.DataKeys
+import me.emiliomini.dutyschedule.services.storage.DataStores
 import me.emiliomini.dutyschedule.services.storage.StorageService
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okio.IOException
 import org.json.JSONException
 import org.json.JSONObject
 import java.time.OffsetDateTime
-import java.util.regex.Pattern
 
 object PrepService {
     private const val TAG = "PrepService"
@@ -34,7 +37,6 @@ object PrepService {
         return this.incode != null
     }
 
-
     suspend fun login(username: String, password: String): Boolean {
         val loginResult: Result<String?> = if (AVOID_PREP_API.active()) {
             Result.success("...{ headers: { 'x-incode-EXAMPLEKEY': 'EXAMPLEVALUE' } }...")
@@ -47,17 +49,10 @@ object PrepService {
             return false
         }
 
-        val incodeRegex = Pattern.compile("'(x-incode-[^']+)': '([^']+)'")
-        val incodeMatcher = incodeRegex.matcher(responseBody)
+        val incode = DataExtractorService.extractIncode(responseBody)
 
-        if (incodeMatcher.find()) {
-            val incodeToken = incodeMatcher.group(1)
-            val incodeValue = incodeMatcher.group(2)
-            if (incodeToken.isNullOrBlank() || incodeValue.isNullOrBlank()) {
-                return false
-            }
-
-            this.incode = Incode(incodeToken, incodeValue)
+        if (incode != null) {
+            this.incode = incode
 
             StorageService.save(DataKeys.USERNAME, username)
             StorageService.save(DataKeys.PASSWORD, password)
@@ -68,16 +63,30 @@ object PrepService {
             return false
         }
 
-        val guidRegex = Pattern.compile("ressourceDataGuid === '([^']+)'")
-        val guidMatcher = guidRegex.matcher(responseBody)
-        if (guidMatcher.find()) {
-            val guid = guidMatcher.group(1)
-            if (guid.isNullOrBlank()) {
-                return false
+        var orgs: OrgItemsProto? = null
+        var allowedOrgs: List<String>? = null
+        try {
+            orgs = this.loadOrgs()
+            if (orgs != null) {
+                Log.d(TAG, "Loaded ${orgs.orgsCount} orgs")
+            } else {
+                Log.w(TAG, "Could not load orgs")
             }
 
+            allowedOrgs = this.loadAllowedOrgs()
+            if (allowedOrgs != null) {
+                Log.d(TAG, "Loaded ${allowedOrgs.size} allowed orgs")
+            } else {
+                Log.w(TAG, "Could not load allowed orgs")
+            }
+        } catch (e: Error) {
+            Log.e(TAG, "${e.message}")
+        }
+
+        val guid = DataExtractorService.extractGUID(responseBody)
+        if (guid != null && allowedOrgs != null) {
             val staffResult = this.getStaff(
-                OrgUnitDataGuid.EMS_SATTLEDT,
+                allowedOrgs.first(),
                 listOf(guid),
                 OffsetDateTime.now(),
                 OffsetDateTime.now()
@@ -128,8 +137,60 @@ object PrepService {
         StorageService.clear(DataKeys.PASSWORD)
     }
 
+    suspend fun loadOrgs(): OrgItemsProto? {
+        val orgs = DataStores.ORG_ITEMS.data.firstOrNull()
+        if (orgs == null || orgs.orgsCount == 0) {
+            val dispoBody = NetworkService.getDispo().getOrNull()
+            if (dispoBody == null) {
+                Log.e(TAG, "Failed to load orgs - missing dispo body")
+                return null
+            }
+
+            val orgTreeLocation = DataExtractorService.extractOrgTreeUrl(dispoBody)
+            if (orgTreeLocation == null) {
+                Log.e(TAG, "Failed to load orgs - missing org tree")
+                return null
+            }
+
+            val orgTreeUrl = NetworkTarget.withScheduleBase(orgTreeLocation).toHttpUrl()
+            val orgTreeBody = NetworkService.get(orgTreeUrl).getOrNull()
+            if (orgTreeBody == null) {
+                Log.e(TAG, "Failed to load orgs - missing org tree body")
+                return null
+            }
+
+            val jsonStart = orgTreeBody.indexOf('{')
+            val jsonEnd = orgTreeBody.lastIndexOf('}')
+            val orgTreeJson = orgTreeBody.substring(jsonStart, jsonEnd + 1)
+            val orgItems = DataParserService.parseOrgTree(JSONObject(orgTreeJson))
+            if (orgItems == null) {
+                Log.e(TAG, "Failed to load orgs - invalid org tree")
+                return null
+            }
+
+            DataStores.ORG_ITEMS.updateData { orgItems }
+
+            return orgItems
+        }
+
+        return orgs
+    }
+
+    suspend fun loadAllowedOrgs(): List<String>? {
+        val dispoBody = NetworkService.getDispo().getOrNull()
+        if (dispoBody == null) {
+            Log.e(TAG, "Failed to load allowed orgs - missing dispo body")
+            return null
+        }
+
+        val allowedOrgs = DataExtractorService.extractAllowedOrgs(dispoBody) ?: return null
+        StorageService.save(DataKeys.ALLOWED_ORGS, allowedOrgs.joinToString(StorageService.DEFAULT_SEPARATOR))
+
+        return allowedOrgs
+    }
+
     suspend fun loadPlan(
-        orgUnitDataGuid: OrgUnitDataGuid,
+        orgUnitDataGuid: String,
         from: OffsetDateTime,
         to: OffsetDateTime
     ): Result<List<DutyDefinition>> {
@@ -163,7 +224,7 @@ object PrepService {
     }
 
     suspend fun getStaff(
-        orgUnitDataGuid: OrgUnitDataGuid,
+        orgUnitDataGuid: String,
         staffDataGuid: List<String>,
         from: OffsetDateTime,
         to: OffsetDateTime
@@ -200,7 +261,7 @@ object PrepService {
     }
 
     suspend fun loadTimeline(
-        orgUnitDataGuid: OrgUnitDataGuid,
+        orgUnitDataGuid: String,
         from: OffsetDateTime,
         to: OffsetDateTime
     ): Result<List<TimelineItem>> {

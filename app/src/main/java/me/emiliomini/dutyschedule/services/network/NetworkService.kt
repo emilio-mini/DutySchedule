@@ -10,11 +10,11 @@ import me.emiliomini.dutyschedule.enums.NetworkTarget
 import me.emiliomini.dutyschedule.models.github.GithubRelease
 import me.emiliomini.dutyschedule.models.network.NetworkCacheData
 import me.emiliomini.dutyschedule.models.prep.Incode
-import me.emiliomini.dutyschedule.models.prep.OrgUnitDataGuid
 import okhttp3.CookieJar
 import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.Headers.Companion.headersOf
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -151,22 +151,23 @@ object NetworkService {
     }
 
     suspend fun keepAlive(): Result<String?> {
-        val request = Request(
-            url = NetworkTarget.KEEP_ALIVE.httpUrl(),
-        )
-        return send(request, true)
+        return get(NetworkTarget.KEEP_ALIVE.httpUrl(), ignoreCache = true)
+    }
+
+    suspend fun getDispo(): Result<String?> {
+        return get(NetworkTarget.DISPO.httpUrl(), verified = true)
     }
 
     suspend fun loadPlan(
         incode: Incode,
-        orgUnitDataGuid: OrgUnitDataGuid,
+        orgUnitDataGuid: String,
         from: OffsetDateTime,
         to: OffsetDateTime
     ): Result<String?> {
         val formattedFrom = from.format(DATE_FORMATTER)
         val formattedTo = to.format(DATE_FORMATTER)
         val form = FormBody.Builder()
-            .add("orgUnitDataGuid", orgUnitDataGuid.value)
+            .add("orgUnitDataGuid", orgUnitDataGuid)
             .add("dateFrom", formattedFrom)
             .add("dateTo", formattedTo)
             .add("withSubOrgUnits", "1")
@@ -181,18 +182,18 @@ object NetworkService {
             ),
             body = form.build()
         )
-        return verifiedSend(request, identifier = "$formattedFrom:$formattedTo")
+        return verifiedSend(request, identifier = "$orgUnitDataGuid:$formattedFrom:$formattedTo")
     }
 
     suspend fun getStaff(
         incode: Incode,
-        orgUnitDataGuid: OrgUnitDataGuid,
+        orgUnitDataGuid: String,
         staffDataGuid: List<String>,
         from: OffsetDateTime,
         to: OffsetDateTime
     ): Result<String?> {
         val form = FormBody.Builder()
-            .add("orgUnitDataGuid", orgUnitDataGuid.value)
+            .add("orgUnitDataGuid", orgUnitDataGuid)
             .add("dateFrom", from.format(DATE_FORMATTER))
             .add("dateTo", to.format(DATE_FORMATTER))
             .add("withSubOrgUnits", "1")
@@ -212,6 +213,13 @@ object NetworkService {
             body = form.build()
         )
         return verifiedSend(request, identifier = staffDataGuid.joinToString())
+    }
+
+    suspend fun get(url: HttpUrl, verified: Boolean = false, ignoreCache: Boolean = false): Result<String?> {
+        val request = Request(
+            url = url
+        )
+        return if(verified) verifiedSend(request, ignoreCache) else send(request, ignoreCache)
     }
 
     private suspend fun send(

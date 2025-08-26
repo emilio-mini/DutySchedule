@@ -5,6 +5,8 @@ import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.flow.firstOrNull
 
 object StorageService {
+    const val DEFAULT_SEPARATOR = ";";
+
     suspend fun <T> save(entry: DataKeyEntry<T>, value: T) {
         DataStores.PREFERENCES.edit { preferences ->
             preferences[entry.key] = value

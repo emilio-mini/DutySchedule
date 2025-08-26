@@ -1,5 +1,5 @@
 syntax = "proto3";
-option java_package = "me.emiliomini.dutyschedule.datastore";
+option java_package = "me.emiliomini.dutyschedule.datastore.alarm";
 option java_multiple_files = true;
 
 message AlarmItemsProto {
