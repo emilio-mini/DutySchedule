@@ -319,7 +319,7 @@ fun HomeScreen(
                     style = MaterialTheme.typography.titleLarge
                 )
                 Text(
-                    detailViewEmployee!!.employee.identifier!!,
+                    detailViewEmployee!!.employee.identifier ?: "",
                     modifier = Modifier.padding(bottom = 4.dp),
                     style = MaterialTheme.typography.bodyMediumEmphasized
                 )
