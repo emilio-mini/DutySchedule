@@ -42,12 +42,6 @@
     <string name="main_settings_app_update_action_update">Aktualisieren</string>
     <string name="main_settings_app_update_action_confirm">OK</string>
     <string name="main_settings_app_version_title_checking">Suche nach updates…</string>
-    <string name="data_station_ambulances_upper_austria">Ambulanzen OÖ</string>
-    <string name="data_station_sattledt">RD Sattledt</string>
-    <string name="data_station_wels">RD Wels</string>
-    <string name="data_station_training_wels">Schulung Wels</string>
-    <string name="data_station_haend_wels_city">HÄND Wels</string>
-    <string name="data_station_haend_wels_surroundings">HÄND Wels-Land</string>
     <string name="data_requirement_sew">Einsatzfahrzeug</string>
     <string name="data_requirement_el">Einsatzlenker</string>
     <string name="data_requirement_tf">Transportführer</string>
@@ -77,4 +71,5 @@
     <string name="main_alarms_title">Wecker</string>
     <string name="main_alarms_none">Keine Wecker gesetzt</string>
     <string name="main_alarms_upcoming">Nächste Wecker</string>
+    <string name="main_schedule_infobox_primary">Hauptdienststelle</string>
 </resources>

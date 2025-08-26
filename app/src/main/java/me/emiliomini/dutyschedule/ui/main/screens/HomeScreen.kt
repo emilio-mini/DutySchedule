@@ -445,10 +445,15 @@ fun HomeScreen(
                                     Icon(Icons.Rounded.Business, contentDescription = null)
                                 },
                                 headlineContent = {
-                                    Text(detailViewEmployee!!.employee.defaultOrg)
+                                    var primaryOrg = orgs.firstOrNull { it.abbreviation == detailViewEmployee!!.employee.defaultOrg }
+                                    if (primaryOrg == null) {
+                                        primaryOrg = orgs.firstOrNull { it.identifier == detailViewEmployee!!.employee.defaultOrg }
+                                    }
+
+                                    Text(if (primaryOrg != null) primaryOrg.title else detailViewEmployee!!.employee.defaultOrg)
                                 },
                                 supportingContent = {
-                                    Text("Primary Station")
+                                    Text(stringResource(R.string.main_schedule_infobox_primary))
                                 },
                                 colors = ListItemDefaults.colors(
                                     containerColor = Color.Transparent
@@ -529,7 +534,7 @@ fun HomeScreen(
                             label = {
                                 Text(stringResource(R.string.main_schedule_infobox_actions_sms))
                             },
-                            enabled = detailViewEmployee!!.employee.email.isNotBlank()
+                            enabled = detailViewEmployee!!.employee.phone.isNotBlank()
                         )
                         AssistChip(
                             onClick = {
@@ -559,7 +564,7 @@ fun HomeScreen(
                             label = {
                                 Text(stringResource(R.string.main_schedule_infobox_actions_whatsapp))
                             },
-                            enabled = detailViewEmployee!!.employee.email.isNotBlank()
+                            enabled = detailViewEmployee!!.employee.phone.isNotBlank()
                         )
                         AssistChip(
                             onClick = {
