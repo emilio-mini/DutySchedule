@@ -72,4 +72,8 @@
     <string name="main_alarms_none">Keine Wecker gesetzt</string>
     <string name="main_alarms_upcoming">Nächste Wecker</string>
     <string name="main_schedule_infobox_primary">Hauptdienststelle</string>
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="main_dashboard_title">Dashboard</string>
+    <string name="main_dashboard_hours">Dienststunden</string>
+    <string name="main_dashboard_section_upcoming_title">Nächste Dienste</string>
 </resources>

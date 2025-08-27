@@ -10,6 +10,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Alarm
+import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -34,6 +35,7 @@ import me.emiliomini.dutyschedule.services.network.PrepService
 import me.emiliomini.dutyschedule.services.notifications.NotificationService
 import me.emiliomini.dutyschedule.services.storage.DataStores
 import me.emiliomini.dutyschedule.ui.main.screens.AlarmsScreen
+import me.emiliomini.dutyschedule.ui.main.screens.DashboardScreen
 import me.emiliomini.dutyschedule.ui.main.screens.HomeScreen
 import me.emiliomini.dutyschedule.ui.main.screens.LoadingScreen
 import me.emiliomini.dutyschedule.ui.main.screens.SettingsScreen
@@ -80,6 +82,10 @@ class MainActivity : ComponentActivity() {
                         var selectedItemIndex by remember { mutableIntStateOf(0) }
                         val navItems = listOf(
                             NavItem(
+                                label = stringResource(R.string.nav_dashboard),
+                                icon = Icons.Rounded.Dashboard
+                            ),
+                            NavItem(
                                 label = stringResource(R.string.nav_schedule),
                                 icon = Icons.Rounded.Schedule
                             ),
@@ -94,7 +100,7 @@ class MainActivity : ComponentActivity() {
                         )
 
                         when (selectedItemIndex) {
-                            0 -> HomeScreen(
+                            0 -> DashboardScreen(
                                 bottomBar = {
                                     NavigationBar {
                                         navItems.forEachIndexed { index, item ->
@@ -111,7 +117,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                 })
 
-                            1 -> AlarmsScreen(
+                            1 -> HomeScreen(
                                 bottomBar = {
                                     NavigationBar {
                                         navItems.forEachIndexed { index, item ->
@@ -128,7 +134,24 @@ class MainActivity : ComponentActivity() {
                                     }
                                 })
 
-                            2 -> SettingsScreen(bottomBar = {
+                            2 -> AlarmsScreen(
+                                bottomBar = {
+                                    NavigationBar {
+                                        navItems.forEachIndexed { index, item ->
+                                            NavigationBarItem(
+                                                selected = selectedItemIndex == index,
+                                                onClick = { selectedItemIndex = index },
+                                                icon = {
+                                                    Icon(
+                                                        item.icon, contentDescription = item.label
+                                                    )
+                                                },
+                                                label = { Text(item.label) })
+                                        }
+                                    }
+                                })
+
+                            3 -> SettingsScreen(bottomBar = {
                                 NavigationBar {
                                     navItems.forEachIndexed { index, item ->
                                         NavigationBarItem(

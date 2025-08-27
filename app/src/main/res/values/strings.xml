@@ -71,4 +71,8 @@
     <string name="main_alarms_none">No alarms set</string>
     <string name="main_alarms_upcoming">Upcoming alarms</string>
     <string name="main_schedule_infobox_primary">Primary Station</string>
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="main_dashboard_title">Dashboard</string>
+    <string name="main_dashboard_hours">Hours</string>
+    <string name="main_dashboard_section_upcoming_title">Upcoming</string>
 </resources>

@@ -9,7 +9,9 @@ import me.emiliomini.dutyschedule.models.prep.Employee
 import me.emiliomini.dutyschedule.models.prep.Requirement
 import me.emiliomini.dutyschedule.models.prep.Type
 import me.emiliomini.dutyschedule.models.github.GithubRelease
+import me.emiliomini.dutyschedule.models.prep.DutyType
 import me.emiliomini.dutyschedule.models.prep.Message
+import me.emiliomini.dutyschedule.models.prep.MinimalDutyDefinition
 import me.emiliomini.dutyschedule.models.prep.Resource
 import org.json.JSONArray
 import org.json.JSONObject
@@ -176,6 +178,50 @@ object DataParserService {
         Log.d(TAG, "Parsed ${sortedDuties.size} duties")
 
         return sortedDuties
+    }
+
+    fun parseLoadMinimalDutyDefinitions(root: JSONObject): List<MinimalDutyDefinition> {
+        val data = root.getJSONArray(this.DATA_ROOT_POSITION)
+        val duties = mutableListOf<MinimalDutyDefinition>()
+
+        for (i in 0 until data.length()) {
+            val obj = data.getJSONObject(i)
+
+            val allocationInfo = obj.getJSONObject("allocationInfo")
+            val allocationKey = allocationInfo.keys().asSequence().firstOrNull()
+            val allocations = if (allocationKey != null) allocationInfo.getJSONArray(allocationKey) else null
+
+            val typeString = allocations?.getString(0)
+            val type = when (typeString) {
+                "[ SEW ]" -> DutyType.EMS
+                "[ Schulung ]" -> DutyType.TRAINING
+                else -> DutyType.UNKNOWN
+            }
+
+            val staffList = mutableListOf<String>()
+            if (allocations != null) {
+                for (j in 1 until allocations.length()) {
+                    staffList.add(allocations.getString(j) ?: "")
+                }
+            }
+            staffList.filter { it.isNotBlank() }
+            val vehicle = staffList.find { it.contains("SEW") || it.contains("ITF") || it.contains("RTW") }
+            staffList.filter { it != vehicle }
+
+            duties.add(
+                MinimalDutyDefinition(
+                    obj.getString("guid"),
+                    OffsetDateTime.parse(obj.getString("begin")),
+                    OffsetDateTime.parse(obj.getString("end")),
+                    type,
+                    vehicle,
+                    staffList,
+                    obj.getInt("duration")
+                )
+            )
+        }
+
+        return duties
     }
 
     fun parseGetStaff(root: JSONObject): List<Employee> {
