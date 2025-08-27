@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material.icons.rounded.AlternateEmail
 import androidx.compose.material.icons.rounded.Badge
 import androidx.compose.material.icons.rounded.Business
@@ -75,7 +76,6 @@ import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import me.emiliomini.dutyschedule.R
-import me.emiliomini.dutyschedule.datastore.alarm.AlarmProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
 import me.emiliomini.dutyschedule.models.prep.AssignedEmployee
 import me.emiliomini.dutyschedule.models.prep.Requirement
@@ -172,6 +172,16 @@ fun HomeScreen(
                 Instant.ofEpochMilli(selectedEndDate!!), ZoneId.systemDefault()
             ),
         ).getOrNull()
+
+        PrepService.loadMessages(
+            selectedOrg!!,
+            OffsetDateTime.ofInstant(
+                Instant.ofEpochMilli(selectedStartDate!!), ZoneId.systemDefault()
+            ),
+            OffsetDateTime.ofInstant(
+                Instant.ofEpochMilli(selectedEndDate!!), ZoneId.systemDefault()
+            )
+        )
     }
 
     val stationScrollState = rememberScrollState()
@@ -200,23 +210,24 @@ fun HomeScreen(
                         .horizontalScroll(stationScrollState),
                     horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
                 ) {
-                    orgs.filter { allowedOrgs?.contains(it.guid) ?: false }.forEachIndexed { index, proto ->
-                        ToggleButton(
-                            checked = selectedOrg == proto.guid,
-                            onCheckedChange = { selectedOrg = proto.guid },
-                            modifier = Modifier.semantics { role = Role.RadioButton },
-                            shapes = when (index) {
-                                0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                                allowedOrgs?.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-                                else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
-                            },
-                            colors = ToggleButtonDefaults.toggleButtonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                            )
-                        ) {
-                            Text(proto.title)
+                    orgs.filter { allowedOrgs?.contains(it.guid) ?: false }
+                        .forEachIndexed { index, proto ->
+                            ToggleButton(
+                                checked = selectedOrg == proto.guid,
+                                onCheckedChange = { selectedOrg = proto.guid },
+                                modifier = Modifier.semantics { role = Role.RadioButton },
+                                shapes = when (index) {
+                                    0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                                    allowedOrgs?.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                                    else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                                },
+                                colors = ToggleButtonDefaults.toggleButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                                )
+                            ) {
+                                Text(proto.title)
+                            }
                         }
-                    }
                 }
                 IconButton(
                     modifier = Modifier.width(48.dp),
@@ -443,6 +454,49 @@ fun HomeScreen(
                         )
                     }
                 }
+
+                val nowMillis = OffsetDateTime.now().toInstant().toEpochMilli()
+                val messages =
+                    PrepService.getMessages()[detailViewEmployee!!.employee.resourceTypeGuid]
+                        ?: emptyList()
+                val filteredMessages = messages.filter {
+                    it.displayFrom.toInstant()
+                        .toEpochMilli() <= nowMillis && it.displayTo.toInstant()
+                        .toEpochMilli() >= nowMillis
+                }
+                if (filteredMessages.isNotEmpty()) {
+                    Spacer(Modifier)
+                    Card(colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            for (message in messages) {
+
+                                ListItem(
+                                    modifier = Modifier
+                                        .background(
+                                            color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                            shape = RoundedCornerShape(4.dp)
+                                        ),
+                                    leadingContent = {
+                                        Icon(
+                                            Icons.AutoMirrored.Rounded.Notes,
+                                            contentDescription = null
+                                        )
+                                    },
+                                    headlineContent = {
+                                        Text(message.message)
+                                    },
+                                    supportingContent = {
+                                        Text(message.title)
+                                    },
+                                    colors = ListItemDefaults.colors(
+                                        containerColor = Color.Transparent
+                                    )
+                                )
+
+                            }
+                        }
+                    }
+                }
                 Spacer(Modifier)
                 Card(colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -457,9 +511,11 @@ fun HomeScreen(
                                     Icon(Icons.Rounded.Business, contentDescription = null)
                                 },
                                 headlineContent = {
-                                    var primaryOrg = orgs.firstOrNull { it.abbreviation == detailViewEmployee!!.employee.defaultOrg }
+                                    var primaryOrg =
+                                        orgs.firstOrNull { it.abbreviation == detailViewEmployee!!.employee.defaultOrg }
                                     if (primaryOrg == null) {
-                                        primaryOrg = orgs.firstOrNull { it.identifier == detailViewEmployee!!.employee.defaultOrg }
+                                        primaryOrg =
+                                            orgs.firstOrNull { it.identifier == detailViewEmployee!!.employee.defaultOrg }
                                     }
 
                                     Text(if (primaryOrg != null) primaryOrg.title else detailViewEmployee!!.employee.defaultOrg)

@@ -185,6 +185,59 @@ object NetworkService {
         return verifiedSend(request, identifier = "$orgUnitDataGuid:$formattedFrom:$formattedTo")
     }
 
+    suspend fun getMessages(
+        incode: Incode,
+        orgUnitDataGuid: String,
+        from: OffsetDateTime,
+        to: OffsetDateTime
+    ): Result<String?> {
+        val formattedFrom = from.format(DATE_FORMATTER)
+        val formattedTo = to.format(DATE_FORMATTER)
+        val form = FormBody.Builder()
+            .add("orgUnitDataGuid", orgUnitDataGuid)
+            .add("dateFrom", formattedFrom)
+            .add("dateTo", formattedTo)
+            .add("withSubOrgUnits", "1")
+            .add("timeShiftDate", "")
+
+        val request = Request(
+            url = NetworkTarget.GET_MESSAGES.httpUrl(),
+            headers = headersOf(
+                incode.token, incode.value,
+                "Content-Type", "application/x-www-form-urlencoded",
+                "Accept-Encoding", "gzip"
+            ),
+            body = form.build()
+        )
+        return verifiedSend(request, identifier = "$orgUnitDataGuid:$formattedFrom:$formattedTo")
+    }
+
+    suspend fun getResources(
+        incode: Incode,
+        orgUnitDataGuid: String,
+        from: OffsetDateTime,
+        to: OffsetDateTime
+    ): Result<String?> {
+        val formattedFrom = from.format(DATE_FORMATTER)
+        val formattedTo = to.format(DATE_FORMATTER)
+        val form = FormBody.Builder()
+            .add("orgUnitDataGuid", orgUnitDataGuid)
+            .add("dateFrom", formattedFrom)
+            .add("dateTo", formattedTo)
+            .add("withSubOrgUnits", "1")
+
+        val request = Request(
+            url = NetworkTarget.GET_RESOURCES.httpUrl(),
+            headers = headersOf(
+                incode.token, incode.value,
+                "Content-Type", "application/x-www-form-urlencoded",
+                "Accept-Encoding", "gzip"
+            ),
+            body = form.build()
+        )
+        return verifiedSend(request, identifier = "$orgUnitDataGuid:$formattedFrom:$formattedTo")
+    }
+
     suspend fun getStaff(
         incode: Incode,
         orgUnitDataGuid: String,

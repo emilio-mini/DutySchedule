@@ -9,6 +9,8 @@ import me.emiliomini.dutyschedule.models.prep.Employee
 import me.emiliomini.dutyschedule.models.prep.Requirement
 import me.emiliomini.dutyschedule.models.prep.Type
 import me.emiliomini.dutyschedule.models.github.GithubRelease
+import me.emiliomini.dutyschedule.models.prep.Message
+import me.emiliomini.dutyschedule.models.prep.Resource
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.OffsetDateTime
@@ -141,6 +143,7 @@ object DataParserService {
                     Requirement.RTW.value -> Employee.Companion.RTW_NAME
                     else -> null
                 }
+                resourceTypeGuid = obj.getString("ressourceTypeDataGuid")
             )
 
             val assignedEmployee = AssignedEmployee(
@@ -216,8 +219,7 @@ object DataParserService {
             val obj = data.getJSONObject(i)
 
             val birthdateTimestamp = obj.getString("birthdate")
-            val birthdate =
-                if (birthdateTimestamp.isNotBlank()) OffsetDateTime.parse(birthdateTimestamp) else null
+            val birthdate = if (birthdateTimestamp.isNotBlank()) OffsetDateTime.parse(birthdateTimestamp) else null
 
             employees.add(
                 Employee(
@@ -227,12 +229,54 @@ object DataParserService {
                     obj.getString("telefon"),
                     obj.getString("email"),
                     obj.getString("externalIsRegularOrgUnit"),
-                    birthdate
+                    birthdate,
+                    obj.getString("ressourceTypeDataGuid")
                 )
             )
         }
 
         return employees
+    }
+
+    fun parseGetResources(root: JSONObject): List<Resource>? {
+        val data = root.getJSONObject(this.DATA_ROOT_POSITION)
+        val resources = mutableListOf<Resource>()
+
+        for (key in data.keys()) {
+            val obj = data.getJSONObject(key)
+
+            resources.add(
+                Resource(
+                    obj.getString("ressourceTypeDataGuid"),
+                    obj.getString("dataGuid")
+                )
+            )
+        }
+
+        return resources
+    }
+
+    fun parseGetMessages(root: JSONObject): List<Message>? {
+        val data = root.getJSONObject(this.DATA_ROOT_POSITION)
+        val messages = mutableListOf<Message>()
+
+        for (key in data.keys()) {
+            val obj = data.getJSONObject(key)
+
+            messages.add(
+                Message(
+                    obj.getString("dataGuid"),
+                    obj.getString("typeGuid"),
+                    obj.getString("title"),
+                    obj.getString("message"),
+                    obj.getInt("messagePriority"),
+                    OffsetDateTime.parse(obj.getString("displayFrom")),
+                    OffsetDateTime.parse(obj.getString("displayTo"))
+                )
+            )
+        }
+
+        return messages
     }
 
     private fun removeLeadingZeros(input: String): String {

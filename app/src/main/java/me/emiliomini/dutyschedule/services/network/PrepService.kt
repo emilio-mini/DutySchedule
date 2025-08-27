@@ -9,6 +9,7 @@ import me.emiliomini.dutyschedule.enums.NetworkTarget
 import me.emiliomini.dutyschedule.models.prep.DutyDefinition
 import me.emiliomini.dutyschedule.models.prep.Employee
 import me.emiliomini.dutyschedule.models.prep.Incode
+import me.emiliomini.dutyschedule.models.prep.Message
 import me.emiliomini.dutyschedule.models.prep.TimelineItem
 import me.emiliomini.dutyschedule.services.storage.DataKeys
 import me.emiliomini.dutyschedule.services.storage.DataStores
@@ -25,8 +26,14 @@ object PrepService {
     private var incode: Incode? = null
     private var self: Employee? = null
 
+    private val messages = mutableMapOf<String, List<Message>>()
+
     fun getSelf(): Employee? {
         return this.self
+    }
+
+    fun getMessages(): Map<String, List<Message>> {
+        return this.messages
     }
 
     fun getIncode(): Incode? {
@@ -184,7 +191,10 @@ object PrepService {
         }
 
         val allowedOrgs = DataExtractorService.extractAllowedOrgs(dispoBody) ?: return null
-        StorageService.save(DataKeys.ALLOWED_ORGS, allowedOrgs.joinToString(StorageService.DEFAULT_SEPARATOR))
+        StorageService.save(
+            DataKeys.ALLOWED_ORGS,
+            allowedOrgs.joinToString(StorageService.DEFAULT_SEPARATOR)
+        )
 
         return allowedOrgs
     }
@@ -313,6 +323,53 @@ object PrepService {
 
         Log.d(TAG, "Loaded ${timelineItems.size} timeline elements")
         return Result.success(timelineItems.toList())
+    }
+
+    suspend fun loadMessages(
+        orgUnitDataGuid: String,
+        from: OffsetDateTime,
+        to: OffsetDateTime
+    ): Result<List<Message>> {
+        if (!isLoggedIn()) {
+            return Result.failure(IOException("Not logged in!"))
+        }
+
+        val resourcesResponse =
+            NetworkService.getResources(incode!!, orgUnitDataGuid, from, to).getOrNull()
+        if (resourcesResponse == null) {
+            return Result.failure(IOException("Failed to get resources!"))
+        }
+        val resources = DataParserService.parseGetResources(JSONObject(resourcesResponse))
+        if (resources == null) {
+            return Result.failure(IOException("Failed to collect resources!"))
+        }
+
+        val messagesResponse =
+            NetworkService.getMessages(incode!!, orgUnitDataGuid, from, to).getOrNull()
+        if (messagesResponse == null) {
+            return Result.failure(IOException("Failed to get messages!"))
+        }
+        val messages = DataParserService.parseGetMessages(JSONObject(messagesResponse))
+        if (messages == null) {
+            return Result.failure(IOException("Failed to collect messages!"))
+        }
+
+        for (message in messages) {
+            val matchingResource = resources.firstOrNull { it.messagesGuid == message.resourceGuid }
+            if (matchingResource == null) {
+                Log.w(TAG, "Message without resource. Skipping...")
+                continue
+            }
+
+            val messageList = this.messages.getOrDefault(matchingResource.employeeGuid, emptyList()).toMutableList()
+            if (messageList.find { it.guid == message.guid } == null) {
+                messageList.add(message)
+            }
+            this.messages[matchingResource.employeeGuid] = messageList
+        }
+
+        Log.d(TAG, "Loaded ${messages.size} messages")
+        return Result.success(messages)
     }
 
 }
