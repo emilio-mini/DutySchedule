@@ -79,6 +79,7 @@ import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
 import me.emiliomini.dutyschedule.models.prep.AssignedEmployee
 import me.emiliomini.dutyschedule.models.prep.Requirement
+import me.emiliomini.dutyschedule.models.prep.Skill
 import me.emiliomini.dutyschedule.models.prep.TimelineItem
 import me.emiliomini.dutyschedule.services.network.PrepService
 import me.emiliomini.dutyschedule.services.storage.DataKeys
@@ -522,6 +523,27 @@ fun HomeScreen(
                                 },
                                 supportingContent = {
                                     Text(stringResource(R.string.main_schedule_infobox_primary))
+                                },
+                                colors = ListItemDefaults.colors(
+                                    containerColor = Color.Transparent
+                                )
+                            )
+                        }
+                        if (detailViewEmployee!!.employee.skill != Skill.INVALID) {
+                            ListItem(
+                                modifier = Modifier
+                                    .background(
+                                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                        shape = RoundedCornerShape(4.dp)
+                                    ),
+                                leadingContent = {
+                                    Icon(Icons.Rounded.Business, contentDescription = null)
+                                },
+                                headlineContent = {
+                                    Text(stringResource(detailViewEmployee!!.employee.skill.getResourceString()))
+                                },
+                                supportingContent = {
+                                    Text(stringResource(R.string.main_schedule_infobox_skill))
                                 },
                                 colors = ListItemDefaults.colors(
                                     containerColor = Color.Transparent

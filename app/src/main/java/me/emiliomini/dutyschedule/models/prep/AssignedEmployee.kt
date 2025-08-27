@@ -7,5 +7,6 @@ data class AssignedEmployee(
     val requirement: Requirement,
     val begin: OffsetDateTime,
     val end: OffsetDateTime,
-    var info: String = ""
+    var info: String = "",
+    var skill: Skill
 )

@@ -26,7 +26,8 @@ data class DutyDefinition(
                         Employee("e3", "1661", Employee.SEW_NAME),
                         Requirement.SEW,
                         nowTime,
-                        nowTime.plusHours(12)
+                        nowTime.plusHours(12),
+                        skill = Skill.INVALID
                     )
                 ),
                 mutableListOf(
@@ -34,7 +35,8 @@ data class DutyDefinition(
                         Employee("e1", "John Doe"),
                         Requirement.EL,
                         nowTime,
-                        nowTime.plusHours(12)
+                        nowTime.plusHours(12),
+                                skill = Skill.RS
                     )
                 ),
                 mutableListOf(
@@ -42,12 +44,14 @@ data class DutyDefinition(
                         Employee("e0", "Your Name"),
                         Requirement.TF,
                         nowTime,
-                        nowTime.plusHours(4)
+                        nowTime.plusHours(4),
+                        skill = Skill.RS
                     ), AssignedEmployee(
                         Employee("e2", "Jane Doe"),
                         Requirement.TF,
                         nowTime.plusHours(4),
-                        nowTime.plusHours(12)
+                        nowTime.plusHours(12),
+                        skill = Skill.RS
                     )
                 ),
             )
