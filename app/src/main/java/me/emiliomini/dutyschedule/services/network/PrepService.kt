@@ -307,7 +307,10 @@ object PrepService {
                 timelineItems.add(TimelineItem.Date(duty.begin))
             }
 
-            timelineItems.add(TimelineItem.Duty(duty))
+            // filter empty Dutys -> no info
+            if(!duty.el.isEmpty() && !duty.tf.isEmpty()) {
+                timelineItems.add(TimelineItem.Duty(duty))
+            }
             previousBegin = duty.begin
         }
 
