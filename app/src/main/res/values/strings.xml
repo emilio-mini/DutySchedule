@@ -42,9 +42,15 @@
     <string name="main_settings_app_update_action_confirm">OK</string>
     <string name="main_settings_app_version_title_checking">Checking for updates…</string>
     <string name="data_requirement_sew">Emergency Vehicle</string>
+    <string name="data_requirement_rtw">RTW</string>
+    <string name="data_requirement_itf">ITF</string>
     <string name="data_requirement_el">Driver</string>
     <string name="data_requirement_tf">Medic</string>
     <string name="data_requirement_rs">Teammember</string>
+    <string name="data_requirement_rtw_rs">RTW RS</string>
+    <string name="data_requirement_itf_el">LKW Driver</string>
+    <string name="data_requirement_itf_nfs">ITF NFS</string>
+    <string name="data_requirement_rtw_nfs">RTW NFS</string>
     <string name="data_requirement_none">None</string>
     <string name="main_schedule_infobox_assigned_role">Assigned role</string>
     <string name="main_schedule_infobox_birthday">Birthday</string>

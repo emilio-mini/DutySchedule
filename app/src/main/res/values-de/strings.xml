@@ -43,9 +43,13 @@
     <string name="main_settings_app_update_action_confirm">OK</string>
     <string name="main_settings_app_version_title_checking">Suche nach updates…</string>
     <string name="data_requirement_sew">Einsatzfahrzeug</string>
+    <string name="data_requirement_itf">ITF</string>
     <string name="data_requirement_el">Einsatzlenker</string>
     <string name="data_requirement_tf">Transportführer</string>
     <string name="data_requirement_rs">Rettungssanitäter</string>
+    <string name="data_requirement_rtw_rs">RTW RS</string>
+    <string name="data_requirement_itf_el">LKW Lenker</string>
+    <string name="data_requirement_rtw_nfs">RTW NFS</string>
     <string name="data_requirement_none">Nichts</string>
     <string name="main_schedule_infobox_assigned_role">Rolle</string>
     <string name="main_schedule_infobox_birthday">Geburtstag</string>
@@ -72,4 +76,6 @@
     <string name="main_alarms_none">Keine Wecker gesetzt</string>
     <string name="main_alarms_upcoming">Nächste Wecker</string>
     <string name="main_schedule_infobox_primary">Hauptdienststelle</string>
+    <string name="data_requirement_itf_nfs">ITF NFS</string>
+    <string name="data_requirement_rtw">RTW</string>
 </resources>
