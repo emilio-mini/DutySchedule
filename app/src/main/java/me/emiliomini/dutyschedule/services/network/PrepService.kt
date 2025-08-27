@@ -362,7 +362,9 @@ object PrepService {
             }
 
             val messageList = this.messages.getOrDefault(matchingResource.employeeGuid, emptyList()).toMutableList()
-            messageList.add(message)
+            if (messageList.find { it.guid == message.guid } == null) {
+                messageList.add(message)
+            }
             this.messages[matchingResource.employeeGuid] = messageList
         }
 

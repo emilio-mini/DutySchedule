@@ -3,6 +3,7 @@ package me.emiliomini.dutyschedule.models.prep
 import java.time.OffsetDateTime
 
 data class Message(
+    val guid: String,
     val resourceGuid: String,
     val title: String,
     val message: String,

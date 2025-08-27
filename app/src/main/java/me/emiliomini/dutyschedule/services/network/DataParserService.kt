@@ -232,6 +232,7 @@ object DataParserService {
 
             messages.add(
                 Message(
+                    obj.getString("dataGuid"),
                     obj.getString("typeGuid"),
                     obj.getString("title"),
                     obj.getString("message"),
