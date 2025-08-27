@@ -82,4 +82,8 @@
     <string name="data_skill_azubi">AZUBI</string>
     <string name="main_schedule_infobox_skill">Funktion</string>
     <string name="data_skill_nfs">FNS</string>
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="main_dashboard_title">Dashboard</string>
+    <string name="main_dashboard_hours">Dienststunden</string>
+    <string name="main_dashboard_section_upcoming_title">Nächste Dienste</string>
 </resources>

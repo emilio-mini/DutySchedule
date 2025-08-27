@@ -10,6 +10,7 @@ import me.emiliomini.dutyschedule.models.prep.DutyDefinition
 import me.emiliomini.dutyschedule.models.prep.Employee
 import me.emiliomini.dutyschedule.models.prep.Incode
 import me.emiliomini.dutyschedule.models.prep.Message
+import me.emiliomini.dutyschedule.models.prep.MinimalDutyDefinition
 import me.emiliomini.dutyschedule.models.prep.TimelineItem
 import me.emiliomini.dutyschedule.services.storage.DataKeys
 import me.emiliomini.dutyschedule.services.storage.DataStores
@@ -326,6 +327,34 @@ object PrepService {
 
         Log.d(TAG, "Loaded ${timelineItems.size} timeline elements")
         return Result.success(timelineItems.toList())
+    }
+
+    suspend fun loadPast(year: String): Result<List<MinimalDutyDefinition>> {
+        if (!isLoggedIn()) {
+            return Result.failure(IOException("Not logged in!"))
+        }
+
+        val pastResponse = NetworkService.loadPast(incode!!, year).getOrNull()
+        if (pastResponse == null) {
+            return Result.failure(IOException("Failed to load past duties!"))
+        }
+
+        val pastDuties = DataParserService.parseLoadMinimalDutyDefinitions(JSONObject(pastResponse))
+        return Result.success(pastDuties)
+    }
+
+    suspend fun loadUpcoming(): Result<List<MinimalDutyDefinition>> {
+        if (!isLoggedIn()) {
+            return Result.failure(IOException("Not logged in!"))
+        }
+
+        val upcomingResponse = NetworkService.loadUpcoming(incode!!).getOrNull()
+        if (upcomingResponse == null) {
+            return Result.failure(IOException("Failed to load upcoming duties!"))
+        }
+
+        val upcomingDuties = DataParserService.parseLoadMinimalDutyDefinitions(JSONObject(upcomingResponse))
+        return Result.success(upcomingDuties)
     }
 
     suspend fun loadMessages(

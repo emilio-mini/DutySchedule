@@ -19,6 +19,12 @@ enum class NetworkTarget(val url: String) {
     // Used to load the whole plan for a station within a timeframe
     LOAD_PLAN(SCHEDULE_BASE.url + "/StaffPortal/plan/data/loadPlan.json"),
 
+    // Used to load upcoming duties for the logged in user
+    LOAD_UPCOMING(SCHEDULE_BASE.url + "/StaffPortal/duties/data/load.json"),
+
+    // Used to load past duties for the logged in user
+    LOAD_PAST(SCHEDULE_BASE.url + "/StaffPortal/archive/data/loadDuties.json"),
+
     // Used to get a list of messages for resources within a timeframe
     GET_MESSAGES(SCHEDULE_BASE.url + "/Ressourcen/messages/data/getMessages.json"),
 
