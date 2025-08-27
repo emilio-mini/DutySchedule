@@ -142,7 +142,7 @@ object DataParserService {
                     Requirement.ITF.value -> Employee.Companion.ITF_NAME
                     Requirement.RTW.value -> Employee.Companion.RTW_NAME
                     else -> null
-                }
+                },
                 resourceTypeGuid = obj.getString("ressourceTypeDataGuid")
             )
 
