@@ -248,7 +248,7 @@ fun AppDutyCard(
                     }
                 }
             }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(48.dp).padding(top = 16.dp, end = 16.dp)) {
                 val currentMillis = OffsetDateTime.now().toInstant().toEpochMilli()
                 val dutyBeginMillis = duty.begin.toInstant().toEpochMilli()
 
