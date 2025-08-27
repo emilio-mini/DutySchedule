@@ -164,7 +164,7 @@ object DataParserService {
                     duties[guid]?.rs?.add(assignedEmployee)
                 }
                 else -> {
-                    continue
+                    duties[guid]?.rs?.add(assignedEmployee)
                 }
             }
         }
