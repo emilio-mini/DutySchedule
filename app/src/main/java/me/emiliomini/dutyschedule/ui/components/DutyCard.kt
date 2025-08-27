@@ -249,44 +249,49 @@ fun AppDutyCard(
                 }
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                IconButton(onClick = {
-                    alarmBlocked = true
-                    if (alarmSet) {
-                        scope.launch {
-                            AlarmService.deleteAlarm(context.applicationContext, duty.guid.hashCode())
-                            alarmSet = false
-                            alarmBlocked = false
-                        }
-                    } else {
-                        scope.launch {
-                            val alarmOffset = StorageService.load(DataKeys.ALARM_OFFSET)
-                            var alarmOffsetMillis = 0L
-                            if (alarmOffset != null) {
-                                try {
-                                    alarmOffsetMillis = TimeUnit.MINUTES.toMillis(alarmOffset)
-                                } catch (_: NumberFormatException) {
-                                }
-                            }
+                val currentMillis = OffsetDateTime.now().toInstant().toEpochMilli()
+                val dutyBeginMillis = duty.begin.toInstant().toEpochMilli()
 
-                            val dutyBeginMillis = duty.begin.toInstant().toEpochMilli()
-                            val timestamp = dutyBeginMillis - alarmOffsetMillis
-                            Log.d("Alarm", "Setting alarm for $timestamp, which is $alarmOffsetMillis before begin at ${dutyBeginMillis}")
-                            AlarmService.scheduleAlarm(
-                                context.applicationContext,
-                                timestamp,
-                                duty.guid.hashCode()
-                            )
-                            alarmBlocked = false
-                            alarmSet = true
+                if (dutyBeginMillis >= currentMillis) {
+                    IconButton(onClick = {
+                        alarmBlocked = true
+                        if (alarmSet) {
+                            scope.launch {
+                                AlarmService.deleteAlarm(context.applicationContext, duty.guid.hashCode())
+                                alarmSet = false
+                                alarmBlocked = false
+                            }
+                        } else {
+                            scope.launch {
+                                val alarmOffset = StorageService.load(DataKeys.ALARM_OFFSET)
+                                var alarmOffsetMillis = 0L
+                                if (alarmOffset != null) {
+                                    try {
+                                        alarmOffsetMillis = TimeUnit.MINUTES.toMillis(alarmOffset)
+                                    } catch (_: NumberFormatException) {
+                                    }
+                                }
+
+                                val timestamp = dutyBeginMillis - alarmOffsetMillis
+                                Log.d("Alarm", "Setting alarm for $timestamp, which is $alarmOffsetMillis before begin at ${dutyBeginMillis}")
+                                AlarmService.scheduleAlarm(
+                                    context.applicationContext,
+                                    timestamp,
+                                    duty.guid.hashCode()
+                                )
+                                alarmBlocked = false
+                                alarmSet = true
+                            }
                         }
-                    }
-                }, enabled = !alarmBlocked) {
-                    if (alarmSet) {
-                        Icon(Icons.Outlined.AlarmOn, contentDescription = "Reminder set")
-                    } else {
-                        Icon(Icons.Outlined.AlarmAdd, contentDescription = "Set Reminder")
+                    }, enabled = !alarmBlocked) {
+                        if (alarmSet) {
+                            Icon(Icons.Outlined.AlarmOn, contentDescription = "Reminder set")
+                        } else {
+                            Icon(Icons.Outlined.AlarmAdd, contentDescription = "Set Reminder")
+                        }
                     }
                 }
+
                 if (!requirementsMet) {
                     Icon(
                         Icons.Outlined.Warning,
