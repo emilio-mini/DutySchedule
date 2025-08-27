@@ -79,7 +79,8 @@ fun AppPersonnelInfo(
                 fontWeight = FontWeight.Light
             )
             Text(
-                text = employee.name, color = contentColor
+                text = employee.name, color = contentColor,
+                fontWeight = if (state == PersonnelInfoState.HIGHLIGHTED) FontWeight.Bold else FontWeight.Normal
             )
         }
     }

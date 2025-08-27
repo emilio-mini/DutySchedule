@@ -47,6 +47,7 @@ import me.emiliomini.dutyschedule.models.prep.Employee
 import me.emiliomini.dutyschedule.ui.components.icons.Ambulance
 import me.emiliomini.dutyschedule.ui.components.icons.SteeringWheel
 import me.emiliomini.dutyschedule.services.alarm.AlarmService
+import me.emiliomini.dutyschedule.services.network.PrepService
 import me.emiliomini.dutyschedule.services.storage.DataKeys
 import me.emiliomini.dutyschedule.services.storage.StorageService
 import java.time.OffsetDateTime
@@ -59,7 +60,6 @@ import java.util.concurrent.TimeUnit
 fun AppDutyCard(
     modifier: Modifier = Modifier,
     duty: DutyDefinition,
-    selfId: String? = null,
     onEmployeeClick: (AssignedEmployee) -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -70,6 +70,9 @@ fun AppDutyCard(
 
     // TODO: Make sure that all slots are filled completely and not just partially
     val requirementsMet = duty.sew.isNotEmpty() && duty.el.isNotEmpty() && duty.tf.isNotEmpty()
+
+    val selfId = PrepService.getSelf()?.guid;
+    val containsSelf = duty.el.any{person -> person.employee.guid == selfId} || duty.tf.any{person -> person.employee.guid == selfId} || duty.rs.any{person -> person.employee.guid == selfId}
 
     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
     val localZoneId = ZoneId.systemDefault()
@@ -150,7 +153,7 @@ fun AppDutyCard(
                     AppPersonnelInfo(
                         icon = SteeringWheel,
                         employee = emptySeat,
-                        state = PersonnelInfoState.DISABLED
+                        state = PersonnelInfoState.DISABLED,
                     )
                 } else {
                     duty.el.forEachIndexed { index, assigned ->
@@ -158,7 +161,7 @@ fun AppDutyCard(
                             modifier = Modifier.clickable(onClick = { onEmployeeClick(assigned) }),
                             icon = if (index == 0) SteeringWheel else null,
                             employee = assigned.employee,
-                            state = if (selfId != null && assigned.employee.identifier == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
+                            state = if (assigned.employee.guid == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
                             showInfoBadge = assigned.info.isNotEmpty(),
                             info = if (!assigned.begin.isEqual(duty.begin) || !assigned.end.isEqual(
                                     duty.end
@@ -192,7 +195,7 @@ fun AppDutyCard(
                             modifier = Modifier.clickable(onClick = { onEmployeeClick(assigned) }),
                             icon = if (index == 0) Icons.Rounded.MedicalInformation else null,
                             employee = assigned.employee,
-                            state = if (selfId != null && assigned.employee.identifier == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
+                            state = if (assigned.employee.guid == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
                             showInfoBadge = assigned.info.isNotEmpty(),
                             info = if (!assigned.begin.isEqual(duty.begin) || !assigned.end.isEqual(
                                     duty.end
@@ -226,7 +229,7 @@ fun AppDutyCard(
                             modifier = Modifier.clickable(onClick = { onEmployeeClick(assigned) }),
                             icon = if (index == 0) Icons.Rounded.Badge else null,
                             employee = assigned.employee,
-                            state = if (selfId != null && assigned.employee.identifier == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
+                            state = if (assigned.employee.guid == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
                             showInfoBadge = assigned.info.isNotEmpty(),
                             info = if (!assigned.begin.isEqual(duty.begin) || !assigned.end.isEqual(
                                     duty.end
@@ -252,7 +255,7 @@ fun AppDutyCard(
                 val currentMillis = OffsetDateTime.now().toInstant().toEpochMilli()
                 val dutyBeginMillis = duty.begin.toInstant().toEpochMilli()
 
-                if (dutyBeginMillis >= currentMillis) {
+                if (dutyBeginMillis >= currentMillis && containsSelf) {
                     IconButton(onClick = {
                         alarmBlocked = true
                         if (alarmSet) {
@@ -310,6 +313,5 @@ fun AppDutyCardPreview(modifier: Modifier = Modifier) {
     AppDutyCard(
         modifier = modifier,
         duty = DutyDefinition("", OffsetDateTime.now(), OffsetDateTime.now()),
-        selfId = "00023456"
     )
 }
