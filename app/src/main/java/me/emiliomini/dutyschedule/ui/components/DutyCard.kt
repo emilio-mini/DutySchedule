@@ -50,6 +50,7 @@ import me.emiliomini.dutyschedule.services.alarm.AlarmService
 import me.emiliomini.dutyschedule.services.network.PrepService
 import me.emiliomini.dutyschedule.services.storage.DataKeys
 import me.emiliomini.dutyschedule.services.storage.StorageService
+import me.emiliomini.dutyschedule.ui.theme.Yellow
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -69,10 +70,12 @@ fun AppDutyCard(
     val emptySeat = Employee("", stringResource(R.string.base_dutycard_no_staff), "0000000")
 
     // TODO: Make sure that all slots are filled completely and not just partially
-    val requirementsMet = duty.sew.isNotEmpty() && duty.el.isNotEmpty() && duty.tf.isNotEmpty()
+    val requirementsMetError = duty.el.isNotEmpty() && duty.tf.isNotEmpty()
+    val requirementsMetWarn = duty.sew.isNotEmpty() && duty.el.isNotEmpty() && duty.tf.isNotEmpty()
 
     val selfId = PrepService.getSelf()?.guid;
-    val containsSelf = duty.el.any{person -> person.employee.guid == selfId} || duty.tf.any{person -> person.employee.guid == selfId} || duty.rs.any{person -> person.employee.guid == selfId}
+    val containsSelf =
+        duty.el.any { person -> person.employee.guid == selfId } || duty.tf.any { person -> person.employee.guid == selfId } || duty.rs.any { person -> person.employee.guid == selfId }
 
     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
     val localZoneId = ZoneId.systemDefault()
@@ -81,7 +84,14 @@ fun AppDutyCard(
     val endTime = duty.end.atZoneSameInstant(localZoneId).format(timeFormatter)
 
     var alarmBlocked by remember { mutableStateOf(false) }
-    var alarmSet by remember { mutableStateOf(AlarmService.isAlarmSet(context.applicationContext, duty.guid.hashCode())) }
+    var alarmSet by remember {
+        mutableStateOf(
+            AlarmService.isAlarmSet(
+                context.applicationContext,
+                duty.guid.hashCode()
+            )
+        )
+    }
 
     Card(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(8.dp)) {
         Row(
@@ -251,7 +261,12 @@ fun AppDutyCard(
                     }
                 }
             }
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(48.dp).padding(top = 16.dp, end = 16.dp)) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .width(48.dp)
+                    .padding(top = 16.dp, end = 16.dp)
+            ) {
                 val currentMillis = OffsetDateTime.now().toInstant().toEpochMilli()
                 val dutyBeginMillis = duty.begin.toInstant().toEpochMilli()
 
@@ -260,7 +275,10 @@ fun AppDutyCard(
                         alarmBlocked = true
                         if (alarmSet) {
                             scope.launch {
-                                AlarmService.deleteAlarm(context.applicationContext, duty.guid.hashCode())
+                                AlarmService.deleteAlarm(
+                                    context.applicationContext,
+                                    duty.guid.hashCode()
+                                )
                                 alarmSet = false
                                 alarmBlocked = false
                             }
@@ -276,7 +294,10 @@ fun AppDutyCard(
                                 }
 
                                 val timestamp = dutyBeginMillis - alarmOffsetMillis
-                                Log.d("Alarm", "Setting alarm for $timestamp, which is $alarmOffsetMillis before begin at ${dutyBeginMillis}")
+                                Log.d(
+                                    "Alarm",
+                                    "Setting alarm for $timestamp, which is $alarmOffsetMillis before begin at ${dutyBeginMillis}"
+                                )
                                 AlarmService.scheduleAlarm(
                                     context.applicationContext,
                                     timestamp,
@@ -295,11 +316,11 @@ fun AppDutyCard(
                     }
                 }
 
-                if (!requirementsMet) {
+                if (!requirementsMetWarn || !requirementsMetError) {
                     Icon(
                         Icons.Outlined.Warning,
                         contentDescription = stringResource(R.string.base_dutycard_accessibility_requirements_issue),
-                        tint = MaterialTheme.colorScheme.error
+                        tint = if (!requirementsMetError) MaterialTheme.colorScheme.error else Yellow
                     )
                 }
             }
