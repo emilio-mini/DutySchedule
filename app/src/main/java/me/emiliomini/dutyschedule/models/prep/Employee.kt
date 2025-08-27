@@ -9,7 +9,8 @@ data class Employee(
     var phone: String = "",
     var email: String = "",
     var defaultOrg: String = "",
-    var birthdate: OffsetDateTime? = null
+    var birthdate: OffsetDateTime? = null,
+    var resourceTypeGuid: String = ""
 ) {
     companion object {
         val SEW_NAME = "SEW"
