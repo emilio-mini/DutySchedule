@@ -90,4 +90,5 @@
     <string name="data_dutytype_ems">EMS Duty</string>
     <string name="data_dutytype_training">Training</string>
     <string name="data_dutytype_unknown">Unknown</string>
+    <string name="base_carousel_no_vehicle">Available</string>
 </resources>

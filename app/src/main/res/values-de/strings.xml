@@ -91,4 +91,5 @@
     <string name="data_dutytype_ems">Rettungsdienst</string>
     <string name="data_dutytype_training">Schulung</string>
     <string name="data_dutytype_unknown">Unbekannt</string>
+    <string name="base_carousel_no_vehicle">Frei</string>
 </resources>
