@@ -24,6 +24,7 @@ import androidx.compose.material.icons.rounded.Badge
 import androidx.compose.material.icons.rounded.Business
 import androidx.compose.material.icons.rounded.Cake
 import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.Class
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.MedicalInformation
 import androidx.compose.material.icons.rounded.Phone
@@ -80,6 +81,8 @@ import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
 import me.emiliomini.dutyschedule.models.prep.AssignedEmployee
 import me.emiliomini.dutyschedule.models.prep.OrgDay
 import me.emiliomini.dutyschedule.models.prep.Requirement
+import me.emiliomini.dutyschedule.models.prep.Skill
+import me.emiliomini.dutyschedule.models.prep.TimelineItem
 import me.emiliomini.dutyschedule.models.prep.ShiftType
 import me.emiliomini.dutyschedule.services.network.PrepService
 import me.emiliomini.dutyschedule.services.storage.DataKeys
@@ -517,6 +520,41 @@ fun HomeScreen(
                                 },
                                 supportingContent = {
                                     Text(stringResource(R.string.main_schedule_infobox_primary))
+                                },
+                                colors = ListItemDefaults.colors(
+                                    containerColor = Color.Transparent
+                                )
+                            )
+                        }
+                        if (detailViewEmployee!!.employee.skill.isNotEmpty()) {
+
+                            val skills = detailViewEmployee!!.employee.skill
+                            val filteredSkills = skills.toMutableList()
+
+                            if (skills.contains(Skill.RS) && skills.contains(Skill.AZUBI)) {
+                                filteredSkills.remove(Skill.AZUBI)
+                            }
+                            if (skills.contains(Skill.NFS) && skills.contains(Skill.RS)) {
+                                filteredSkills.remove(Skill.RS)
+                            }
+                            val skillTxt =
+                                filteredSkills.map { stringResource(it.getResourceString()) }
+                                    .joinToString(", ")
+
+                            ListItem(
+                                modifier = Modifier
+                                    .background(
+                                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                        shape = RoundedCornerShape(4.dp)
+                                    ),
+                                leadingContent = {
+                                    Icon(Icons.Rounded.Class, contentDescription = null)
+                                },
+                                headlineContent = {
+                                    Text(skillTxt)
+                                },
+                                supportingContent = {
+                                    Text(stringResource(R.string.main_schedule_infobox_skill))
                                 },
                                 colors = ListItemDefaults.colors(
                                     containerColor = Color.Transparent

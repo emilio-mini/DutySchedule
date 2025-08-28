@@ -78,6 +78,11 @@
     <string name="main_schedule_infobox_primary">Hauptdienststelle</string>
     <string name="data_requirement_itf_nfs">ITF NFS</string>
     <string name="data_requirement_rtw">RTW</string>
+    <string name="data_skill_rs">Rettungssanitäter</string>
+    <string name="data_skill_azubi">AZUBI</string>
+    <string name="data_skill_nkv">NKV</string>
+    <string name="main_schedule_infobox_skill">Ausbildung</string>
+    <string name="data_skill_nfs">NFS</string>
     <string name="nav_dashboard">Dashboard</string>
     <string name="main_dashboard_title">Dashboard</string>
     <string name="main_dashboard_hours">Dienststunden</string>
@@ -91,5 +96,9 @@
     <string name="data_dutytype_ems">Rettungsdienst</string>
     <string name="data_dutytype_training">Schulung</string>
     <string name="data_dutytype_unknown">Unbekannt</string>
+    <string name="data_skill_haend">HÄND</string>
+    <string name="data_skill_fk">Führungskraft</string>
+    <string name="data_skill_pa">Praxisanleiter</string>
+    <string name="data_skill_sef">SEF</string>
     <string name="base_carousel_no_vehicle">Frei</string>
 </resources>

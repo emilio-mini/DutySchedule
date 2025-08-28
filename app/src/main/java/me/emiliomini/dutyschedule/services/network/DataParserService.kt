@@ -13,6 +13,7 @@ import me.emiliomini.dutyschedule.models.prep.DutyType
 import me.emiliomini.dutyschedule.models.prep.Message
 import me.emiliomini.dutyschedule.models.prep.MinimalDutyDefinition
 import me.emiliomini.dutyschedule.models.prep.Resource
+import me.emiliomini.dutyschedule.models.prep.Skill
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.OffsetDateTime
@@ -129,12 +130,43 @@ object DataParserService {
             val end = OffsetDateTime.parse(endTimestamp)
             val requirement = obj.getString(Requirement.Companion.POSITION)
             val info = obj.getString(Employee.Companion.INFO_POSITION)
+            val skill = obj.getString(Skill.Companion.POSITION)
             var employeeName = obj.getJSONObject(Employee.Companion.ADDITIONAL_INFOS_POSITION)
                 .getString(Employee.Companion.ADDITIONAL_INFOS_NAME_POSITION)
             if (employeeName.isBlank() || employeeName == "Verplant") {
                 // Using INFO Tag as fallback
                 employeeName = info
             }
+
+            //val skills: MutableList<Skill> = mutableListOf()
+
+            /*if (skill != null) {
+                for (j in 0 until skill.length()) {
+                    val skillObject = skill.getJSONObject(j)
+                    val skillDataGuid = skillObject.optString("skillDataGuid")
+                    val currentParsedSkill = Skill.Companion.parse(skillDataGuid)
+
+                    if (currentParsedSkill != Skill.INVALID) {
+                        /*if (currentParsedSkill == Skill.NFS) {
+                            bestSkillSoFar = Skill.NFS
+                            break
+                        }
+
+                        else if (currentParsedSkill == Skill.RS && bestSkillSoFar != Skill.NFS) {
+                            bestSkillSoFar = Skill.RS
+                        }
+
+                        else if (currentParsedSkill == Skill.AZUBI && bestSkillSoFar != Skill.NFS && bestSkillSoFar != Skill.RS) {
+                            bestSkillSoFar = Skill.AZUBI
+                        }
+
+                        else if (bestSkillSoFar == Skill.INVALID) {
+                            bestSkillSoFar = currentParsedSkill
+                        }*/
+                        skills.add(currentParsedSkill)
+                    }
+                }
+            }*/
 
             val employee = Employee(
                 employeeGuid,
@@ -145,7 +177,8 @@ object DataParserService {
                     Requirement.RTW.value -> Employee.Companion.RTW_NAME
                     else -> null
                 },
-                resourceTypeGuid = obj.getString("ressourceTypeDataGuid")
+                resourceTypeGuid = obj.getString("ressourceTypeDataGuid"),
+                //skill = Skill.Companion.parse(skill),
             )
 
             val assignedEmployee = AssignedEmployee(
@@ -153,7 +186,8 @@ object DataParserService {
                 Requirement.Companion.parse(requirement),
                 begin,
                 end,
-                info
+                info,
+                //skill = Skill.Companion.parse(skill)
             )
 
             if (duties[guid] == null || duties[guid]?.el == null) {
@@ -222,7 +256,8 @@ object DataParserService {
 
             val allocationInfo = obj.getJSONObject("allocationInfo")
             val allocationKey = allocationInfo.keys().asSequence().firstOrNull()
-            val allocations = if (allocationKey != null) allocationInfo.getJSONArray(allocationKey) else null
+            val allocations =
+                if (allocationKey != null) allocationInfo.getJSONArray(allocationKey) else null
 
             val typeString = allocations?.getString(0)
             val type = when (typeString) {
@@ -238,7 +273,8 @@ object DataParserService {
                 }
             }
             staffList.filter { it.isNotBlank() }
-            val vehicle = staffList.find { it.contains("SEW") || it.contains("ITF") || it.contains("RTW") }
+            val vehicle =
+                staffList.find { it.contains("SEW") || it.contains("ITF") || it.contains("RTW") }
             staffList.filter { it != vehicle }
 
             duties.add(
@@ -265,7 +301,26 @@ object DataParserService {
             val obj = data.getJSONObject(i)
 
             val birthdateTimestamp = obj.getString("birthdate")
-            val birthdate = if (birthdateTimestamp.isNotBlank()) OffsetDateTime.parse(birthdateTimestamp) else null
+            val birthdate =
+                if (birthdateTimestamp.isNotBlank()) OffsetDateTime.parse(birthdateTimestamp) else null
+
+            val staffToSkillsArray = obj.optJSONArray(Employee.Companion.SKILL_STAFF_POSITION)
+            val skills: MutableList<Skill> = mutableListOf()
+
+            if (staffToSkillsArray != null) {
+                for (j in 0 until staffToSkillsArray.length()) {
+                    val skillObject = staffToSkillsArray.getJSONObject(j)
+                    val skillDataGuid = skillObject.optString("skillDataGuid")
+                    val currentParsedSkill = Skill.Companion.parse(skillDataGuid)
+
+                    if (currentParsedSkill != Skill.INVALID) {
+                        if (!skills.contains(currentParsedSkill)) {
+                            skills.add(currentParsedSkill)
+                        }
+
+                    }
+                }
+            }
 
             employees.add(
                 Employee(
@@ -276,7 +331,8 @@ object DataParserService {
                     obj.getString("email"),
                     obj.getString("externalIsRegularOrgUnit"),
                     birthdate,
-                    obj.getString("ressourceTypeDataGuid")
+                    obj.getString("ressourceTypeDataGuid"),
+                    skill = skills
                 )
             )
         }
