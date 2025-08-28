@@ -175,6 +175,7 @@ object DataParserService {
                     Requirement.SEW.value -> Employee.Companion.SEW_NAME
                     Requirement.ITF.value -> Employee.Companion.ITF_NAME
                     Requirement.RTW.value -> Employee.Companion.RTW_NAME
+                    Requirement.HAEND.value -> Employee.Companion.HAEND_NAME
                     else -> null
                 },
                 resourceTypeGuid = obj.getString("ressourceTypeDataGuid"),
@@ -207,6 +208,10 @@ object DataParserService {
                     duties[guid]?.sew?.add(assignedEmployee)
                 }
 
+                Requirement.HAEND.value -> {
+                    duties[guid]?.sew?.add(assignedEmployee)
+                }
+
                 Requirement.EL.value -> {
                     duties[guid]?.el?.add(assignedEmployee)
                 }
@@ -221,6 +226,10 @@ object DataParserService {
 
                 Requirement.RS.value -> {
                     duties[guid]?.rs?.add(assignedEmployee)
+                }
+
+                Requirement.HAEND_EL.value -> {
+                    duties[guid]?.el?.add(assignedEmployee)
                 }
 
                 Requirement.RTW_NFS.value -> {

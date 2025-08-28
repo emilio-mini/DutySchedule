@@ -100,4 +100,5 @@
     <string name="data_dutytype_ems">EMS Duty</string>
     <string name="data_dutytype_training">Training</string>
     <string name="data_dutytype_unknown">Unknown</string>
+    <string name="data_requirement_haend_el">SANHÄ</string>
 </resources>

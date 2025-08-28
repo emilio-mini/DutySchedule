@@ -12,6 +12,7 @@ import me.emiliomini.dutyschedule.models.prep.Employee
 import me.emiliomini.dutyschedule.models.prep.Incode
 import me.emiliomini.dutyschedule.models.prep.Message
 import me.emiliomini.dutyschedule.models.prep.MinimalDutyDefinition
+import me.emiliomini.dutyschedule.models.prep.Requirement
 import me.emiliomini.dutyschedule.models.prep.TimelineItem
 import me.emiliomini.dutyschedule.services.storage.DataKeys
 import me.emiliomini.dutyschedule.services.storage.DataStores
@@ -331,7 +332,7 @@ object PrepService {
             }
 
             // filter empty Dutys -> no info
-            if(!duty.el.isEmpty() && !duty.tf.isEmpty()) {
+            if(!duty.el.isEmpty() && !duty.tf.isEmpty() || duty.sew.any { it.requirement == Requirement.HAEND }) {
                 timelineItems.add(TimelineItem.Duty(duty))
             }
             previousBegin = duty.begin

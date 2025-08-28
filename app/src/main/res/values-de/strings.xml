@@ -45,6 +45,7 @@
     <string name="data_requirement_sew">Einsatzfahrzeug</string>
     <string name="data_requirement_itf">ITF</string>
     <string name="data_requirement_haend">HÄND</string>
+    <string name="data_requirement_haend_el">SANHÄ</string>
     <string name="data_requirement_el">Einsatzlenker</string>
     <string name="data_requirement_tf">Transportführer</string>
     <string name="data_requirement_rs">Rettungssanitäter</string>

@@ -44,6 +44,7 @@ import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.models.prep.AssignedEmployee
 import me.emiliomini.dutyschedule.models.prep.DutyDefinition
 import me.emiliomini.dutyschedule.models.prep.Employee
+import me.emiliomini.dutyschedule.models.prep.Requirement
 import me.emiliomini.dutyschedule.ui.components.icons.Ambulance
 import me.emiliomini.dutyschedule.ui.components.icons.SteeringWheel
 import me.emiliomini.dutyschedule.services.alarm.AlarmService
@@ -70,8 +71,8 @@ fun AppDutyCard(
     val emptySeat = Employee("", stringResource(R.string.base_dutycard_no_staff), "0000000")
 
     // TODO: Make sure that all slots are filled completely and not just partially
-    val requirementsMetError = duty.el.isNotEmpty() && duty.tf.isNotEmpty()
-    val requirementsMetWarn = duty.sew.isNotEmpty() && duty.el.isNotEmpty() && duty.tf.isNotEmpty()
+    val requirementsMetError = (duty.el.isNotEmpty() && duty.tf.isNotEmpty()) || (duty.el.isNotEmpty() && !duty.tf.any { person -> person.requirement == Requirement.HAEND } )
+    val requirementsMetWarn = duty.sew.isNotEmpty() && duty.el.isNotEmpty() && duty.tf.isNotEmpty() || (duty.el.isNotEmpty() && !duty.tf.any { person -> person.requirement == Requirement.HAEND } )
 
     val selfId = PrepService.getSelf()?.guid;
     val containsSelf =
