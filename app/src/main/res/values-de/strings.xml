@@ -100,4 +100,5 @@
     <string name="data_skill_fk">Führungskraft</string>
     <string name="data_skill_pa">Praxisanleiter</string>
     <string name="data_skill_sef">SEF</string>
+    <string name="base_carousel_no_vehicle">Frei</string>
 </resources>
