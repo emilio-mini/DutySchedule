@@ -371,7 +371,7 @@ object PrepService {
                         && it.el.isEmpty()
                         && it.rs.isEmpty()
             }
-            day.dayShift = day.dayShift.dropLast(day.dayShift.size - lastDayIndex)
+            day.dayShift = if (lastDayIndex > 0) day.dayShift.dropLast(day.dayShift.size - lastDayIndex) else day.dayShift
 
             day.nightShift = day.nightShift.sortedWith(dutyComparator)
             val lastNightIndex = 1 + day.nightShift.indexOfFirst {
@@ -380,7 +380,7 @@ object PrepService {
                         && it.el.isEmpty()
                         && it.rs.isEmpty()
             }
-            day.nightShift = day.nightShift.dropLast(day.nightShift.size - lastNightIndex)
+            day.nightShift = if (lastNightIndex > 0) day.nightShift.dropLast(day.nightShift.size - lastNightIndex) else day.nightShift
         }
 
         Log.d(TAG, "Loaded ${days.size} days on the timeline")
