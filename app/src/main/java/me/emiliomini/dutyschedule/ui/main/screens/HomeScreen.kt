@@ -136,7 +136,20 @@ fun HomeScreen(
         }
 
         allowedOrgs = orgs.split(StorageService.DEFAULT_SEPARATOR)
-        selectedOrg = allowedOrgs?.first()
+    }
+
+    LaunchedEffect(orgs, allowedOrgs) {
+
+        var primaryOrg = orgs.firstOrNull { it.abbreviation == PrepService.getSelf()?.defaultOrg }
+        if (primaryOrg == null) {
+            primaryOrg = orgs.firstOrNull { it.identifier == PrepService.getSelf()?.defaultOrg }
+        }
+
+        selectedOrg = if (primaryOrg != null) {
+            primaryOrg.guid
+        } else {
+            allowedOrgs?.first()
+        }
     }
 
     LaunchedEffect(selectedStartDate, selectedEndDate, selectedOrg) {
@@ -245,7 +258,6 @@ fun HomeScreen(
                             is TimelineItem.Duty -> {
                                 AppDutyCard(
                                     duty = item.duty,
-                                    selfId = PrepService.getSelf()?.identifier,
                                     onEmployeeClick = {
                                         detailViewEmployee = it
                                     }
