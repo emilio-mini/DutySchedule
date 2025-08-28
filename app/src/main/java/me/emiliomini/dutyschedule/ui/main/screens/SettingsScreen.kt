@@ -3,7 +3,6 @@ package me.emiliomini.dutyschedule.ui.main.screens
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Logout
 import androidx.compose.material.icons.rounded.Person
@@ -20,8 +18,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -40,6 +36,8 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.services.network.PrepService
+import me.emiliomini.dutyschedule.ui.components.CardColumn
+import me.emiliomini.dutyschedule.ui.components.CardListItem
 import me.emiliomini.dutyschedule.ui.main.components.DutyAlarmListItem
 import me.emiliomini.dutyschedule.ui.main.components.VersionListItem
 
@@ -71,97 +69,81 @@ fun SettingsScreen(
                 stringResource(R.string.main_settings_section_alarms),
                 color = MaterialTheme.colorScheme.primary
             )
-            Card(colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    DutyAlarmListItem()
-                }
+            CardColumn {
+                DutyAlarmListItem()
             }
             Spacer(modifier = Modifier.height(8.dp))
+
             Text(
                 stringResource(R.string.main_settings_section_account),
                 color = MaterialTheme.colorScheme.primary
             )
-            Card(colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    ListItem(
-                        modifier = Modifier
-                            .background(
-                                color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                shape = RoundedCornerShape(4.dp)
-                            )
-                            .combinedClickable(onClick = {
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        snackbarIncodeText
-                                    )
-                                }
-                            }, onLongClick = {
-                                val incode = PrepService.getIncode()
-                                if (incode == null) {
-                                    return@combinedClickable
-                                }
-                                val clipboardManager =
-                                    context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                val clipData = ClipData.newPlainText(
-                                    "Incode", "${incode.token}:${incode.value}"
+            CardColumn {
+                CardListItem(
+                    modifier = Modifier
+                        .combinedClickable(onClick = {
+                            scope.launch {
+                                snackbarHostState.showSnackbar(
+                                    snackbarIncodeText
                                 )
-                                clipboardManager.setPrimaryClip(clipData)
-                            }), colors = ListItemDefaults.colors(
-                            containerColor = Color.Transparent
-                        ), headlineContent = {
-                            Text(
-                                PrepService.getSelf()?.name
-                                    ?: stringResource(R.string.main_settings_account_user_title_fallback)
-                            )
-                        }, supportingContent = {
-                            val incode = PrepService.getIncode()
-                            if (incode != null) {
-                                Text(incode.token)
-                            } else {
-                                Text(stringResource(R.string.main_settings_account_user_content_fallback))
                             }
-                        }, leadingContent = {
-                            Icon(
-                                Icons.Rounded.Person,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
+                        }, onLongClick = {
+                            val incode = PrepService.getIncode()
+                            if (incode == null) {
+                                return@combinedClickable
+                            }
+                            val clipboardManager =
+                                context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            val clipData = ClipData.newPlainText(
+                                "Incode", "${incode.token}:${incode.value}"
                             )
-                        })
-                    ListItem(
-                        modifier = Modifier
-                            .background(
-                                color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                shape = RoundedCornerShape(4.dp)
-                            )
-                            .clickable(onClick = onLogout),
-                        colors = ListItemDefaults.colors(
-                            containerColor = Color.Transparent
-                        ),
-                        headlineContent = {
-                            Text(stringResource(R.string.main_settings_account_logout_title))
-                        },
-                        supportingContent = {
-                            Text(stringResource(R.string.main_settings_account_logout_content))
-                        },
-                        leadingContent = {
-                            Icon(
-                                Icons.AutoMirrored.Rounded.Logout,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        },
-                    )
-                }
+                            clipboardManager.setPrimaryClip(clipData)
+                        }),
+                    headlineContent = {
+                        Text(
+                            PrepService.getSelf()?.name
+                                ?: stringResource(R.string.main_settings_account_user_title_fallback)
+                        )
+                    }, supportingContent = {
+                        val incode = PrepService.getIncode()
+                        if (incode != null) {
+                            Text(incode.token)
+                        } else {
+                            Text(stringResource(R.string.main_settings_account_user_content_fallback))
+                        }
+                    }, leadingContent = {
+                        Icon(
+                            Icons.Rounded.Person,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    })
+                CardListItem(
+                    modifier = Modifier
+                        .clickable(onClick = onLogout),
+                    headlineContent = {
+                        Text(stringResource(R.string.main_settings_account_logout_title))
+                    },
+                    supportingContent = {
+                        Text(stringResource(R.string.main_settings_account_logout_content))
+                    },
+                    leadingContent = {
+                        Icon(
+                            Icons.AutoMirrored.Rounded.Logout,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    },
+                )
             }
             Spacer(modifier = Modifier.height(8.dp))
+
             Text(
                 stringResource(R.string.main_settings_section_app),
                 color = MaterialTheme.colorScheme.primary
             )
-            Card(colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    VersionListItem()
-                }
+            CardColumn {
+                VersionListItem()
             }
         }
     })

@@ -4,6 +4,7 @@ import android.util.Log
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgItemsProto
+import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
 import me.emiliomini.dutyschedule.debug.DebugFlags.AVOID_PREP_API
 import me.emiliomini.dutyschedule.enums.NetworkTarget
 import me.emiliomini.dutyschedule.models.prep.DutyDefinition
@@ -43,6 +44,17 @@ object PrepService {
 
     fun isLoggedIn(): Boolean {
         return this.incode != null
+    }
+
+    suspend fun getOrg(abbreviationOrIdentifier: String): OrgProto? {
+        val orgs = this.loadOrgs()?.orgsList ?: return null
+
+        var org = orgs.firstOrNull { it.abbreviation == abbreviationOrIdentifier }
+        if (org == null) {
+            org = orgs.firstOrNull { it.identifier == abbreviationOrIdentifier }
+        }
+
+        return org
     }
 
     suspend fun login(username: String, password: String): Boolean {
@@ -353,7 +365,8 @@ object PrepService {
             return Result.failure(IOException("Failed to load upcoming duties!"))
         }
 
-        val upcomingDuties = DataParserService.parseLoadMinimalDutyDefinitions(JSONObject(upcomingResponse))
+        val upcomingDuties =
+            DataParserService.parseLoadMinimalDutyDefinitions(JSONObject(upcomingResponse))
         return Result.success(upcomingDuties)
     }
 
@@ -393,7 +406,8 @@ object PrepService {
                 continue
             }
 
-            val messageList = this.messages.getOrDefault(matchingResource.employeeGuid, emptyList()).toMutableList()
+            val messageList = this.messages.getOrDefault(matchingResource.employeeGuid, emptyList())
+                .toMutableList()
             if (messageList.find { it.guid == message.guid } == null) {
                 messageList.add(message)
             }

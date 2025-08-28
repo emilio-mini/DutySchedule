@@ -6,7 +6,11 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.absoluteOffset
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,6 +37,7 @@ fun ArcProgressIndicator(
     progressColor: Color = MaterialTheme.colorScheme.primary,
     overflowColor: Color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
     progressBorderColor: Color = MaterialTheme.colorScheme.background,
+    pending: Boolean = false,
     content: @Composable BoxScope.() -> Unit = {}
 ) {
     var safeProgress = progress - floor(progress)
@@ -92,5 +97,12 @@ fun ArcProgressIndicator(
             )
         }
         content()
+        if (pending) {
+            LinearProgressIndicator(
+                modifier = Modifier
+                    .width(sizeDp / 4)
+                    .offset(y = sizeDp / 3)
+            )
+        }
     }
 }
