@@ -256,7 +256,8 @@ object DataParserService {
 
             val allocationInfo = obj.getJSONObject("allocationInfo")
             val allocationKey = allocationInfo.keys().asSequence().firstOrNull()
-            val allocations = if (allocationKey != null) allocationInfo.getJSONArray(allocationKey) else null
+            val allocations =
+                if (allocationKey != null) allocationInfo.getJSONArray(allocationKey) else null
 
             val typeString = allocations?.getString(0)
             val type = when (typeString) {
@@ -272,7 +273,8 @@ object DataParserService {
                 }
             }
             staffList.filter { it.isNotBlank() }
-            val vehicle = staffList.find { it.contains("SEW") || it.contains("ITF") || it.contains("RTW") }
+            val vehicle =
+                staffList.find { it.contains("SEW") || it.contains("ITF") || it.contains("RTW") }
             staffList.filter { it != vehicle }
 
             duties.add(
@@ -299,7 +301,8 @@ object DataParserService {
             val obj = data.getJSONObject(i)
 
             val birthdateTimestamp = obj.getString("birthdate")
-            val birthdate = if (birthdateTimestamp.isNotBlank()) OffsetDateTime.parse(birthdateTimestamp) else null
+            val birthdate =
+                if (birthdateTimestamp.isNotBlank()) OffsetDateTime.parse(birthdateTimestamp) else null
 
             val staffToSkillsArray = obj.optJSONArray(Employee.Companion.SKILL_STAFF_POSITION)
             val skills: MutableList<Skill> = mutableListOf()

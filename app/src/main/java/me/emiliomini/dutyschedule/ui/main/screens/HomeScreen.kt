@@ -533,7 +533,7 @@ fun HomeScreen(
                         if (detailViewEmployee!!.employee.skill.isNotEmpty()) {
 
                             val skills = detailViewEmployee!!.employee.skill
-                            var filteredSkills = skills.toMutableList()
+                            val filteredSkills = skills.toMutableList()
 
                             if (skills.contains(Skill.RS) && skills.contains(Skill.AZUBI)) {
                                 filteredSkills.remove(Skill.AZUBI)
@@ -541,7 +541,9 @@ fun HomeScreen(
                             if (skills.contains(Skill.NFS) && skills.contains(Skill.RS)) {
                                 filteredSkills.remove(Skill.RS)
                             }
-                            val skillTxt = filteredSkills.map { stringResource(it.getResourceString()) }.joinToString(", ")
+                            val skillTxt =
+                                filteredSkills.map { stringResource(it.getResourceString()) }
+                                    .joinToString(", ")
 
                             ListItem(
                                 modifier = Modifier
