@@ -359,26 +359,47 @@ object DataParserService {
     }
 
     fun parseGetMessages(root: JSONObject): List<Message>? {
-        val data = root.getJSONObject(this.DATA_ROOT_POSITION)
-        val messages = mutableListOf<Message>()
 
-        for (key in data.keys()) {
-            val obj = data.getJSONObject(key)
+        try {
+            if (!root.has("data")) {
+                Log.w(TAG, "parseGetMessages: 'data' field missing in JSON root.")
+                return listOf()
+            }
 
-            messages.add(
-                Message(
-                    obj.getString("dataGuid"),
-                    obj.getString("typeGuid"),
-                    obj.getString("title"),
-                    obj.getString("message"),
-                    obj.getInt("messagePriority"),
-                    OffsetDateTime.parse(obj.getString("displayFrom")),
-                    OffsetDateTime.parse(obj.getString("displayTo"))
+            val dataNode =
+                root.opt("data") // opt verwenden, um keine Exception bei falschem Typ zu werfen
+
+            if (dataNode == null) { // Sollte durch root.has abgedeckt sein, aber doppelt sicher
+                Log.w(TAG, "parseGetMessages: 'data' field is null.")
+                return listOf()
+            }
+
+
+            val data = root.getJSONObject(this.DATA_ROOT_POSITION)
+            val messages = mutableListOf<Message>()
+
+            for (key in data.keys()) {
+                val obj = data.getJSONObject(key)
+
+                messages.add(
+                    Message(
+                        obj.getString("dataGuid"),
+                        obj.getString("typeGuid"),
+                        obj.getString("title"),
+                        obj.getString("message"),
+                        obj.getInt("messagePriority"),
+                        OffsetDateTime.parse(obj.getString("displayFrom")),
+                        OffsetDateTime.parse(obj.getString("displayTo"))
+                    )
                 )
-            )
-        }
+            }
 
-        return messages
+            return messages
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing JSON", e)
+            return listOf()
+
+        }
     }
 
     private fun removeLeadingZeros(input: String): String {

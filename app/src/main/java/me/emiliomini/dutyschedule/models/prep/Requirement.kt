@@ -7,6 +7,7 @@ enum class Requirement(val value: String) {
     SEW("d590f25129127adfdb7e994be630de152f5f1682_2_1544535093_4117"),
     RTW("390b263970bc93d4612d9a9544d50b1b6bc1d9a7_2_1551891770_4987"),
     ITF("297d898e34f3ce811302fbfd98c238d6adfc5617_2_1668611309_2843"),
+    HAEND("efafdf85ad4b64da658b23b359a3a456fd340b35_2_1551887183_8843"),
 
     EL("43e3811f89fea7883aa664c53b10f287fdf63020_2_1544535120_1506"),
     TF("6509a03415cb338da9ffa9b2b849cd617bd756ca_2_1544535149_1171"),
@@ -22,6 +23,7 @@ enum class Requirement(val value: String) {
             SEW -> R.string.data_requirement_sew
             RTW -> R.string.data_requirement_rtw
             ITF -> R.string.data_requirement_itf
+            HAEND -> R.string.data_requirement_haend
             EL -> R.string.data_requirement_el
             TF -> R.string.data_requirement_tf
             RS -> R.string.data_requirement_rs
