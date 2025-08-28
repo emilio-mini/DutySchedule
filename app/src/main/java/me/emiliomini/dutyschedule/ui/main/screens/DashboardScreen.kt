@@ -40,7 +40,7 @@ import me.emiliomini.dutyschedule.services.network.PrepService
 import me.emiliomini.dutyschedule.ui.components.ArcProgressIndicator
 import me.emiliomini.dutyschedule.ui.components.EmployeeAvatar
 import me.emiliomini.dutyschedule.ui.components.LazyCardColumn
-import me.emiliomini.dutyschedule.ui.components.UpcomingDutyCard
+import me.emiliomini.dutyschedule.ui.components.MinimalDutyCard
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -145,14 +145,7 @@ fun DashboardScreen(
                         itemsIndexed(
                             items = upcomingDuties,
                             key = { _, duty -> duty.guid }) { index, duty ->
-                            UpcomingDutyCard(
-                                guid = duty.guid,
-                                vehicle = duty.vehicle,
-                                employees = duty.staff,
-                                begin = duty.begin,
-                                end = duty.end,
-                                type = duty.type
-                            )
+                            MinimalDutyCard(duty = duty)
                         }
                     }
                 }
