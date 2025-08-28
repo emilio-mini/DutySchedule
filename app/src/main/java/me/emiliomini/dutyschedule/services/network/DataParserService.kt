@@ -139,7 +139,12 @@ object DataParserService {
             val employee = Employee(
                 employeeGuid,
                 employeeName,
-                if (requirement == Requirement.SEW.value) Employee.Companion.SEW_NAME else null,
+                when (requirement) {
+                    Requirement.SEW.value -> Employee.Companion.SEW_NAME
+                    Requirement.ITF.value -> Employee.Companion.ITF_NAME
+                    Requirement.RTW.value -> Employee.Companion.RTW_NAME
+                    else -> null
+                },
                 resourceTypeGuid = obj.getString("ressourceTypeDataGuid")
             )
 
@@ -159,15 +164,43 @@ object DataParserService {
                 Requirement.SEW.value -> {
                     duties[guid]?.sew?.add(assignedEmployee)
                 }
+
+                Requirement.RTW.value -> {
+                    duties[guid]?.sew?.add(assignedEmployee)
+                }
+
+                Requirement.ITF.value -> {
+                    duties[guid]?.sew?.add(assignedEmployee)
+                }
+
                 Requirement.EL.value -> {
                     duties[guid]?.el?.add(assignedEmployee)
                 }
+
+                Requirement.RTW_RS.value -> {
+                    duties[guid]?.el?.add(assignedEmployee)
+                }
+
                 Requirement.TF.value -> {
                     duties[guid]?.tf?.add(assignedEmployee)
                 }
+
                 Requirement.RS.value -> {
                     duties[guid]?.rs?.add(assignedEmployee)
                 }
+
+                Requirement.RTW_NFS.value -> {
+                    duties[guid]?.tf?.add(assignedEmployee)
+                }
+
+                Requirement.ITF_NFS.value -> {
+                    duties[guid]?.tf?.add(assignedEmployee)
+                }
+
+                Requirement.ITF_LKW.value -> {
+                    duties[guid]?.el?.add(assignedEmployee)
+                }
+
                 else -> {
                     duties[guid]?.rs?.add(assignedEmployee)
                 }
