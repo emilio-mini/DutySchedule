@@ -115,6 +115,16 @@ class MainActivity : ComponentActivity() {
                                                 label = { Text(item.label) })
                                         }
                                     }
+                                }, onLogout = {
+                                    lifecycleScope.launch {
+                                        PrepService.logout()
+                                        startActivity(
+                                            Intent(
+                                                this@MainActivity, OnboardingActivity::class.java
+                                            )
+                                        )
+                                        finish()
+                                    }
                                 })
 
                             1 -> HomeScreen(

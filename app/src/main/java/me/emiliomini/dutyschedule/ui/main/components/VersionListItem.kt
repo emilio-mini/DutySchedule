@@ -1,10 +1,8 @@
 package me.emiliomini.dutyschedule.ui.main.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Update
@@ -12,8 +10,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearWavyProgressIndicator
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,7 +24,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -39,11 +34,12 @@ import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.models.github.GithubRelease
 import me.emiliomini.dutyschedule.services.network.NetworkService
 import me.emiliomini.dutyschedule.services.util.UtilService
+import me.emiliomini.dutyschedule.ui.components.CardListItem
 import okhttp3.Headers
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun VersionListItem() {
+fun VersionListItem(modifier: Modifier = Modifier) {
     var showDetails by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -111,27 +107,22 @@ fun VersionListItem() {
     }
 
     if (latestRelease != null && latestRelease!!.tag != BuildConfig.VERSION_NAME) {
-        ListItem(
-            modifier = Modifier
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    shape = RoundedCornerShape(4.dp)
-                )
-                .clickable(onClick = {
-                    if (isUpdating) {
-                        return@clickable
-                    }
+        CardListItem(
+            modifier = Modifier.clickable(onClick = {
+                if (isUpdating) {
+                    return@clickable
+                }
 
-                    showDetails = true
-                }), colors = ListItemDefaults.colors(
-                containerColor = Color.Transparent
-            ), headlineContent = {
+                showDetails = true
+            }),
+            headlineContent = {
                 if (isUpdating) {
                     Text(stringResource(R.string.main_settings_app_update_title_progress))
                 } else {
                     Text(stringResource(R.string.main_settings_app_update_title))
                 }
-            }, supportingContent = {
+            },
+            supportingContent = {
                 if (isUpdating) {
                     LinearWavyProgressIndicator(
                         progress = {
@@ -141,47 +132,52 @@ fun VersionListItem() {
                 } else {
                     Text(latestRelease!!.tag)
                 }
-            }, leadingContent = {
+            },
+            leadingContent = {
                 Icon(
                     Icons.Rounded.Update,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary
                 )
-            }, trailingContent = {
+            },
+            trailingContent = {
                 if (latestRelease == null) {
                     LoadingIndicator()
                 }
             })
     } else {
-        ListItem(
-            modifier = Modifier
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    shape = RoundedCornerShape(4.dp)
-                )
-                .combinedClickable(onClick = {
+        CardListItem(
+            modifier = modifier.combinedClickable(
+                onClick = {
                     if (latestRelease != null) {
                         showDetails = true
                     }
-                }, onLongClick = {
+                },
+                onLongClick = {
                     scope.launch {
                         isCheckingLatest = true
                         latestRelease = NetworkService.getLatestVersion(true).getOrNull()
                         isCheckingLatest = false
                     }
-                }), colors = ListItemDefaults.colors(
-                containerColor = Color.Transparent
-            ), headlineContent = {
+                }
+            ),
+            headlineContent = {
                 if (isCheckingLatest) {
                     Text(stringResource(R.string.main_settings_app_version_title_checking))
                 } else {
                     Text(stringResource(R.string.main_settings_app_version_title))
                 }
-            }, supportingContent = {
+            },
+            supportingContent = {
                 Text(BuildConfig.VERSION_NAME)
-            }, leadingContent = {
+            },
+            leadingContent = {
                 if (isCheckingLatest) {
-                    LoadingIndicator(modifier = Modifier.scale(1.4f).width(24.dp))
+                    LoadingIndicator(
+                        modifier = Modifier
+                            .scale(1.4f)
+                            .width(24.dp)
+                    )
                 } else {
                     Icon(
                         Icons.Rounded.Info,

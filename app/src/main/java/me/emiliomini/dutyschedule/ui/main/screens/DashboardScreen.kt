@@ -1,17 +1,23 @@
 package me.emiliomini.dutyschedule.ui.main.screens
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -33,29 +39,34 @@ import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.models.prep.MinimalDutyDefinition
 import me.emiliomini.dutyschedule.services.network.PrepService
 import me.emiliomini.dutyschedule.ui.components.ArcProgressIndicator
+import me.emiliomini.dutyschedule.ui.components.EmployeeAvatar
+import me.emiliomini.dutyschedule.ui.components.LazyCardColumn
 import me.emiliomini.dutyschedule.ui.components.UpcomingDutyCard
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun DashboardScreen(modifier: Modifier = Modifier, bottomBar: @Composable (() -> Unit) = {}) {
+fun DashboardScreen(modifier: Modifier = Modifier, bottomBar: @Composable (() -> Unit) = {}, onLogout: () -> Unit) {
     val currentYear = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy"))
     var upcomingDuties by remember { mutableStateOf<List<MinimalDutyDefinition>>(emptyList()) }
     var pastDuties by remember { mutableStateOf<List<MinimalDutyDefinition>>(emptyList()) }
 
-    val requiredMinutes = 144 * 60
+    val requiredMinutes = 143 * 60
     var minutesSum by remember { mutableFloatStateOf(0f) }
     var progress by remember { mutableFloatStateOf(0f) }
 
+    var pastLoaded by remember { mutableStateOf(false) }
+    var upcomingLoaded by remember { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
         upcomingDuties = PrepService.loadUpcoming().getOrNull() ?: emptyList()
+        upcomingLoaded = true
         pastDuties = PrepService.loadPast(currentYear).getOrNull() ?: emptyList()
-    }
-
-    LaunchedEffect(pastDuties) {
         minutesSum = pastDuties.sumOf { it.duration }.toFloat()
         progress = minutesSum / requiredMinutes
+        pastLoaded = true
     }
 
     Scaffold(
@@ -64,6 +75,13 @@ fun DashboardScreen(modifier: Modifier = Modifier, bottomBar: @Composable (() ->
             TopAppBar(
                 title = {
                     Text(stringResource(R.string.main_dashboard_title))
+                },
+                actions = {
+                    val employee = PrepService.getSelf()
+                    if (employee != null) {
+                        EmployeeAvatar(employee = employee, onLogout = onLogout)
+                        Spacer(Modifier.width(16.dp))
+                    }
                 }
             )
         },
@@ -79,14 +97,18 @@ fun DashboardScreen(modifier: Modifier = Modifier, bottomBar: @Composable (() ->
                     modifier = Modifier.fillMaxWidth(),
                     sizeDp = 232.dp,
                     progress = progress,
-                    strokeWidth = 24.dp
+                    strokeWidth = 24.dp,
+                    pending = !pastLoaded
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Row(verticalAlignment = Alignment.Bottom) {
-                            Text("${minutesSum / 60}", style = MaterialTheme.typography.titleLarge)
+                            Text(
+                                String.format(Locale.getDefault(), "%.2f", minutesSum / 60f),
+                                style = MaterialTheme.typography.titleLarge
+                            )
                             Text(
                                 " / ${requiredMinutes / 60}",
                                 style = MaterialTheme.typography.titleLarge,
@@ -101,8 +123,12 @@ fun DashboardScreen(modifier: Modifier = Modifier, bottomBar: @Composable (() ->
                     stringResource(R.string.main_dashboard_section_upcoming_title),
                     color = MaterialTheme.colorScheme.primary
                 )
-                Card(colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-                    LazyColumn(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                if (!upcomingLoaded) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        LoadingIndicator()
+                    }
+                } else {
+                    LazyCardColumn {
                         itemsIndexed(
                             items = upcomingDuties,
                             key = { _, duty -> duty.guid }) { index, duty ->

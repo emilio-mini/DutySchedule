@@ -46,15 +46,8 @@ fun UpcomingDutyCard(
     val dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
     val localZoneId = ZoneId.systemDefault()
 
-    ListItem(
-        modifier = modifier
-            .background(
-                color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                shape = RoundedCornerShape(4.dp)
-            ),
-        colors = ListItemDefaults.colors(
-            containerColor = Color.Transparent
-        ),
+    CardListItem(
+        modifier = modifier,
         headlineContent = {
             Row(
                 modifier = Modifier.fillMaxWidth(),

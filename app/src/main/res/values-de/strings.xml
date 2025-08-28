@@ -76,4 +76,10 @@
     <string name="main_dashboard_title">Dashboard</string>
     <string name="main_dashboard_hours">Dienststunden</string>
     <string name="main_dashboard_section_upcoming_title">Nächste Dienste</string>
+    <string name="base_avatar_dialog_title">Konto</string>
+    <string name="base_avatar_dialog_phone">Telefon</string>
+    <string name="base_avatar_dialog_mail">E-Mail</string>
+    <string name="base_avatar_dialog_birthdate">Geburtstag</string>
+    <string name="base_avatar_dialog_primary">Hauptdienststelle</string>
+    <string name="base_avatar_dialog_action_logout">Abmelden</string>
 </resources>

@@ -75,4 +75,10 @@
     <string name="main_dashboard_title">Dashboard</string>
     <string name="main_dashboard_hours">Hours</string>
     <string name="main_dashboard_section_upcoming_title">Upcoming</string>
+    <string name="base_avatar_dialog_title">Account</string>
+    <string name="base_avatar_dialog_phone">Phone</string>
+    <string name="base_avatar_dialog_mail">Mail</string>
+    <string name="base_avatar_dialog_birthdate">Birthday</string>
+    <string name="base_avatar_dialog_primary">Primary Station</string>
+    <string name="base_avatar_dialog_action_logout">Logout</string>
 </resources>
