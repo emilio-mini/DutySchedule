@@ -185,6 +185,54 @@ object NetworkService {
         return verifiedSend(request, identifier = "$orgUnitDataGuid:$formattedFrom:$formattedTo")
     }
 
+    suspend fun loadUpcoming(
+        incode: Incode
+    ): Result<String?> {
+        val form = FormBody.Builder()
+            .add("year", "")
+            .add("month", "")
+            .add("dateDescendingSort", "true")
+            .add("max", "30")
+            .add("orgUnit", "")
+            .add("withSubOrgs", "on")
+            .add("form.event.onsubmit", "searchForm")
+
+        val request = Request(
+            url = NetworkTarget.LOAD_UPCOMING.httpUrl(),
+            headers = headersOf(
+                incode.token, incode.value,
+                "Content-Type", "application/x-www-form-urlencoded",
+                "Accept-Encoding", "gzip"
+            ),
+            body = form.build()
+        )
+        return verifiedSend(request)
+    }
+
+    suspend fun loadPast(
+        incode: Incode,
+        year: String
+    ): Result<String?> {
+        val form = FormBody.Builder()
+            .add("year", year)
+            .add("month", "")
+            .add("dateDescendingSort", "true")
+            .add("orgUnit", "")
+            .add("withSubOrgs", "on")
+            .add("form.event.onsubmit", "searchForm")
+
+        val request = Request(
+            url = NetworkTarget.LOAD_PAST.httpUrl(),
+            headers = headersOf(
+                incode.token, incode.value,
+                "Content-Type", "application/x-www-form-urlencoded",
+                "Accept-Encoding", "gzip"
+            ),
+            body = form.build()
+        )
+        return verifiedSend(request)
+    }
+
     suspend fun getMessages(
         incode: Incode,
         orgUnitDataGuid: String,
