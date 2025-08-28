@@ -47,8 +47,10 @@ import me.emiliomini.dutyschedule.models.prep.Employee
 import me.emiliomini.dutyschedule.ui.components.icons.Ambulance
 import me.emiliomini.dutyschedule.ui.components.icons.SteeringWheel
 import me.emiliomini.dutyschedule.services.alarm.AlarmService
+import me.emiliomini.dutyschedule.services.network.PrepService
 import me.emiliomini.dutyschedule.services.storage.DataKeys
 import me.emiliomini.dutyschedule.services.storage.StorageService
+import me.emiliomini.dutyschedule.ui.theme.Yellow
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -59,7 +61,6 @@ import java.util.concurrent.TimeUnit
 fun AppDutyCard(
     modifier: Modifier = Modifier,
     duty: DutyDefinition,
-    selfId: String? = null,
     onEmployeeClick: (AssignedEmployee) -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -69,7 +70,12 @@ fun AppDutyCard(
     val emptySeat = Employee("", stringResource(R.string.base_dutycard_no_staff), "0000000")
 
     // TODO: Make sure that all slots are filled completely and not just partially
-    val requirementsMet = duty.sew.isNotEmpty() && duty.el.isNotEmpty() && duty.tf.isNotEmpty()
+    val requirementsMetError = duty.el.isNotEmpty() && duty.tf.isNotEmpty()
+    val requirementsMetWarn = duty.sew.isNotEmpty() && duty.el.isNotEmpty() && duty.tf.isNotEmpty()
+
+    val selfId = PrepService.getSelf()?.guid;
+    val containsSelf =
+        duty.el.any { person -> person.employee.guid == selfId } || duty.tf.any { person -> person.employee.guid == selfId } || duty.rs.any { person -> person.employee.guid == selfId }
 
     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
     val localZoneId = ZoneId.systemDefault()
@@ -78,7 +84,14 @@ fun AppDutyCard(
     val endTime = duty.end.atZoneSameInstant(localZoneId).format(timeFormatter)
 
     var alarmBlocked by remember { mutableStateOf(false) }
-    var alarmSet by remember { mutableStateOf(AlarmService.isAlarmSet(context.applicationContext, duty.guid.hashCode())) }
+    var alarmSet by remember {
+        mutableStateOf(
+            AlarmService.isAlarmSet(
+                context.applicationContext,
+                duty.guid.hashCode()
+            )
+        )
+    }
 
     Card(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(8.dp)) {
         Row(
@@ -150,7 +163,7 @@ fun AppDutyCard(
                     AppPersonnelInfo(
                         icon = SteeringWheel,
                         employee = emptySeat,
-                        state = PersonnelInfoState.DISABLED
+                        state = PersonnelInfoState.DISABLED,
                     )
                 } else {
                     duty.el.forEachIndexed { index, assigned ->
@@ -158,7 +171,7 @@ fun AppDutyCard(
                             modifier = Modifier.clickable(onClick = { onEmployeeClick(assigned) }),
                             icon = if (index == 0) SteeringWheel else null,
                             employee = assigned.employee,
-                            state = if (selfId != null && assigned.employee.identifier == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
+                            state = if (assigned.employee.guid == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
                             showInfoBadge = assigned.info.isNotEmpty(),
                             info = if (!assigned.begin.isEqual(duty.begin) || !assigned.end.isEqual(
                                     duty.end
@@ -192,7 +205,7 @@ fun AppDutyCard(
                             modifier = Modifier.clickable(onClick = { onEmployeeClick(assigned) }),
                             icon = if (index == 0) Icons.Rounded.MedicalInformation else null,
                             employee = assigned.employee,
-                            state = if (selfId != null && assigned.employee.identifier == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
+                            state = if (assigned.employee.guid == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
                             showInfoBadge = assigned.info.isNotEmpty(),
                             info = if (!assigned.begin.isEqual(duty.begin) || !assigned.end.isEqual(
                                     duty.end
@@ -226,7 +239,7 @@ fun AppDutyCard(
                             modifier = Modifier.clickable(onClick = { onEmployeeClick(assigned) }),
                             icon = if (index == 0) Icons.Rounded.Badge else null,
                             employee = assigned.employee,
-                            state = if (selfId != null && assigned.employee.identifier == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
+                            state = if (assigned.employee.guid == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
                             showInfoBadge = assigned.info.isNotEmpty(),
                             info = if (!assigned.begin.isEqual(duty.begin) || !assigned.end.isEqual(
                                     duty.end
@@ -248,50 +261,66 @@ fun AppDutyCard(
                     }
                 }
             }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                IconButton(onClick = {
-                    alarmBlocked = true
-                    if (alarmSet) {
-                        scope.launch {
-                            AlarmService.deleteAlarm(context.applicationContext, duty.guid.hashCode())
-                            alarmSet = false
-                            alarmBlocked = false
-                        }
-                    } else {
-                        scope.launch {
-                            val alarmOffset = StorageService.load(DataKeys.ALARM_OFFSET)
-                            var alarmOffsetMillis = 0L
-                            if (alarmOffset != null) {
-                                try {
-                                    alarmOffsetMillis = TimeUnit.MINUTES.toMillis(alarmOffset)
-                                } catch (_: NumberFormatException) {
-                                }
-                            }
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .width(48.dp)
+                    .padding(top = 16.dp, end = 16.dp)
+            ) {
+                val currentMillis = OffsetDateTime.now().toInstant().toEpochMilli()
+                val dutyBeginMillis = duty.begin.toInstant().toEpochMilli()
 
-                            val dutyBeginMillis = duty.begin.toInstant().toEpochMilli()
-                            val timestamp = dutyBeginMillis - alarmOffsetMillis
-                            Log.d("Alarm", "Setting alarm for $timestamp, which is $alarmOffsetMillis before begin at ${dutyBeginMillis}")
-                            AlarmService.scheduleAlarm(
-                                context.applicationContext,
-                                timestamp,
-                                duty.guid.hashCode()
-                            )
-                            alarmBlocked = false
-                            alarmSet = true
+                if (dutyBeginMillis >= currentMillis && containsSelf) {
+                    IconButton(onClick = {
+                        alarmBlocked = true
+                        if (alarmSet) {
+                            scope.launch {
+                                AlarmService.deleteAlarm(
+                                    context.applicationContext,
+                                    duty.guid.hashCode()
+                                )
+                                alarmSet = false
+                                alarmBlocked = false
+                            }
+                        } else {
+                            scope.launch {
+                                val alarmOffset = StorageService.load(DataKeys.ALARM_OFFSET)
+                                var alarmOffsetMillis = 0L
+                                if (alarmOffset != null) {
+                                    try {
+                                        alarmOffsetMillis = TimeUnit.MINUTES.toMillis(alarmOffset)
+                                    } catch (_: NumberFormatException) {
+                                    }
+                                }
+
+                                val timestamp = dutyBeginMillis - alarmOffsetMillis
+                                Log.d(
+                                    "Alarm",
+                                    "Setting alarm for $timestamp, which is $alarmOffsetMillis before begin at ${dutyBeginMillis}"
+                                )
+                                AlarmService.scheduleAlarm(
+                                    context.applicationContext,
+                                    timestamp,
+                                    duty.guid.hashCode()
+                                )
+                                alarmBlocked = false
+                                alarmSet = true
+                            }
                         }
-                    }
-                }, enabled = !alarmBlocked) {
-                    if (alarmSet) {
-                        Icon(Icons.Outlined.AlarmOn, contentDescription = "Reminder set")
-                    } else {
-                        Icon(Icons.Outlined.AlarmAdd, contentDescription = "Set Reminder")
+                    }, enabled = !alarmBlocked) {
+                        if (alarmSet) {
+                            Icon(Icons.Outlined.AlarmOn, contentDescription = "Reminder set")
+                        } else {
+                            Icon(Icons.Outlined.AlarmAdd, contentDescription = "Set Reminder")
+                        }
                     }
                 }
-                if (!requirementsMet) {
+
+                if (!requirementsMetWarn || !requirementsMetError) {
                     Icon(
                         Icons.Outlined.Warning,
                         contentDescription = stringResource(R.string.base_dutycard_accessibility_requirements_issue),
-                        tint = MaterialTheme.colorScheme.error
+                        tint = if (!requirementsMetError) MaterialTheme.colorScheme.error else Yellow
                     )
                 }
             }
@@ -305,6 +334,5 @@ fun AppDutyCardPreview(modifier: Modifier = Modifier) {
     AppDutyCard(
         modifier = modifier,
         duty = DutyDefinition("", OffsetDateTime.now(), OffsetDateTime.now()),
-        selfId = "00023456"
     )
 }
