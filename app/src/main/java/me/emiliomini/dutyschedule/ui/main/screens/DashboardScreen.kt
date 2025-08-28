@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -53,7 +54,7 @@ fun DashboardScreen(modifier: Modifier = Modifier, bottomBar: @Composable (() ->
     var upcomingDuties by remember { mutableStateOf<List<MinimalDutyDefinition>>(emptyList()) }
     var pastDuties by remember { mutableStateOf<List<MinimalDutyDefinition>>(emptyList()) }
 
-    val requiredMinutes = 143 * 60
+    val requiredMinutes = 144 * 60
     var minutesSum by remember { mutableFloatStateOf(0f) }
     var progress by remember { mutableFloatStateOf(0f) }
 
@@ -90,7 +91,8 @@ fun DashboardScreen(modifier: Modifier = Modifier, bottomBar: @Composable (() ->
             Column(
                 modifier = modifier
                     .padding(innerPadding)
-                    .padding(20.dp),
+                    .padding(horizontal = 20.dp)
+                    .offset(y = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 ArcProgressIndicator(

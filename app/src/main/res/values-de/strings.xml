@@ -88,4 +88,7 @@
     <string name="base_avatar_dialog_birthdate">Geburtstag</string>
     <string name="base_avatar_dialog_primary">Hauptdienststelle</string>
     <string name="base_avatar_dialog_action_logout">Abmelden</string>
+    <string name="data_dutytype_ems">Rettungsdienst</string>
+    <string name="data_dutytype_training">Schulung</string>
+    <string name="data_dutytype_unknown">Unbekannt</string>
 </resources>
