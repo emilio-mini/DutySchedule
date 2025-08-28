@@ -1,5 +1,8 @@
 package me.emiliomini.dutyschedule.ui.main.screens
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,13 +14,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -32,7 +31,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -49,7 +47,11 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun DashboardScreen(modifier: Modifier = Modifier, bottomBar: @Composable (() -> Unit) = {}, onLogout: () -> Unit) {
+fun DashboardScreen(
+    modifier: Modifier = Modifier,
+    bottomBar: @Composable (() -> Unit) = {},
+    onLogout: () -> Unit
+) {
     val currentYear = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy"))
     var upcomingDuties by remember { mutableStateOf<List<MinimalDutyDefinition>>(emptyList()) }
     var pastDuties by remember { mutableStateOf<List<MinimalDutyDefinition>>(emptyList()) }
@@ -69,6 +71,15 @@ fun DashboardScreen(modifier: Modifier = Modifier, bottomBar: @Composable (() ->
         progress = minutesSum / requiredMinutes
         pastLoaded = true
     }
+
+    val animatedMinutes by animateFloatAsState(
+        targetValue = minutesSum,
+        animationSpec = tween(
+            durationMillis = 500,
+            easing = FastOutSlowInEasing
+        ),
+        label = "QuotaAnimation"
+    )
 
     Scaffold(
         modifier = modifier,
@@ -108,7 +119,7 @@ fun DashboardScreen(modifier: Modifier = Modifier, bottomBar: @Composable (() ->
                     ) {
                         Row(verticalAlignment = Alignment.Bottom) {
                             Text(
-                                String.format(Locale.getDefault(), "%.2f", minutesSum / 60f),
+                                String.format(Locale.getDefault(), "%.2f", animatedMinutes / 60f),
                                 style = MaterialTheme.typography.titleLarge
                             )
                             Text(
