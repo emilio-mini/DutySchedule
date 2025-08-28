@@ -82,7 +82,6 @@ import me.emiliomini.dutyschedule.models.prep.AssignedEmployee
 import me.emiliomini.dutyschedule.models.prep.OrgDay
 import me.emiliomini.dutyschedule.models.prep.Requirement
 import me.emiliomini.dutyschedule.models.prep.Skill
-import me.emiliomini.dutyschedule.models.prep.TimelineItem
 import me.emiliomini.dutyschedule.models.prep.ShiftType
 import me.emiliomini.dutyschedule.services.network.PrepService
 import me.emiliomini.dutyschedule.services.storage.DataKeys
@@ -91,7 +90,6 @@ import me.emiliomini.dutyschedule.services.storage.StorageService
 import me.emiliomini.dutyschedule.services.storage.viewmodels.OrgListViewModel
 import me.emiliomini.dutyschedule.services.storage.viewmodels.OrgListViewModelFactory
 import me.emiliomini.dutyschedule.ui.components.AppDateInfo
-import me.emiliomini.dutyschedule.ui.components.AppDutyCard
 import me.emiliomini.dutyschedule.ui.components.DutyCardCarousel
 import me.emiliomini.dutyschedule.ui.components.icons.Ambulance
 import me.emiliomini.dutyschedule.ui.components.icons.SteeringWheel
