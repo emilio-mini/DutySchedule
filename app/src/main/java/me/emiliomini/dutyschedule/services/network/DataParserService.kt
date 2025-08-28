@@ -138,6 +138,36 @@ object DataParserService {
                 employeeName = info
             }
 
+            //val skills: MutableList<Skill> = mutableListOf()
+
+            /*if (skill != null) {
+                for (j in 0 until skill.length()) {
+                    val skillObject = skill.getJSONObject(j)
+                    val skillDataGuid = skillObject.optString("skillDataGuid")
+                    val currentParsedSkill = Skill.Companion.parse(skillDataGuid)
+
+                    if (currentParsedSkill != Skill.INVALID) {
+                        /*if (currentParsedSkill == Skill.NFS) {
+                            bestSkillSoFar = Skill.NFS
+                            break
+                        }
+
+                        else if (currentParsedSkill == Skill.RS && bestSkillSoFar != Skill.NFS) {
+                            bestSkillSoFar = Skill.RS
+                        }
+
+                        else if (currentParsedSkill == Skill.AZUBI && bestSkillSoFar != Skill.NFS && bestSkillSoFar != Skill.RS) {
+                            bestSkillSoFar = Skill.AZUBI
+                        }
+
+                        else if (bestSkillSoFar == Skill.INVALID) {
+                            bestSkillSoFar = currentParsedSkill
+                        }*/
+                        skills.add(currentParsedSkill)
+                    }
+                }
+            }*/
+
             val employee = Employee(
                 employeeGuid,
                 employeeName,
@@ -148,7 +178,7 @@ object DataParserService {
                     else -> null
                 },
                 resourceTypeGuid = obj.getString("ressourceTypeDataGuid"),
-                skill = Skill.Companion.parse(skill),
+                //skill = Skill.Companion.parse(skill),
             )
 
             val assignedEmployee = AssignedEmployee(
@@ -157,7 +187,7 @@ object DataParserService {
                 begin,
                 end,
                 info,
-                skill = Skill.Companion.parse(skill)
+                //skill = Skill.Companion.parse(skill)
             )
 
             if (duties[guid] == null || duties[guid]?.el == null) {
@@ -272,7 +302,7 @@ object DataParserService {
             val birthdate = if (birthdateTimestamp.isNotBlank()) OffsetDateTime.parse(birthdateTimestamp) else null
 
             val staffToSkillsArray = obj.optJSONArray(Employee.Companion.SKILL_STAFF_POSITION)
-            var bestSkillSoFar: Skill = Skill.INVALID
+            val skills: MutableList<Skill> = mutableListOf()
 
             if (staffToSkillsArray != null) {
                 for (j in 0 until staffToSkillsArray.length()) {
@@ -281,22 +311,10 @@ object DataParserService {
                     val currentParsedSkill = Skill.Companion.parse(skillDataGuid)
 
                     if (currentParsedSkill != Skill.INVALID) {
-                        if (currentParsedSkill == Skill.NFS) {
-                            bestSkillSoFar = Skill.NFS
-                            break
+                        if (!skills.contains(currentParsedSkill)) {
+                            skills.add(currentParsedSkill)
                         }
 
-                        else if (currentParsedSkill == Skill.RS && bestSkillSoFar != Skill.NFS) {
-                            bestSkillSoFar = Skill.RS
-                        }
-
-                        else if (currentParsedSkill == Skill.AZUBI && bestSkillSoFar != Skill.NFS && bestSkillSoFar != Skill.RS) {
-                            bestSkillSoFar = Skill.AZUBI
-                        }
-
-                        else if (bestSkillSoFar == Skill.INVALID) {
-                            bestSkillSoFar = currentParsedSkill
-                        }
                     }
                 }
             }
@@ -311,7 +329,7 @@ object DataParserService {
                     obj.getString("externalIsRegularOrgUnit"),
                     birthdate,
                     obj.getString("ressourceTypeDataGuid"),
-                    skill = bestSkillSoFar
+                    skill = skills
                 )
             )
         }

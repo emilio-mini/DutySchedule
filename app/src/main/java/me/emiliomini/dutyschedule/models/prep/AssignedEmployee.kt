@@ -8,5 +8,4 @@ data class AssignedEmployee(
     val begin: OffsetDateTime,
     val end: OffsetDateTime,
     var info: String = "",
-    var skill: Skill
 )

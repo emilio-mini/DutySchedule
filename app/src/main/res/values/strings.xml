@@ -80,6 +80,11 @@
     <string name="data_skill_rs">RS</string>
     <string name="data_skill_nfs">NFS</string>
     <string name="data_skill_azubi">Slave</string>
+    <string name="data_skill_haend">HÄND</string>
+    <string name="data_skill_fk">Officer</string>
+    <string name="data_skill_pa">Instructor</string>
+    <string name="data_skill_sef">Driver</string>
+    <string name="data_skill_nkv">NKV</string>
     <string name="main_schedule_infobox_skill">Skill</string>
     <string name="nav_dashboard">Dashboard</string>
     <string name="main_dashboard_title">Dashboard</string>

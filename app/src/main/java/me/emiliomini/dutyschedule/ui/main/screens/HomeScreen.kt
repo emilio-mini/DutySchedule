@@ -24,6 +24,7 @@ import androidx.compose.material.icons.rounded.Badge
 import androidx.compose.material.icons.rounded.Business
 import androidx.compose.material.icons.rounded.Cake
 import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.Class
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.MedicalInformation
 import androidx.compose.material.icons.rounded.Phone
@@ -529,7 +530,19 @@ fun HomeScreen(
                                 )
                             )
                         }
-                        if (detailViewEmployee!!.employee.skill != Skill.INVALID) {
+                        if (detailViewEmployee!!.employee.skill.isNotEmpty()) {
+
+                            val skills = detailViewEmployee!!.employee.skill
+                            var filteredSkills = skills.toMutableList()
+
+                            if (skills.contains(Skill.RS) && skills.contains(Skill.AZUBI)) {
+                                filteredSkills.remove(Skill.AZUBI)
+                            }
+                            if (skills.contains(Skill.NFS) && skills.contains(Skill.RS)) {
+                                filteredSkills.remove(Skill.RS)
+                            }
+                            val skillTxt = filteredSkills.map { stringResource(it.getResourceString()) }.joinToString(", ")
+
                             ListItem(
                                 modifier = Modifier
                                     .background(
@@ -537,10 +550,10 @@ fun HomeScreen(
                                         shape = RoundedCornerShape(4.dp)
                                     ),
                                 leadingContent = {
-                                    Icon(Icons.Rounded.Business, contentDescription = null)
+                                    Icon(Icons.Rounded.Class, contentDescription = null)
                                 },
                                 headlineContent = {
-                                    Text(stringResource(detailViewEmployee!!.employee.skill.getResourceString()))
+                                    Text(skillTxt)
                                 },
                                 supportingContent = {
                                     Text(stringResource(R.string.main_schedule_infobox_skill))

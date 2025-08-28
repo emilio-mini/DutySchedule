@@ -11,7 +11,7 @@ data class Employee(
     var defaultOrg: String = "",
     var birthdate: OffsetDateTime? = null,
     var resourceTypeGuid: String = "",
-    var skill: Skill = Skill.INVALID
+    var skill: MutableList<Skill> = mutableListOf()
 ) {
     companion object {
         val SEW_NAME = "SEW"
