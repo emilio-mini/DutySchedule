@@ -9,6 +9,8 @@ import me.emiliomini.dutyschedule.models.prep.Employee
 import me.emiliomini.dutyschedule.models.prep.Requirement
 import me.emiliomini.dutyschedule.models.prep.Type
 import me.emiliomini.dutyschedule.models.github.GithubRelease
+import me.emiliomini.dutyschedule.models.network.CreateDutyResponse
+import me.emiliomini.dutyschedule.models.network.CreatedDuty
 import me.emiliomini.dutyschedule.models.prep.DutyType
 import me.emiliomini.dutyschedule.models.prep.Message
 import me.emiliomini.dutyschedule.models.prep.MinimalDutyDefinition
@@ -124,6 +126,7 @@ object DataParserService {
             }
 
             val guid = obj.getString("parentDataGuid")
+            val dataGuid = obj.getString("dataGuid")
             val beginTimestamp = obj.getString(DutyDefinition.Companion.BEGIN_POSITION)
             val endTimestamp = obj.getString(DutyDefinition.Companion.END_POSITION)
             val begin = OffsetDateTime.parse(beginTimestamp)
@@ -166,6 +169,7 @@ object DataParserService {
             }
 
             when (requirement) {
+                // Vehicle
                 Requirement.SEW.value -> {
                     duties[guid]?.sew?.add(assignedEmployee)
                 }
@@ -182,40 +186,51 @@ object DataParserService {
                     duties[guid]?.sew?.add(assignedEmployee)
                 }
 
+                // Staff
+
                 Requirement.EL.value -> {
                     duties[guid]?.el?.add(assignedEmployee)
+                    duties[guid]?.el_slot_id = dataGuid
                 }
 
                 Requirement.RTW_RS.value -> {
                     duties[guid]?.el?.add(assignedEmployee)
+                    duties[guid]?.el_slot_id = dataGuid
                 }
 
                 Requirement.TF.value -> {
                     duties[guid]?.tf?.add(assignedEmployee)
+                    duties[guid]?.tf_slot_id = dataGuid
                 }
 
                 Requirement.RS.value -> {
                     duties[guid]?.rs?.add(assignedEmployee)
+                    duties[guid]?.rs_slot_id = dataGuid
                 }
 
                 Requirement.HAEND_EL.value -> {
                     duties[guid]?.el?.add(assignedEmployee)
+                    duties[guid]?.el_slot_id = dataGuid
                 }
 
                 Requirement.RTW_NFS.value -> {
                     duties[guid]?.tf?.add(assignedEmployee)
+                    duties[guid]?.tf_slot_id = dataGuid
                 }
 
                 Requirement.ITF_NFS.value -> {
                     duties[guid]?.tf?.add(assignedEmployee)
+                    duties[guid]?.tf_slot_id = dataGuid
                 }
 
                 Requirement.ITF_LKW.value -> {
                     duties[guid]?.el?.add(assignedEmployee)
+                    duties[guid]?.el_slot_id = dataGuid
                 }
 
                 else -> {
                     duties[guid]?.rs?.add(assignedEmployee)
+                    duties[guid]?.rs_slot_id = dataGuid
                 }
             }
         }
@@ -381,8 +396,64 @@ object DataParserService {
         }
     }
 
+    fun parseCreateAndAllocateDuty(json: JSONObject): CreateDutyResponse? {
+        val errors = json.optJSONArray("errorMessages")?.toListOfStrings().orEmpty()
+        val successMsg = json.optString("successMessage", "").takeIf { it.isNotBlank() }
+        val alertMsg   = json.optString("alertMessage", "").takeIf { it.isNotBlank() }
+        val changedId  = json.optString("changedDataId", "").takeIf { it.isNotBlank() }
+        val dataObj    = json.optJSONObject("data")
+
+        val duty = dataObj?.let { d ->
+            val guid  = d.optString("guid", "")
+            val dGuid = d.optString("dataGuid", "")
+            val org   = d.optString("orgUnitDataGuid", "")
+            val begin = d.optString("begin", "")
+            val end   = d.optString("end", "")
+
+            if (guid.isBlank() || dGuid.isBlank() || org.isBlank() || begin.isNullOrBlank() || end.isNullOrBlank()) {
+                null
+            } else {
+                CreatedDuty(
+                    guid = guid,
+                    dataGuid = dGuid,
+                    orgUnitDataGuid = org,
+                    begin = OffsetDateTime.parse(begin), // "2025-08-31T05:00:00Z"
+                    end   = OffsetDateTime.parse(end),
+                    requirementGroupChildDataGuid = d.optString("requirementGroupChildDataGuid", "").nullIfBlank(),
+                    resourceTypeDataGuid          = d.optString("ressourceTypeDataGuid", "").nullIfBlank(),
+                    skillDataGuid                 = d.optString("skillDataGuid", "").nullIfBlank(),
+                    skillCharacterisationDataGuid = d.optString("skillCharacterisationDataGuid", "").nullIfBlank(),
+                    shiftDataGuid                 = d.optString("shiftDataGuid", "").nullIfBlank(),
+                    planBaseDataGuid              = d.optString("planBaseDataGuid", "").nullIfBlank(),
+                    planBaseEntryDataGuid         = d.optString("planBaseEntryDataGuid", "").nullIfBlank(),
+                    allocationDataGuid            = d.optString("allocationDataGuid", "").nullIfBlank(),
+                    allocationRessourceDataGuid   = d.optString("allocationRessourceDataGuid", "").nullIfBlank(),
+                    released = d.optInt("released", 0),
+                    bookable = d.optInt("bookable", 0),
+                    resourceName = d.optJSONObject("additionalInfos")?.optString("ressource_name", "").nullIfBlank()
+                )
+            }
+        }
+
+        val success = errors.isEmpty() && duty != null
+        return CreateDutyResponse(
+            success = success,
+            errorMessages = errors,
+            successMessage = successMsg,
+            alertMessage = alertMsg,
+            changedDataId = changedId,
+            duty = duty
+        )
+    }
+
     private fun removeLeadingZeros(input: String): String {
         val regex = "^0+".toRegex()
         return input.replace(regex, "")
     }
+
+    // Helper Functions
+    private fun JSONArray.toListOfStrings(): List<String> =
+        (0 until length()).mapNotNull { idx -> optString(idx, null) }.filter { it.isNotBlank() }
+
+    private fun String?.nullIfBlank(): String? = if (this.isNullOrBlank()) null else this
 }

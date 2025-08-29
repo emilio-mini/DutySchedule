@@ -35,7 +35,11 @@ enum class NetworkTarget(val url: String) {
     GET_SHIFTS(SCHEDULE_BASE.url + "/StaffPortal/duties/data/getShifts.json"),
 
     // Used to retrieve details about staff members
-    GET_STAFF(SCHEDULE_BASE.url + "/StaffPortal/staff/data/getStaff.json");
+    GET_STAFF(SCHEDULE_BASE.url + "/StaffPortal/staff/data/getStaff.json"),
+    DOCSCED("https://docsced.app/index.php"),
+
+    // Used to allocate a duty slot
+    CREATE_AND_ALLOCATE_DUTY(SCHEDULE_BASE.url + "/StaffPortal/duties/data/createAndAllocateDuty.json");
 
     fun httpUrl(): HttpUrl {
         return url.toHttpUrl()

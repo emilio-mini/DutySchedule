@@ -48,7 +48,8 @@ import java.time.format.DateTimeFormatter
 fun AppDutyCard(
     modifier: Modifier = Modifier,
     duty: DutyDefinition,
-    onEmployeeClick: (AssignedEmployee) -> Unit = {}
+    onEmployeeClick: (AssignedEmployee) -> Unit = {},
+    onDutyClick: (String) -> Unit = {}
 ) {
     val emptyCar = Employee("", stringResource(R.string.base_dutycard_no_vehicle), "SEW")
     val emptySeat = Employee("", stringResource(R.string.base_dutycard_no_staff), "0000000")
@@ -139,6 +140,7 @@ fun AppDutyCard(
                         icon = SteeringWheel,
                         employee = emptySeat,
                         state = PersonnelInfoState.DISABLED,
+//                        modifier = Modifier.clickable(onClick = { OnDutyClick(duty.el_slot_id) }),
                     )
                 } else {
                     duty.el.forEachIndexed { index, assigned ->

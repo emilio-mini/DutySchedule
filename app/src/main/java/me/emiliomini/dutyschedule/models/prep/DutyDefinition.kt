@@ -9,7 +9,10 @@ data class DutyDefinition(
     var sew: MutableList<AssignedEmployee> = mutableListOf(),
     var el: MutableList<AssignedEmployee> = mutableListOf(),
     var tf: MutableList<AssignedEmployee> = mutableListOf(),
-    var rs: MutableList<AssignedEmployee> = mutableListOf()
+    var rs: MutableList<AssignedEmployee> = mutableListOf(),
+    var el_slot_id: String? = null,
+    var tf_slot_id: String? = null,
+    var rs_slot_id: String? = null
 ) {
     companion object {
         const val BEGIN_POSITION = "begin"

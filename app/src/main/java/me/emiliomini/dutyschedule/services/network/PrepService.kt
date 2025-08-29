@@ -7,6 +7,7 @@ import me.emiliomini.dutyschedule.datastore.prep.org.OrgItemsProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
 import me.emiliomini.dutyschedule.debug.DebugFlags.AVOID_PREP_API
 import me.emiliomini.dutyschedule.enums.NetworkTarget
+import me.emiliomini.dutyschedule.models.network.CreateDutyResponse
 import me.emiliomini.dutyschedule.models.prep.AssignedEmployee
 import me.emiliomini.dutyschedule.models.prep.DutyDefinition
 import me.emiliomini.dutyschedule.models.prep.Employee
@@ -578,6 +579,26 @@ object PrepService {
                 )
 
             }
+        }
+    }
+
+    suspend fun createAndAllocateDuty(planDataGuid: String): Result<CreateDutyResponse> {
+        val code = getIncode() ?: return Result.failure(IOException("Not logged in!"))
+
+        val body = NetworkService.createAndAllocateDuty(code, planDataGuid).getOrNull()
+            ?: return Result.failure(IOException("Failed to create duty!"))
+
+        val parsed = try {
+            DataParserService.parseCreateAndAllocateDuty(JSONObject(body))
+        } catch (e: Exception) {
+            Log.e(TAG, "Invalid JSON! $body")
+            null
+        }
+
+        return if (parsed == null) {
+            Result.failure(IOException("Failed to parse create duty response!"))
+        } else {
+            Result.success(parsed)
         }
     }
 
