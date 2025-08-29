@@ -421,4 +421,22 @@ object NetworkService {
         networkCache[request.url.toString()] =
             NetworkCacheData(identifier, request, data, Instant.now())
     }
+
+    suspend fun loadDocScedCalendar(
+        config: String,                 // z.B. "welsstadt" oder "welsland"
+        gran: String? = null,           // optional: "wee" | "mon" | "nextMon" | "ges"
+        ignoreCache: Boolean = false
+    ): Result<String?> {
+        val urlBuilder = "https://docsced.app/index.php".toHttpUrl().newBuilder()
+            .addQueryParameter("site", "calendar")
+            .addQueryParameter("config", config)
+
+        if (!gran.isNullOrBlank()) {
+            urlBuilder.addQueryParameter("gran", gran)
+        }
+
+        val url = urlBuilder.build()
+        Log.d(TAG, "Loading DocSced calendar: $url")
+        return get(url, verified = false, ignoreCache = ignoreCache)
+    }
 }

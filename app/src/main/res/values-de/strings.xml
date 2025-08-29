@@ -102,4 +102,5 @@
     <string name="data_skill_fk">Führungskraft</string>
     <string name="data_skill_pa">Praxisanleiter</string>
     <string name="data_skill_sef">SEF</string>
+    <string name="data_requirement_haend_dr">Dr.</string>
 </resources>

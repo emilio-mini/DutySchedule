@@ -4,7 +4,7 @@ import java.time.OffsetDateTime
 
 data class AssignedEmployee(
     var employee: Employee,
-    val requirement: Requirement,
+    var requirement: Requirement,
     val begin: OffsetDateTime,
     val end: OffsetDateTime,
     var info: String = "",

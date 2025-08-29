@@ -41,7 +41,7 @@ import kotlin.math.abs
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DutyAlarmListItem(modifier: Modifier = Modifier) {
-    val context = LocalContext.current
+    LocalContext.current
     var showDialog by remember { mutableStateOf(false) }
     var selectedDurationMin by remember { mutableLongStateOf(90L) }
     val scope = rememberCoroutineScope()

@@ -130,43 +130,13 @@ object DataParserService {
             val end = OffsetDateTime.parse(endTimestamp)
             val requirement = obj.getString(Requirement.Companion.POSITION)
             val info = obj.getString(Employee.Companion.INFO_POSITION)
-            val skill = obj.getString(Skill.Companion.POSITION)
+            obj.getString(Skill.Companion.POSITION)
             var employeeName = obj.getJSONObject(Employee.Companion.ADDITIONAL_INFOS_POSITION)
                 .getString(Employee.Companion.ADDITIONAL_INFOS_NAME_POSITION)
             if (employeeName.isBlank() || employeeName == "Verplant") {
                 // Using INFO Tag as fallback
                 employeeName = info
             }
-
-            //val skills: MutableList<Skill> = mutableListOf()
-
-            /*if (skill != null) {
-                for (j in 0 until skill.length()) {
-                    val skillObject = skill.getJSONObject(j)
-                    val skillDataGuid = skillObject.optString("skillDataGuid")
-                    val currentParsedSkill = Skill.Companion.parse(skillDataGuid)
-
-                    if (currentParsedSkill != Skill.INVALID) {
-                        /*if (currentParsedSkill == Skill.NFS) {
-                            bestSkillSoFar = Skill.NFS
-                            break
-                        }
-
-                        else if (currentParsedSkill == Skill.RS && bestSkillSoFar != Skill.NFS) {
-                            bestSkillSoFar = Skill.RS
-                        }
-
-                        else if (currentParsedSkill == Skill.AZUBI && bestSkillSoFar != Skill.NFS && bestSkillSoFar != Skill.RS) {
-                            bestSkillSoFar = Skill.AZUBI
-                        }
-
-                        else if (bestSkillSoFar == Skill.INVALID) {
-                            bestSkillSoFar = currentParsedSkill
-                        }*/
-                        skills.add(currentParsedSkill)
-                    }
-                }
-            }*/
 
             val employee = Employee(
                 employeeGuid,

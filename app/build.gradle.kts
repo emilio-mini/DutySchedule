@@ -102,4 +102,5 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation (libs.accompanist.permissions)
     implementation(libs.compose.markdown)
+    implementation("org.jsoup:jsoup:1.21.2")
 }

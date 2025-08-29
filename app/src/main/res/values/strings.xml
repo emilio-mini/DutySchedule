@@ -101,4 +101,5 @@
     <string name="data_dutytype_training">Training</string>
     <string name="data_dutytype_unknown">Unknown</string>
     <string name="data_requirement_haend_el">SANHÄ</string>
+    <string name="data_requirement_haend_dr">Dr.</string>
 </resources>

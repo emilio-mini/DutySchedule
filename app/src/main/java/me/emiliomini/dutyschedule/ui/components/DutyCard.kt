@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AlarmAdd
 import androidx.compose.material.icons.outlined.AlarmOn
 import androidx.compose.material.icons.outlined.Warning
+import androidx.compose.material.icons.rounded.AssignmentInd
 import androidx.compose.material.icons.rounded.Badge
 import androidx.compose.material.icons.rounded.MedicalInformation
 import androidx.compose.material3.Card
@@ -74,7 +75,7 @@ fun AppDutyCard(
     val requirementsMetError = (duty.el.isNotEmpty() && duty.tf.isNotEmpty()) || (duty.el.isNotEmpty() && !duty.tf.any { person -> person.requirement == Requirement.HAEND } )
     val requirementsMetWarn = duty.sew.isNotEmpty() && duty.el.isNotEmpty() && duty.tf.isNotEmpty() || (duty.el.isNotEmpty() && !duty.tf.any { person -> person.requirement == Requirement.HAEND } )
 
-    val selfId = PrepService.getSelf()?.guid;
+    val selfId = PrepService.getSelf()?.guid
     val containsSelf =
         duty.el.any { person -> person.employee.guid == selfId } || duty.tf.any { person -> person.employee.guid == selfId } || duty.rs.any { person -> person.employee.guid == selfId }
 
@@ -204,10 +205,10 @@ fun AppDutyCard(
                     duty.tf.forEachIndexed { index, assigned ->
                         AppPersonnelInfo(
                             modifier = Modifier.clickable(onClick = { onEmployeeClick(assigned) }),
-                            icon = if (index == 0) Icons.Rounded.MedicalInformation else null,
+                            icon = if (index == 0) if(assigned.requirement == Requirement.HAEND_DR) Icons.Rounded.AssignmentInd else  Icons.Rounded.MedicalInformation else null,
                             employee = assigned.employee,
                             state = if (assigned.employee.guid == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
-                            showInfoBadge = assigned.info.isNotEmpty(),
+                            showInfoBadge = assigned.info.isNotEmpty() && assigned.requirement != Requirement.HAEND_DR,
                             info = if (!assigned.begin.isEqual(duty.begin) || !assigned.end.isEqual(
                                     duty.end
                                 )
