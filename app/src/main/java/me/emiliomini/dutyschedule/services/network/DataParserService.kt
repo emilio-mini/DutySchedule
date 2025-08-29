@@ -9,6 +9,8 @@ import me.emiliomini.dutyschedule.models.prep.Employee
 import me.emiliomini.dutyschedule.models.prep.Requirement
 import me.emiliomini.dutyschedule.models.prep.Type
 import me.emiliomini.dutyschedule.models.github.GithubRelease
+import me.emiliomini.dutyschedule.models.network.CreateDutyResponse
+import me.emiliomini.dutyschedule.models.network.CreatedDuty
 import me.emiliomini.dutyschedule.models.prep.DutyType
 import me.emiliomini.dutyschedule.models.prep.Message
 import me.emiliomini.dutyschedule.models.prep.MinimalDutyDefinition
@@ -124,49 +126,20 @@ object DataParserService {
             }
 
             val guid = obj.getString("parentDataGuid")
+            val dataGuid = obj.getString("dataGuid")
             val beginTimestamp = obj.getString(DutyDefinition.Companion.BEGIN_POSITION)
             val endTimestamp = obj.getString(DutyDefinition.Companion.END_POSITION)
             val begin = OffsetDateTime.parse(beginTimestamp)
             val end = OffsetDateTime.parse(endTimestamp)
             val requirement = obj.getString(Requirement.Companion.POSITION)
             val info = obj.getString(Employee.Companion.INFO_POSITION)
-            val skill = obj.getString(Skill.Companion.POSITION)
+            obj.getString(Skill.Companion.POSITION)
             var employeeName = obj.getJSONObject(Employee.Companion.ADDITIONAL_INFOS_POSITION)
                 .getString(Employee.Companion.ADDITIONAL_INFOS_NAME_POSITION)
             if (employeeName.isBlank() || employeeName == "Verplant") {
                 // Using INFO Tag as fallback
                 employeeName = info
             }
-
-            //val skills: MutableList<Skill> = mutableListOf()
-
-            /*if (skill != null) {
-                for (j in 0 until skill.length()) {
-                    val skillObject = skill.getJSONObject(j)
-                    val skillDataGuid = skillObject.optString("skillDataGuid")
-                    val currentParsedSkill = Skill.Companion.parse(skillDataGuid)
-
-                    if (currentParsedSkill != Skill.INVALID) {
-                        /*if (currentParsedSkill == Skill.NFS) {
-                            bestSkillSoFar = Skill.NFS
-                            break
-                        }
-
-                        else if (currentParsedSkill == Skill.RS && bestSkillSoFar != Skill.NFS) {
-                            bestSkillSoFar = Skill.RS
-                        }
-
-                        else if (currentParsedSkill == Skill.AZUBI && bestSkillSoFar != Skill.NFS && bestSkillSoFar != Skill.RS) {
-                            bestSkillSoFar = Skill.AZUBI
-                        }
-
-                        else if (bestSkillSoFar == Skill.INVALID) {
-                            bestSkillSoFar = currentParsedSkill
-                        }*/
-                        skills.add(currentParsedSkill)
-                    }
-                }
-            }*/
 
             val employee = Employee(
                 employeeGuid,
@@ -175,6 +148,7 @@ object DataParserService {
                     Requirement.SEW.value -> Employee.Companion.SEW_NAME
                     Requirement.ITF.value -> Employee.Companion.ITF_NAME
                     Requirement.RTW.value -> Employee.Companion.RTW_NAME
+                    Requirement.HAEND.value -> Employee.Companion.HAEND_NAME
                     else -> null
                 },
                 resourceTypeGuid = obj.getString("ressourceTypeDataGuid"),
@@ -195,6 +169,7 @@ object DataParserService {
             }
 
             when (requirement) {
+                // Vehicle
                 Requirement.SEW.value -> {
                     duties[guid]?.sew?.add(assignedEmployee)
                 }
@@ -207,36 +182,55 @@ object DataParserService {
                     duties[guid]?.sew?.add(assignedEmployee)
                 }
 
+                Requirement.HAEND.value -> {
+                    duties[guid]?.sew?.add(assignedEmployee)
+                }
+
+                // Staff
+
                 Requirement.EL.value -> {
                     duties[guid]?.el?.add(assignedEmployee)
+                    duties[guid]?.el_slot_id = dataGuid
                 }
 
                 Requirement.RTW_RS.value -> {
                     duties[guid]?.el?.add(assignedEmployee)
+                    duties[guid]?.el_slot_id = dataGuid
                 }
 
                 Requirement.TF.value -> {
                     duties[guid]?.tf?.add(assignedEmployee)
+                    duties[guid]?.tf_slot_id = dataGuid
                 }
 
                 Requirement.RS.value -> {
                     duties[guid]?.rs?.add(assignedEmployee)
+                    duties[guid]?.rs_slot_id = dataGuid
+                }
+
+                Requirement.HAEND_EL.value -> {
+                    duties[guid]?.el?.add(assignedEmployee)
+                    duties[guid]?.el_slot_id = dataGuid
                 }
 
                 Requirement.RTW_NFS.value -> {
                     duties[guid]?.tf?.add(assignedEmployee)
+                    duties[guid]?.tf_slot_id = dataGuid
                 }
 
                 Requirement.ITF_NFS.value -> {
                     duties[guid]?.tf?.add(assignedEmployee)
+                    duties[guid]?.tf_slot_id = dataGuid
                 }
 
                 Requirement.ITF_LKW.value -> {
                     duties[guid]?.el?.add(assignedEmployee)
+                    duties[guid]?.el_slot_id = dataGuid
                 }
 
                 else -> {
                     duties[guid]?.rs?.add(assignedEmployee)
+                    duties[guid]?.rs_slot_id = dataGuid
                 }
             }
         }
@@ -359,30 +353,107 @@ object DataParserService {
     }
 
     fun parseGetMessages(root: JSONObject): List<Message>? {
-        val data = root.getJSONObject(this.DATA_ROOT_POSITION)
-        val messages = mutableListOf<Message>()
 
-        for (key in data.keys()) {
-            val obj = data.getJSONObject(key)
+        try {
+            if (!root.has("data")) {
+                Log.w(TAG, "parseGetMessages: 'data' field missing in JSON root.")
+                return listOf()
+            }
 
-            messages.add(
-                Message(
-                    obj.getString("dataGuid"),
-                    obj.getString("typeGuid"),
-                    obj.getString("title"),
-                    obj.getString("message"),
-                    obj.getInt("messagePriority"),
-                    OffsetDateTime.parse(obj.getString("displayFrom")),
-                    OffsetDateTime.parse(obj.getString("displayTo"))
+            val dataNode =
+                root.opt("data") // opt verwenden, um keine Exception bei falschem Typ zu werfen
+
+            if (dataNode == null) { // Sollte durch root.has abgedeckt sein, aber doppelt sicher
+                Log.w(TAG, "parseGetMessages: 'data' field is null.")
+                return listOf()
+            }
+
+
+            val data = root.getJSONObject(this.DATA_ROOT_POSITION)
+            val messages = mutableListOf<Message>()
+
+            for (key in data.keys()) {
+                val obj = data.getJSONObject(key)
+
+                messages.add(
+                    Message(
+                        obj.getString("dataGuid"),
+                        obj.getString("typeGuid"),
+                        obj.getString("title"),
+                        obj.getString("message"),
+                        obj.getInt("messagePriority"),
+                        OffsetDateTime.parse(obj.getString("displayFrom")),
+                        OffsetDateTime.parse(obj.getString("displayTo"))
+                    )
                 )
-            )
+            }
+
+            return messages
+        } catch (e: Exception) {
+            Log.e(TAG, "Error parsing JSON", e)
+            return listOf()
+
+        }
+    }
+
+    fun parseCreateAndAllocateDuty(json: JSONObject): CreateDutyResponse? {
+        val errors = json.optJSONArray("errorMessages")?.toListOfStrings().orEmpty()
+        val successMsg = json.optString("successMessage", "").takeIf { it.isNotBlank() }
+        val alertMsg   = json.optString("alertMessage", "").takeIf { it.isNotBlank() }
+        val changedId  = json.optString("changedDataId", "").takeIf { it.isNotBlank() }
+        val dataObj    = json.optJSONObject("data")
+
+        val duty = dataObj?.let { d ->
+            val guid  = d.optString("guid", "")
+            val dGuid = d.optString("dataGuid", "")
+            val org   = d.optString("orgUnitDataGuid", "")
+            val begin = d.optString("begin", "")
+            val end   = d.optString("end", "")
+
+            if (guid.isBlank() || dGuid.isBlank() || org.isBlank() || begin.isNullOrBlank() || end.isNullOrBlank()) {
+                null
+            } else {
+                CreatedDuty(
+                    guid = guid,
+                    dataGuid = dGuid,
+                    orgUnitDataGuid = org,
+                    begin = OffsetDateTime.parse(begin), // "2025-08-31T05:00:00Z"
+                    end   = OffsetDateTime.parse(end),
+                    requirementGroupChildDataGuid = d.optString("requirementGroupChildDataGuid", "").nullIfBlank(),
+                    resourceTypeDataGuid          = d.optString("ressourceTypeDataGuid", "").nullIfBlank(),
+                    skillDataGuid                 = d.optString("skillDataGuid", "").nullIfBlank(),
+                    skillCharacterisationDataGuid = d.optString("skillCharacterisationDataGuid", "").nullIfBlank(),
+                    shiftDataGuid                 = d.optString("shiftDataGuid", "").nullIfBlank(),
+                    planBaseDataGuid              = d.optString("planBaseDataGuid", "").nullIfBlank(),
+                    planBaseEntryDataGuid         = d.optString("planBaseEntryDataGuid", "").nullIfBlank(),
+                    allocationDataGuid            = d.optString("allocationDataGuid", "").nullIfBlank(),
+                    allocationRessourceDataGuid   = d.optString("allocationRessourceDataGuid", "").nullIfBlank(),
+                    released = d.optInt("released", 0),
+                    bookable = d.optInt("bookable", 0),
+                    resourceName = d.optJSONObject("additionalInfos")?.optString("ressource_name", "").nullIfBlank()
+                )
+            }
         }
 
-        return messages
+        val success = errors.isEmpty() && duty != null
+        return CreateDutyResponse(
+            success = success,
+            errorMessages = errors,
+            successMessage = successMsg,
+            alertMessage = alertMsg,
+            changedDataId = changedId,
+            duty = duty
+        )
     }
 
     private fun removeLeadingZeros(input: String): String {
         val regex = "^0+".toRegex()
         return input.replace(regex, "")
     }
+
+    // Helper Functions
+    private fun JSONArray.toListOfStrings(): List<String> =
+        (0 until length()).mapNotNull { idx -> optString(idx, null) }.filter { it.isNotBlank() }
+
+    private fun String?.nullIfBlank(): String? = if (this.isNullOrBlank()) null else this
 }

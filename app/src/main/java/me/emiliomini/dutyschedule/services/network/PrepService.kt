@@ -7,11 +7,16 @@ import me.emiliomini.dutyschedule.datastore.prep.org.OrgItemsProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
 import me.emiliomini.dutyschedule.debug.DebugFlags.AVOID_PREP_API
 import me.emiliomini.dutyschedule.enums.NetworkTarget
+import me.emiliomini.dutyschedule.models.network.CreateDutyResponse
+import me.emiliomini.dutyschedule.models.prep.AssignedEmployee
 import me.emiliomini.dutyschedule.models.prep.DutyDefinition
 import me.emiliomini.dutyschedule.models.prep.Employee
 import me.emiliomini.dutyschedule.models.prep.Incode
 import me.emiliomini.dutyschedule.models.prep.Message
 import me.emiliomini.dutyschedule.models.prep.MinimalDutyDefinition
+import me.emiliomini.dutyschedule.models.prep.Org
+import me.emiliomini.dutyschedule.models.prep.Requirement
+import me.emiliomini.dutyschedule.services.parsers.DocScedParserService
 import me.emiliomini.dutyschedule.models.prep.OrgDay
 import me.emiliomini.dutyschedule.services.storage.DataKeys
 import me.emiliomini.dutyschedule.services.storage.DataStores
@@ -20,8 +25,13 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okio.IOException
 import org.json.JSONException
 import org.json.JSONObject
+import java.time.Duration
+import java.time.LocalDate
+import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
+import java.time.ZoneId
+import java.time.ZonedDateTime
 
 object PrepService {
     private const val TAG = "PrepService"
@@ -106,7 +116,7 @@ object PrepService {
             return false
         }
 
-        var orgs: OrgItemsProto? = null
+        var orgs: OrgItemsProto?
         var allowedOrgs: List<String>? = null
         try {
             orgs = this.loadOrgs()
@@ -165,7 +175,6 @@ object PrepService {
             return this.login(username, password)
         }
 
-        // Try restoring using keepalive
         val keepAlive = NetworkService.keepAlive().getOrNull()
         if (keepAlive == "true") {
             return true
@@ -331,7 +340,6 @@ object PrepService {
         }
         val staffMap = staff.associateBy { it.guid }
 
-        // Note: This is trash
         plan.forEach { dutyDefinition ->
             dutyDefinition.el.forEach { assigned ->
                 assigned.employee = staffMap[assigned.employee.guid] ?: assigned.employee
@@ -342,6 +350,17 @@ object PrepService {
             dutyDefinition.rs.forEach { assigned ->
                 assigned.employee = staffMap[assigned.employee.guid] ?: assigned.employee
             }
+        }
+
+        try {
+            augmentHaendWithDocScedTf(
+                duties = plan,
+                selectedOrgGuid = orgUnitDataGuid,
+                from = from,
+                to = to
+            )
+        } catch (e: Exception) {
+            Log.w(TAG, "HÄND-Augmentierung fehlgeschlagen: ${e.message}")
         }
 
         val days = mutableMapOf<String, OrgDay>()
@@ -380,6 +399,12 @@ object PrepService {
                         && it.el.isEmpty()
                         && it.rs.isEmpty()
             }
+
+            /*
+            if (!duty.el.isEmpty() && !duty.tf.isEmpty() || duty.sew.any { it.requirement == Requirement.HAEND }) {
+                timelineItems.add(TimelineItem.Duty(duty))
+            }
+             */
             day.nightShift = if (lastNightIndex > 0) day.nightShift.dropLast(day.nightShift.size - lastNightIndex) else day.nightShift
         }
 
@@ -464,5 +489,154 @@ object PrepService {
         return Result.success(messages)
     }
 
+    private suspend fun augmentHaendWithDocScedTf(
+        duties: List<DutyDefinition>,
+        selectedOrgGuid: String,
+        from: OffsetDateTime,
+        to: OffsetDateTime
+    ) {
+        val config = Org.parse(selectedOrgGuid).getDocscedConfig()
+        if (config == null) {
+            Log.d(TAG, "DocSced: ausgewählte Org ist kein HÄND (Wels/Wels-Land) – skip")
+            return
+        }
+
+        val html = NetworkService.loadDocScedCalendar(config = config, gran = "ges").getOrNull()
+        if (html.isNullOrBlank()) {
+            Log.w(TAG, "DocSced: kein HTML geladen für $config")
+            return
+        }
+        val days = DocScedParserService.parseFahrdienst(html).getOrNull().orEmpty()
+        val byDate = days.associateBy { it.date } // Map<LocalDate, FahrdienstDay>
+        Log.d(TAG, "DocSced: ${days.size} Fahrdienst-Tage geparst für $config")
+
+        for (duty in duties) {
+            val haends = duty.sew.filter { it.requirement == Requirement.HAEND }
+            if (haends.isEmpty()) continue
+
+            for (haend in haends) {
+                val zone = ZoneId.systemDefault()
+
+                val mid = localMidpoint(haend.begin, haend.end, zone)
+                val night = isNight(mid)
+                val dsDate = docscedRowDate(mid)
+
+                val dsDay = byDate[dsDate]
+                if (dsDay == null) {
+                    Log.d(TAG, "DocSced: kein Zeilendatum $dsDate ($config)")
+                    continue
+                }
+
+                Log.d(
+                    TAG,
+                    "DocSced[$config][$dsDate] TAG=${dsDay.tag.joinToString()} | NACHT=${dsDay.nacht.joinToString()}"
+                )
+
+                val candidate = if (night) dsDay.nacht.firstOrNull() else dsDay.tag.firstOrNull()
+                if (candidate.isNullOrBlank()) {
+                    Log.d(
+                        TAG,
+                        "DocSced: kein ${if (night) "Nacht" else "Tag"}-Arzt am $dsDate ($config)"
+                    )
+                    continue
+                }
+
+                val label =
+                    "HÄND ${if (config == "welsland") "Wels-Land" else "Wels-Stadt"} (${if (night) "Nacht" else "Tag"})"
+                val docEmployee = Employee(
+                    guid = "docsced:$config:$dsDate:${if (night) "nacht" else "tag"}",
+                    name = candidate,
+                    //identifier = stringResource(R.string.data_requirement_haend_dr)
+                    identifier = "Dr."
+                )
+
+                val targetTf =
+                    duty.tf.firstOrNull { overlaps(it.begin, it.end, haend.begin, haend.end) }
+                        ?: duty.tf.firstOrNull()
+                if (targetTf != null) {
+                    targetTf.employee = docEmployee
+                    targetTf.info =
+                        (targetTf.info + if (targetTf.info.isBlank()) label else " | $label").trim()
+                    targetTf.requirement = Requirement.HAEND_DR
+                } else {
+                    duty.tf.add(
+                        AssignedEmployee(
+                            employee = docEmployee,
+                            begin = haend.begin,
+                            end = haend.end,
+                            requirement = Requirement.HAEND_DR,
+                            info = label
+                        )
+                    )
+                }
+
+                Log.d(
+                    TAG,
+                    "DocSced: ${docEmployee.name} → TF gesetzt ($config, $dsDate, ${if (night) "Nacht" else "Tag"}) " +
+                            "für HÄND ${
+                                haend.begin.atZoneSameInstant(zone).toLocalTime()
+                            }–${haend.end.atZoneSameInstant(zone).toLocalTime()}"
+                )
+
+            }
+        }
+    }
+
+    suspend fun createAndAllocateDuty(planDataGuid: String): Result<CreateDutyResponse> {
+        val code = getIncode() ?: return Result.failure(IOException("Not logged in!"))
+
+        val body = NetworkService.createAndAllocateDuty(code, planDataGuid).getOrNull()
+            ?: return Result.failure(IOException("Failed to create duty!"))
+
+        val parsed = try {
+            DataParserService.parseCreateAndAllocateDuty(JSONObject(body))
+        } catch (e: Exception) {
+            Log.e(TAG, "Invalid JSON! $body")
+            null
+        }
+
+        return if (parsed == null) {
+            Result.failure(IOException("Failed to parse create duty response!"))
+        } else {
+            Result.success(parsed)
+        }
+    }
+
+    private fun localMidpoint(b: OffsetDateTime, e: OffsetDateTime, zone: ZoneId): ZonedDateTime {
+        val bl = b.atZoneSameInstant(zone)
+        val el = e.atZoneSameInstant(zone)
+        val dur = Duration.between(bl, el)      // korrekt auch über Mitternacht & DST
+        return bl.plus(dur.dividedBy(2))
+    }
+
+    private fun isNight(mid: ZonedDateTime): Boolean {
+        val t = mid.toLocalTime()
+        return t < LocalTime.of(6, 0) || t >= LocalTime.of(18, 0)
+    }
+
+    /** DocSced zeigt die Nachtdienste in der Zeile des ABENDS.
+     *  Liegt der Midpoint < 06:00, ordnen wir ihn dem VORTAG zu.
+     */
+    private fun docscedRowDate(mid: ZonedDateTime): LocalDate {
+        val t = mid.toLocalTime()
+        return if (t < LocalTime.of(6, 0)) mid.toLocalDate().minusDays(1) else mid.toLocalDate()
+    }
+
+    private fun overlaps(
+        aStart: OffsetDateTime,
+        aEnd: OffsetDateTime,
+        bStart: OffsetDateTime,
+        bEnd: OffsetDateTime
+    ): Boolean {
+        val aS = aStart.toInstant()
+        val aE = aEnd.toInstant()
+        val bS = bStart.toInstant()
+        val bE = bEnd.toInstant()
+        return aS < bE && bS < aE
+    }
+
+    private fun isNight(begin: LocalTime, end: LocalTime): Boolean {
+        return begin >= LocalTime.of(19, 0) || end <= LocalTime.of(7, 0)
+    }
 }
 

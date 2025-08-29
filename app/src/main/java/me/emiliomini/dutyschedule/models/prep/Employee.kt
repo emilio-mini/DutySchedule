@@ -17,6 +17,7 @@ data class Employee(
         val SEW_NAME = "SEW"
         val ITF_NAME = "ITF"
         val RTW_NAME = "RTW"
+        val HAEND_NAME = "HÄND"
         val STAFF_GUID_POSITION = "dataGuid"
         val STAFF_NAME_POSITION = "name"
         val STAFF_IDENTIFIER_POSITION = "personalnummer"

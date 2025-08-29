@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Warning
+import androidx.compose.material.icons.rounded.AssignmentInd
 import androidx.compose.material.icons.rounded.Badge
 import androidx.compose.material.icons.rounded.MedicalInformation
 import androidx.compose.material3.Card
@@ -34,6 +35,7 @@ import me.emiliomini.dutyschedule.models.prep.AssignedEmployee
 import me.emiliomini.dutyschedule.models.prep.DutyDefinition
 import me.emiliomini.dutyschedule.models.prep.Employee
 import me.emiliomini.dutyschedule.services.network.PrepService
+import me.emiliomini.dutyschedule.models.prep.Requirement
 import me.emiliomini.dutyschedule.ui.components.icons.Ambulance
 import me.emiliomini.dutyschedule.ui.components.icons.SteeringWheel
 import me.emiliomini.dutyschedule.ui.theme.Yellow
@@ -46,15 +48,20 @@ import java.time.format.DateTimeFormatter
 fun AppDutyCard(
     modifier: Modifier = Modifier,
     duty: DutyDefinition,
-    onEmployeeClick: (AssignedEmployee) -> Unit = {}
+    onEmployeeClick: (AssignedEmployee) -> Unit = {},
+    onDutyClick: (String) -> Unit = {}
 ) {
     val emptyCar = Employee("", stringResource(R.string.base_dutycard_no_vehicle), "SEW")
     val emptySeat = Employee("", stringResource(R.string.base_dutycard_no_staff), "0000000")
 
-    val requirementsMetError = duty.el.isNotEmpty() && duty.tf.isNotEmpty()
-    val requirementsMetWarn = duty.sew.isNotEmpty() && duty.el.isNotEmpty() && duty.tf.isNotEmpty()
+    val requirementsMetError =
+        (duty.el.isNotEmpty() && duty.tf.isNotEmpty()) || (duty.el.isNotEmpty() && !duty.tf.any { person -> person.requirement == Requirement.HAEND })
+    val requirementsMetWarn =
+        duty.sew.isNotEmpty() && duty.el.isNotEmpty() && duty.tf.isNotEmpty() || (duty.el.isNotEmpty() && !duty.tf.any { person -> person.requirement == Requirement.HAEND })
 
     val selfId = PrepService.getSelf()?.guid;
+    val containsSelf =
+        duty.el.any { person -> person.employee.guid == selfId } || duty.tf.any { person -> person.employee.guid == selfId } || duty.rs.any { person -> person.employee.guid == selfId }
 
     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
     val localZoneId = ZoneId.systemDefault()
@@ -133,6 +140,7 @@ fun AppDutyCard(
                         icon = SteeringWheel,
                         employee = emptySeat,
                         state = PersonnelInfoState.DISABLED,
+//                        modifier = Modifier.clickable(onClick = { OnDutyClick(duty.el_slot_id) }),
                     )
                 } else {
                     duty.el.forEachIndexed { index, assigned ->
@@ -172,10 +180,10 @@ fun AppDutyCard(
                     duty.tf.forEachIndexed { index, assigned ->
                         AppPersonnelInfo(
                             modifier = Modifier.clickable(onClick = { onEmployeeClick(assigned) }),
-                            icon = if (index == 0) Icons.Rounded.MedicalInformation else null,
+                            icon = if (index == 0) if (assigned.requirement == Requirement.HAEND_DR) Icons.Rounded.AssignmentInd else Icons.Rounded.MedicalInformation else null,
                             employee = assigned.employee,
                             state = if (assigned.employee.guid == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
-                            showInfoBadge = assigned.info.isNotEmpty(),
+                            showInfoBadge = assigned.info.isNotEmpty() && assigned.requirement != Requirement.HAEND_DR,
                             info = if (!assigned.begin.isEqual(duty.begin) || !assigned.end.isEqual(
                                     duty.end
                                 )

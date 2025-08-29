@@ -421,4 +421,48 @@ object NetworkService {
         networkCache[request.url.toString()] =
             NetworkCacheData(identifier, request, data, Instant.now())
     }
+
+    suspend fun loadDocScedCalendar(
+        config: String,                 // z.B. "welsstadt" oder "welsland"
+        gran: String? = null,           // optional: "wee" | "mon" | "nextMon" | "ges"
+        ignoreCache: Boolean = false
+    ): Result<String?> {
+        val urlBuilder = NetworkTarget.DOCSCED.httpUrl().newBuilder()
+            .addQueryParameter("site", "calendar")
+            .addQueryParameter("config", config)
+
+        if (!gran.isNullOrBlank()) {
+            urlBuilder.addQueryParameter("gran", gran)
+        }
+
+        val url = urlBuilder.build()
+        Log.d(TAG, "Loading DocSced calendar: $url")
+        return get(url, verified = false, ignoreCache = ignoreCache)
+    }
+
+    suspend fun createAndAllocateDuty(
+        incode: Incode,
+        planDataGuid: String,
+        ignoreCache: Boolean = true
+    ): Result<String?> {
+        val form = FormBody.Builder()
+            .add("plan", planDataGuid)
+            .build()
+
+        val request = Request(
+            url = NetworkTarget.CREATE_AND_ALLOCATE_DUTY.httpUrl(),
+            headers = headersOf(
+                incode.token, incode.value,                                         // z.B. "x-incode-38d757ae3c": "<value>"
+                "Content-Type", "application/x-www-form-urlencoded; charset=UTF-8",
+                "Accept", "application/json, text/javascript, */*; q=0.01",
+                "X-Requested-With", "XMLHttpRequest",
+                "Accept-Encoding", "gzip",
+                "Origin", "https://dienstplan.o.roteskreuz.at",
+                "Referer", "https://dienstplan.o.roteskreuz.at/StaffPortal/dispo.php"
+            ),
+            body = form
+        )
+
+        return verifiedSend(request, ignoreCache = ignoreCache, identifier = planDataGuid)
+    }
 }
