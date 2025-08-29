@@ -79,9 +79,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
 import me.emiliomini.dutyschedule.models.prep.AssignedEmployee
+import me.emiliomini.dutyschedule.models.prep.OrgDay
 import me.emiliomini.dutyschedule.models.prep.Requirement
 import me.emiliomini.dutyschedule.models.prep.Skill
-import me.emiliomini.dutyschedule.models.prep.TimelineItem
+import me.emiliomini.dutyschedule.models.prep.ShiftType
 import me.emiliomini.dutyschedule.services.network.PrepService
 import me.emiliomini.dutyschedule.services.storage.DataKeys
 import me.emiliomini.dutyschedule.services.storage.DataStores
@@ -89,7 +90,7 @@ import me.emiliomini.dutyschedule.services.storage.StorageService
 import me.emiliomini.dutyschedule.services.storage.viewmodels.OrgListViewModel
 import me.emiliomini.dutyschedule.services.storage.viewmodels.OrgListViewModelFactory
 import me.emiliomini.dutyschedule.ui.components.AppDateInfo
-import me.emiliomini.dutyschedule.ui.components.AppDutyCard
+import me.emiliomini.dutyschedule.ui.components.DutyCardCarousel
 import me.emiliomini.dutyschedule.ui.components.icons.Ambulance
 import me.emiliomini.dutyschedule.ui.components.icons.SteeringWheel
 import java.time.Instant
@@ -123,7 +124,7 @@ fun HomeScreen(
     var selectedEndDate by remember { mutableStateOf<Long?>(currentMillis + defaultDateSpacing) }
 
     val context = LocalContext.current
-    var timeline by remember { mutableStateOf<List<TimelineItem>?>(null) }
+    var timeline by remember { mutableStateOf<List<OrgDay>?>(null) }
 
     var allowedOrgs by remember { mutableStateOf<List<String>?>(null) }
     var selectedOrg by remember { mutableStateOf<String?>(null) }
@@ -252,20 +253,13 @@ fun HomeScreen(
                     contentPadding = PaddingValues(bottom = 20.dp)
                 ) {
                     items(timeline ?: emptyList()) { item ->
-                        when (item) {
-                            is TimelineItem.Date -> {
-                                AppDateInfo(date = item.date)
-                            }
-
-                            is TimelineItem.Duty -> {
-                                AppDutyCard(
-                                    duty = item.duty,
-                                    onEmployeeClick = {
-                                        detailViewEmployee = it
-                                    }
-                                )
-                            }
-                        }
+                        AppDateInfo(date = item.date)
+                        DutyCardCarousel(duties = item.dayShift, shiftType = ShiftType.DAY_SHIFT, onEmployeeClick = {
+                            detailViewEmployee = it
+                        })
+                        DutyCardCarousel(duties = item.nightShift, shiftType = ShiftType.NIGHT_SHIFT, onEmployeeClick = {
+                            detailViewEmployee = it
+                        })
                     }
                 }
             } else {

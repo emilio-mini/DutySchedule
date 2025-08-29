@@ -102,4 +102,5 @@
     <string name="data_dutytype_unknown">Unknown</string>
     <string name="data_requirement_haend_el">SANHÄ</string>
     <string name="data_requirement_haend_dr">Dr.</string>
+    <string name="base_carousel_no_vehicle">Available</string>
 </resources>

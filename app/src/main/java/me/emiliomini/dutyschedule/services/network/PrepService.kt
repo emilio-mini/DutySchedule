@@ -15,8 +15,8 @@ import me.emiliomini.dutyschedule.models.prep.Message
 import me.emiliomini.dutyschedule.models.prep.MinimalDutyDefinition
 import me.emiliomini.dutyschedule.models.prep.Org
 import me.emiliomini.dutyschedule.models.prep.Requirement
-import me.emiliomini.dutyschedule.models.prep.TimelineItem
 import me.emiliomini.dutyschedule.services.parsers.DocScedParserService
+import me.emiliomini.dutyschedule.models.prep.OrgDay
 import me.emiliomini.dutyschedule.services.storage.DataKeys
 import me.emiliomini.dutyschedule.services.storage.DataStores
 import me.emiliomini.dutyschedule.services.storage.StorageService
@@ -28,6 +28,7 @@ import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
@@ -38,6 +39,28 @@ object PrepService {
     private var self: Employee? = null
 
     private val messages = mutableMapOf<String, List<Message>>()
+
+    private val dutyComparator = Comparator<DutyDefinition> { d1, d2 ->
+        fun DutyDefinition.nonEmptySecondaryCount(): Int =
+            listOf(el, tf, rs).count { it.isNotEmpty() }
+
+        val d1HasSew = d1.sew.isNotEmpty()
+        val d2HasSew = d2.sew.isNotEmpty()
+
+        if (d1HasSew && !d2HasSew) return@Comparator -1
+        if (!d1HasSew && d2HasSew) return@Comparator 1
+
+        if (d1HasSew && d2HasSew) {
+            val name1 = d1.sew.first().employee.name
+            val name2 = d2.sew.first().employee.name
+            val nameCmp = name1.compareTo(name2)
+            if (nameCmp != 0) return@Comparator nameCmp
+        }
+
+        val d1Count = d1.nonEmptySecondaryCount()
+        val d2Count = d2.nonEmptySecondaryCount()
+        return@Comparator d1Count.compareTo(d2Count)
+    }
 
     fun getSelf(): Employee? {
         return this.self
@@ -295,7 +318,7 @@ object PrepService {
         orgUnitDataGuid: String,
         from: OffsetDateTime,
         to: OffsetDateTime
-    ): Result<List<TimelineItem>> {
+    ): Result<List<OrgDay>> {
         val plan = this.loadPlan(orgUnitDataGuid, from, to).getOrNull()
         if (plan.isNullOrEmpty()) {
             Log.e(TAG, "Failed to load plan")
@@ -339,23 +362,53 @@ object PrepService {
             Log.w(TAG, "HÄND-Augmentierung fehlgeschlagen: ${e.message}")
         }
 
-        val sortedPlan = plan.sortedBy { it.begin }
-        val timelineItems = mutableListOf<TimelineItem>()
+        val days = mutableMapOf<String, OrgDay>()
+        val keyPattern = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        for (duty in plan) {
+            val date = duty.begin.format(keyPattern)
+            val day = days.getOrDefault(
+                date,
+                OrgDay(orgUnitDataGuid, duty.begin, emptyList(), emptyList())
+            )
 
-        var previousBegin: OffsetDateTime? = null
-        for (duty in sortedPlan) {
-            if (previousBegin == null || previousBegin.toLocalDate() != duty.begin.toLocalDate()) {
-                timelineItems.add(TimelineItem.Date(duty.begin))
+            if (duty.begin.hour <= 16) { // TODO: Check actual day/night-shift differentiation
+                day.dayShift = day.dayShift + listOf(duty)
+            } else {
+                day.nightShift = day.nightShift + listOf(duty)
             }
 
+            days[date] = day
+        }
+
+        val daysList = days.values.toList()
+        for (day in daysList) {
+            day.dayShift = day.dayShift.sortedWith(dutyComparator)
+            val lastDayIndex = 1 + day.dayShift.indexOfFirst {
+                it.sew.isEmpty()
+                        && it.tf.isEmpty()
+                        && it.el.isEmpty()
+                        && it.rs.isEmpty()
+            }
+            day.dayShift = if (lastDayIndex > 0) day.dayShift.dropLast(day.dayShift.size - lastDayIndex) else day.dayShift
+
+            day.nightShift = day.nightShift.sortedWith(dutyComparator)
+            val lastNightIndex = 1 + day.nightShift.indexOfFirst {
+                it.sew.isEmpty()
+                        && it.tf.isEmpty()
+                        && it.el.isEmpty()
+                        && it.rs.isEmpty()
+            }
+
+            /*
             if (!duty.el.isEmpty() && !duty.tf.isEmpty() || duty.sew.any { it.requirement == Requirement.HAEND }) {
                 timelineItems.add(TimelineItem.Duty(duty))
             }
-            previousBegin = duty.begin
+             */
+            day.nightShift = if (lastNightIndex > 0) day.nightShift.dropLast(day.nightShift.size - lastNightIndex) else day.nightShift
         }
 
-        Log.d(TAG, "Loaded ${timelineItems.size} timeline elements")
-        return Result.success(timelineItems.toList())
+        Log.d(TAG, "Loaded ${days.size} days on the timeline")
+        return Result.success(daysList)
     }
 
     suspend fun loadPast(year: String): Result<List<MinimalDutyDefinition>> {
