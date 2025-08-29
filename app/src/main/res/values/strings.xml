@@ -105,4 +105,8 @@
     <string name="base_carousel_no_vehicle">Available</string>
     <string name="data_org_we">Wels-Stadt</string>
     <string name="data_org_wl">Wels-Land</string>
+    <string name="create_duty_title">Add duty?</string>
+    <string name="create_duty_subtitle">Do you want to allocate this slot?</string>
+    <string name="create_duty_cancel">abort</string>
+    <string name="create_duty_confirm">continue</string>
 </resources>

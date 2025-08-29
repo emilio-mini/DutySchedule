@@ -33,7 +33,8 @@ fun DutyCardCarousel(
     modifier: Modifier = Modifier,
     duties: List<DutyDefinition>,
     shiftType: ShiftType,
-    onEmployeeClick: (AssignedEmployee) -> Unit = {}
+    onEmployeeClick: (AssignedEmployee) -> Unit = {},
+    onDutyClick: (String?) -> Unit
 ) {
     if (duties.isEmpty()) {
         return
@@ -89,7 +90,8 @@ fun DutyCardCarousel(
         ) { index ->
             AppDutyCard(
                 duty = duties[index],
-                onEmployeeClick = onEmployeeClick
+                onEmployeeClick = onEmployeeClick,
+                onDutyClick = onDutyClick
             )
         }
     }

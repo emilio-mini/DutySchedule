@@ -1,41 +1,20 @@
 package me.emiliomini.dutyschedule.ui.main.screens
 
-import android.content.Intent
-import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Notes
-import androidx.compose.material.icons.rounded.AlternateEmail
-import androidx.compose.material.icons.rounded.Badge
-import androidx.compose.material.icons.rounded.Business
-import androidx.compose.material.icons.rounded.Cake
 import androidx.compose.material.icons.rounded.CalendarMonth
-import androidx.compose.material.icons.rounded.Class
-import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material.icons.rounded.MedicalInformation
-import androidx.compose.material.icons.rounded.Phone
-import androidx.compose.material.icons.rounded.Schedule
-import androidx.compose.material.icons.rounded.Textsms
-import androidx.compose.material.icons.rounded.Whatsapp
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ButtonGroupDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DateRangePicker
@@ -44,11 +23,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -56,32 +32,30 @@ import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDateRangePickerState
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
+import me.emiliomini.dutyschedule.models.network.CreateDutyResponse
+import me.emiliomini.dutyschedule.models.network.CreatedDuty
 import me.emiliomini.dutyschedule.models.prep.AssignedEmployee
 import me.emiliomini.dutyschedule.models.prep.OrgDay
-import me.emiliomini.dutyschedule.models.prep.Requirement
-import me.emiliomini.dutyschedule.models.prep.Skill
 import me.emiliomini.dutyschedule.models.prep.ShiftType
 import me.emiliomini.dutyschedule.services.network.PrepService
 import me.emiliomini.dutyschedule.services.storage.DataKeys
@@ -90,13 +64,12 @@ import me.emiliomini.dutyschedule.services.storage.StorageService
 import me.emiliomini.dutyschedule.services.storage.viewmodels.OrgListViewModel
 import me.emiliomini.dutyschedule.services.storage.viewmodels.OrgListViewModelFactory
 import me.emiliomini.dutyschedule.ui.components.AppDateInfo
+import me.emiliomini.dutyschedule.ui.components.AssignConfirmSheet
 import me.emiliomini.dutyschedule.ui.components.DutyCardCarousel
-import me.emiliomini.dutyschedule.ui.components.icons.Ambulance
-import me.emiliomini.dutyschedule.ui.components.icons.SteeringWheel
+import me.emiliomini.dutyschedule.ui.components.EmployeeDetailSheet
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -123,7 +96,6 @@ fun HomeScreen(
     var selectedStartDate by remember { mutableStateOf<Long?>(currentMillis) }
     var selectedEndDate by remember { mutableStateOf<Long?>(currentMillis + defaultDateSpacing) }
 
-    val context = LocalContext.current
     var timeline by remember { mutableStateOf<List<OrgDay>?>(null) }
 
     var allowedOrgs by remember { mutableStateOf<List<String>?>(null) }
@@ -131,6 +103,11 @@ fun HomeScreen(
     val orgs by viewModel.orgsFlow.collectAsStateWithLifecycle(
         initialValue = emptyList<OrgProto>()
     )
+
+    var pendingPlanGuid by remember { mutableStateOf<String?>(null) }
+    var creating by remember { mutableStateOf(false) }
+    var createError by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         val orgs = StorageService.load(DataKeys.ALLOWED_ORGS)
@@ -188,9 +165,6 @@ fun HomeScreen(
     }
 
     val stationScrollState = rememberScrollState()
-
-    val detailActionsScrollState = rememberScrollState()
-    val detailViewState = rememberModalBottomSheetState()
     var detailViewEmployee by remember { mutableStateOf<AssignedEmployee?>(null) }
 
     Scaffold(modifier = modifier, topBar = {
@@ -256,10 +230,10 @@ fun HomeScreen(
                         AppDateInfo(date = item.date)
                         DutyCardCarousel(duties = item.dayShift, shiftType = ShiftType.DAY_SHIFT, onEmployeeClick = {
                             detailViewEmployee = it
-                        })
+                        }, onDutyClick = { planGuid -> pendingPlanGuid = planGuid })
                         DutyCardCarousel(duties = item.nightShift, shiftType = ShiftType.NIGHT_SHIFT, onEmployeeClick = {
                             detailViewEmployee = it
-                        })
+                        }, onDutyClick = { planGuid -> pendingPlanGuid = planGuid })
                     }
                 }
             } else {
@@ -320,381 +294,76 @@ fun HomeScreen(
     }
 
     if (detailViewEmployee != null) {
-        val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
-        val localZoneId = ZoneId.systemDefault()
+        EmployeeDetailSheet(
+            employee = detailViewEmployee,
+            orgs = orgs,
+            onDismiss = { detailViewEmployee = null }
+        )
+    }
 
-        ModalBottomSheet(
-            onDismissRequest = {
-                detailViewEmployee = null
-            },
-            sheetState = detailViewState
-        ) {
-            Column(
-                modifier = Modifier.padding(horizontal = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    detailViewEmployee!!.employee.name,
-                    style = MaterialTheme.typography.titleLarge
+    AssignConfirmSheet(
+        planGuid = pendingPlanGuid,
+        loading = creating,
+        error = createError,
+        onDismiss = {
+            if (!creating) { pendingPlanGuid = null; createError = null }
+        },
+        onConfirm = {
+            val guid = pendingPlanGuid ?: return@AssignConfirmSheet
+            creating = true
+            createError = null
+            scope.launch {
+
+                //val resp = PrepService.createAndAllocateDuty(guid)
+                val resp = Result.success(CreateDutyResponse(
+                    success = true,
+                    errorMessages = emptyList(),
+                    alertMessage = null,
+                    successMessage = "",
+                    changedDataId = "",
+                    duty = CreatedDuty(
+                        guid = "",
+                        dataGuid = "",
+                        orgUnitDataGuid = "",
+                        begin = OffsetDateTime.now(),
+                        end = OffsetDateTime.now(),
+                        requirementGroupChildDataGuid = "",
+                        resourceTypeDataGuid = "",
+                        skillDataGuid = "",
+                        skillCharacterisationDataGuid = "",
+                        shiftDataGuid = "",
+                        planBaseDataGuid = "",
+                        planBaseEntryDataGuid = "",
+                        allocationDataGuid = "",
+                        allocationRessourceDataGuid = "",
+                        released = 0,
+                        bookable = 0,
+                        resourceName = ""
+                    )
                 )
-                Text(
-                    detailViewEmployee!!.employee.identifier ?: "",
-                    modifier = Modifier.padding(bottom = 4.dp),
-                    style = MaterialTheme.typography.bodyMediumEmphasized
                 )
-                Card(colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        if (detailViewEmployee!!.info.isNotBlank()) {
-                            ListItem(
-                                modifier = Modifier
-                                    .background(
-                                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                        shape = RoundedCornerShape(4.dp)
-                                    ),
-                                leadingContent = {
-                                    Icon(
-                                        Icons.Rounded.Info,
-                                        contentDescription = null
-                                    )
-                                },
-                                headlineContent = {
-                                    Text(detailViewEmployee!!.info)
-                                },
-                                supportingContent = {
-                                    Text(stringResource(R.string.main_schedule_infobox_info))
-                                },
-                                colors = ListItemDefaults.colors(
-                                    containerColor = Color.Transparent
-                                )
-                            )
-                        }
-                        ListItem(
-                            modifier = Modifier
-                                .background(
-                                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                    shape = RoundedCornerShape(4.dp)
-                                ),
-                            leadingContent = {
-                                when (detailViewEmployee!!.requirement) {
-                                    Requirement.SEW -> Icon(
-                                        Ambulance,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
+                val ok = resp.getOrNull()?.success == true
 
-                                    Requirement.EL -> Icon(
-                                        SteeringWheel,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-
-                                    Requirement.TF -> Icon(
-                                        Icons.Rounded.MedicalInformation,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-
-                                    else -> Icon(
-                                        Icons.Rounded.Badge,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                            },
-                            headlineContent = {
-                                Text(
-                                    stringResource(detailViewEmployee!!.requirement.getResourceString())
-                                )
-                            },
-                            supportingContent = {
-                                Text(stringResource(R.string.main_schedule_infobox_assigned_role))
-                            },
-                            colors = ListItemDefaults.colors(
-                                containerColor = Color.Transparent
-                            )
-                        )
-                        ListItem(
-                            modifier = Modifier
-                                .background(
-                                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                    shape = RoundedCornerShape(4.dp)
-                                ),
-                            leadingContent = {
-                                Icon(
-                                    Icons.Rounded.Schedule,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                            },
-                            headlineContent = {
-                                Text(
-                                    "${
-                                        detailViewEmployee!!.begin.atZoneSameInstant(localZoneId)
-                                            .format(timeFormatter)
-                                    } - ${
-                                        detailViewEmployee!!.end.atZoneSameInstant(localZoneId)
-                                            .format(timeFormatter)
-                                    }"
-                                )
-                            },
-                            supportingContent = {
-                                Text(
-                                    detailViewEmployee!!.begin.format(
-                                        DateTimeFormatter.ofPattern("d MMMM yyyy")
-                                    )
-                                )
-                            },
-                            colors = ListItemDefaults.colors(
-                                containerColor = Color.Transparent
-                            )
-                        )
-                    }
-                }
-
-                val nowMillis = OffsetDateTime.now().toInstant().toEpochMilli()
-                val messages =
-                    PrepService.getMessages()[detailViewEmployee!!.employee.resourceTypeGuid]
-                        ?: emptyList()
-                val filteredMessages = messages.filter {
-                    it.displayFrom.toInstant()
-                        .toEpochMilli() <= nowMillis && it.displayTo.toInstant()
-                        .toEpochMilli() >= nowMillis
-                }
-                if (filteredMessages.isNotEmpty()) {
-                    Spacer(Modifier)
-                    Card(colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            for (message in messages) {
-
-                                ListItem(
-                                    modifier = Modifier
-                                        .background(
-                                            color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                            shape = RoundedCornerShape(4.dp)
-                                        ),
-                                    leadingContent = {
-                                        Icon(
-                                            Icons.AutoMirrored.Rounded.Notes,
-                                            contentDescription = null
-                                        )
-                                    },
-                                    headlineContent = {
-                                        Text(message.message)
-                                    },
-                                    supportingContent = {
-                                        Text(message.title)
-                                    },
-                                    colors = ListItemDefaults.colors(
-                                        containerColor = Color.Transparent
-                                    )
-                                )
-
-                            }
-                        }
-                    }
-                }
-                Spacer(Modifier)
-                Card(colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        if (detailViewEmployee!!.employee.defaultOrg.isNotBlank()) {
-                            ListItem(
-                                modifier = Modifier
-                                    .background(
-                                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                        shape = RoundedCornerShape(4.dp)
-                                    ),
-                                leadingContent = {
-                                    Icon(Icons.Rounded.Business, contentDescription = null)
-                                },
-                                headlineContent = {
-                                    var primaryOrg =
-                                        orgs.firstOrNull { it.abbreviation == detailViewEmployee!!.employee.defaultOrg }
-                                    if (primaryOrg == null) {
-                                        primaryOrg =
-                                            orgs.firstOrNull { it.identifier == detailViewEmployee!!.employee.defaultOrg }
-                                    }
-
-                                    Text(if (primaryOrg != null) primaryOrg.title else detailViewEmployee!!.employee.defaultOrg)
-                                },
-                                supportingContent = {
-                                    Text(stringResource(R.string.main_schedule_infobox_primary))
-                                },
-                                colors = ListItemDefaults.colors(
-                                    containerColor = Color.Transparent
-                                )
-                            )
-                        }
-                        if (detailViewEmployee!!.employee.skill.isNotEmpty()) {
-
-                            val skills = detailViewEmployee!!.employee.skill
-                            val filteredSkills = skills.toMutableList()
-
-                            if (skills.contains(Skill.RS) && skills.contains(Skill.AZUBI)) {
-                                filteredSkills.remove(Skill.AZUBI)
-                            }
-                            if (skills.contains(Skill.NFS) && skills.contains(Skill.RS)) {
-                                filteredSkills.remove(Skill.RS)
-                            }
-                            val skillTxt =
-                                filteredSkills.map { stringResource(it.getResourceString()) }
-                                    .joinToString(", ")
-
-                            ListItem(
-                                modifier = Modifier
-                                    .background(
-                                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                        shape = RoundedCornerShape(4.dp)
-                                    ),
-                                leadingContent = {
-                                    Icon(Icons.Rounded.Class, contentDescription = null)
-                                },
-                                headlineContent = {
-                                    Text(skillTxt)
-                                },
-                                supportingContent = {
-                                    Text(stringResource(R.string.main_schedule_infobox_skill))
-                                },
-                                colors = ListItemDefaults.colors(
-                                    containerColor = Color.Transparent
-                                )
-                            )
-                        }
-                        if (detailViewEmployee!!.employee.birthdate != null) {
-                            ListItem(
-                                modifier = Modifier
-                                    .background(
-                                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                        shape = RoundedCornerShape(4.dp)
-                                    ),
-                                leadingContent = {
-                                    Icon(Icons.Rounded.Cake, contentDescription = null)
-                                },
-                                headlineContent = {
-                                    Text(
-                                        detailViewEmployee!!.employee.birthdate!!.format(
-                                            DateTimeFormatter.ofPattern("d MMMM yyyy")
-                                        )
-                                    )
-                                },
-                                supportingContent = {
-                                    Text(stringResource(R.string.main_schedule_infobox_birthday))
-                                },
-                                colors = ListItemDefaults.colors(
-                                    containerColor = Color.Transparent
-                                )
-                            )
-                        }
-                    }
-                }
-                if (detailViewEmployee!!.requirement != Requirement.SEW) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(detailActionsScrollState),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        AssistChip(
-                            onClick = {
-                                val uri = "tel:${detailViewEmployee!!.employee.phone}".toUri()
-                                val intent = Intent(Intent.ACTION_DIAL, uri)
-                                context.startActivity(intent)
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    Icons.Rounded.Phone,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(
-                                        AssistChipDefaults.IconSize
-                                    )
-                                )
-                            },
-                            label = {
-                                Text(stringResource(R.string.main_schedule_infobox_actions_call))
-                            },
-                            enabled = detailViewEmployee!!.employee.phone.isNotBlank()
-                        )
-                        AssistChip(
-                            onClick = {
-                                val uri = "smsto:${detailViewEmployee!!.employee.phone}".toUri()
-                                val intent = Intent(Intent.ACTION_SENDTO, uri)
-                                if (intent.resolveActivity(context.packageManager) != null) {
-                                    context.startActivity(intent)
-                                }
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    Icons.Rounded.Textsms,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(
-                                        AssistChipDefaults.IconSize
-                                    )
-                                )
-                            },
-                            label = {
-                                Text(stringResource(R.string.main_schedule_infobox_actions_sms))
-                            },
-                            enabled = detailViewEmployee!!.employee.phone.isNotBlank()
-                        )
-                        AssistChip(
-                            onClick = {
-                                val fullNumber =
-                                    detailViewEmployee!!.employee.phone.filter { it.isDigit() }
-                                val uri =
-                                    "https://wa.me/$fullNumber/".toUri()
-
-                                val intent = Intent(Intent.ACTION_VIEW).apply {
-                                    data = uri
-                                    setPackage("com.whatsapp")
-                                }
-
-                                if (intent.resolveActivity(context.packageManager) != null) {
-                                    context.startActivity(intent)
-                                }
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    Icons.Rounded.Whatsapp,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(
-                                        AssistChipDefaults.IconSize
-                                    )
-                                )
-                            },
-                            label = {
-                                Text(stringResource(R.string.main_schedule_infobox_actions_whatsapp))
-                            },
-                            enabled = detailViewEmployee!!.employee.phone.isNotBlank()
-                        )
-                        AssistChip(
-                            onClick = {
-                                val intent = Intent(Intent.ACTION_SENDTO).apply {
-                                    data = "mailto:".toUri()
-                                    putExtra(
-                                        Intent.EXTRA_EMAIL,
-                                        arrayOf(detailViewEmployee!!.employee.email)
-                                    )
-                                }
-                                if (intent.resolveActivity(context.packageManager) != null) {
-                                    context.startActivity(intent)
-                                }
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    Icons.Rounded.AlternateEmail,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(
-                                        AssistChipDefaults.IconSize
-                                    )
-                                )
-                            },
-                            label = {
-                                Text(stringResource(R.string.main_schedule_infobox_actions_mail))
-                            },
-                            enabled = detailViewEmployee!!.employee.email.isNotBlank()
-                        )
-                    }
+                creating = false
+                if (ok) {
+                    pendingPlanGuid = null
+                    // Timeline refreshen:
+                    timeline = PrepService.loadTimeline(
+                        selectedOrg!!,
+                        OffsetDateTime.ofInstant(Instant.ofEpochMilli(selectedStartDate!!), ZoneId.systemDefault()),
+                        OffsetDateTime.ofInstant(Instant.ofEpochMilli(selectedEndDate!!), ZoneId.systemDefault()),
+                    ).getOrNull()
+                } else {
+                    createError = resp.fold(
+                        onSuccess = { r ->
+                            listOfNotNull(r.alertMessage, r.errorMessages.joinToString().ifBlank { null })
+                                .joinToString(" – ")
+                                .ifBlank { "Unbekannter Fehler" }
+                        },
+                        onFailure = { it.message ?: "Netzwerkfehler" }
+                    )
                 }
             }
         }
-    }
+    )
 }

@@ -93,6 +93,7 @@ dependencies {
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.okhttp.java.net.cookiejar)
     implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.material3)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -19,10 +19,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import me.emiliomini.dutyschedule.models.prep.DutyType
 import me.emiliomini.dutyschedule.models.prep.MinimalDutyDefinition
 import me.emiliomini.dutyschedule.ui.components.icons.Ambulance
+import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
@@ -81,4 +83,19 @@ fun MinimalDutyCard(
         )
         AlarmToggle(dutyBegin = duty.begin, guid = duty.guid)
     }
+}
+
+@Preview(showBackground = false)
+@Composable
+fun MinimalDutyCardPreview(modifier: Modifier = Modifier) {
+    MinimalDutyCard(
+        modifier = modifier,
+        duty = MinimalDutyDefinition(
+            "", OffsetDateTime.now(), OffsetDateTime.now(),
+            type = DutyType.EMS,
+            vehicle = "SEW 1613 V",
+            staff = mutableListOf(),
+            duration = 5
+        ),
+    )
 }
