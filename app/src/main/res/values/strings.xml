@@ -103,4 +103,6 @@
     <string name="data_requirement_haend_el">SANHÄ</string>
     <string name="data_requirement_haend_dr">Dr.</string>
     <string name="base_carousel_no_vehicle">Available</string>
+    <string name="data_org_we">Wels-Stadt</string>
+    <string name="data_org_wl">Wels-Land</string>
 </resources>

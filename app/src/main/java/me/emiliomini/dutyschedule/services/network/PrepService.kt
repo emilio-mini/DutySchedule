@@ -495,8 +495,8 @@ object PrepService {
         from: OffsetDateTime,
         to: OffsetDateTime
     ) {
-        val config = Org.parse(selectedOrgGuid).getDocscedConfig()
-        if (config == null) {
+        val config = Org.parse(selectedOrgGuid)
+        if (config == null || config == Org.INVALID) {
             Log.d(TAG, "DocSced: ausgewählte Org ist kein HÄND (Wels/Wels-Land) – skip")
             return
         }
@@ -541,8 +541,8 @@ object PrepService {
                     continue
                 }
 
-                val label =
-                    "HÄND ${if (config == "welsland") "Wels-Land" else "Wels-Stadt"} (${if (night) "Nacht" else "Tag"})"
+                //val label = "HÄND ${stringResource(config.getResourceString())} (${if (night) "Nacht" else "Tag"})"
+                val label = "HÄND ${if (config == Org.WELS_LAND) "Wels-Land" else "Wels-Stadt"} (${if (night) "Nacht" else "Tag"})"
                 val docEmployee = Employee(
                     guid = "docsced:$config:$dsDate:${if (night) "nacht" else "tag"}",
                     name = candidate,

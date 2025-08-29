@@ -10,6 +10,7 @@ import me.emiliomini.dutyschedule.enums.NetworkTarget
 import me.emiliomini.dutyschedule.models.github.GithubRelease
 import me.emiliomini.dutyschedule.models.network.NetworkCacheData
 import me.emiliomini.dutyschedule.models.prep.Incode
+import me.emiliomini.dutyschedule.models.prep.Org
 import okhttp3.CookieJar
 import okhttp3.FormBody
 import okhttp3.Headers
@@ -423,13 +424,13 @@ object NetworkService {
     }
 
     suspend fun loadDocScedCalendar(
-        config: String,                 // z.B. "welsstadt" oder "welsland"
+        config: Org,                 // z.B. "welsstadt" oder "welsland"
         gran: String? = null,           // optional: "wee" | "mon" | "nextMon" | "ges"
         ignoreCache: Boolean = false
     ): Result<String?> {
         val urlBuilder = NetworkTarget.DOCSCED.httpUrl().newBuilder()
             .addQueryParameter("site", "calendar")
-            .addQueryParameter("config", config)
+            .addQueryParameter("config", config.getDocscedConfig())
 
         if (!gran.isNullOrBlank()) {
             urlBuilder.addQueryParameter("gran", gran)
