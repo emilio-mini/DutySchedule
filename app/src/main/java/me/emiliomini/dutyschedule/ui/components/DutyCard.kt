@@ -53,8 +53,10 @@ fun AppDutyCard(
     val emptyCar = Employee("", stringResource(R.string.base_dutycard_no_vehicle), "SEW")
     val emptySeat = Employee("", stringResource(R.string.base_dutycard_no_staff), "0000000")
 
-    val requirementsMetError = (duty.el.isNotEmpty() && duty.tf.isNotEmpty()) || (duty.el.isNotEmpty() && !duty.tf.any { person -> person.requirement == Requirement.HAEND } )
-    val requirementsMetWarn = duty.sew.isNotEmpty() && duty.el.isNotEmpty() && duty.tf.isNotEmpty() || (duty.el.isNotEmpty() && !duty.tf.any { person -> person.requirement == Requirement.HAEND } )
+    val requirementsMetError =
+        (duty.el.isNotEmpty() && duty.tf.isNotEmpty()) || (duty.el.isNotEmpty() && !duty.tf.any { person -> person.requirement == Requirement.HAEND })
+    val requirementsMetWarn =
+        duty.sew.isNotEmpty() && duty.el.isNotEmpty() && duty.tf.isNotEmpty() || (duty.el.isNotEmpty() && !duty.tf.any { person -> person.requirement == Requirement.HAEND })
 
     val selfId = PrepService.getSelf()?.guid;
     val containsSelf =
@@ -176,7 +178,7 @@ fun AppDutyCard(
                     duty.tf.forEachIndexed { index, assigned ->
                         AppPersonnelInfo(
                             modifier = Modifier.clickable(onClick = { onEmployeeClick(assigned) }),
-                            icon = if (index == 0) if(assigned.requirement == Requirement.HAEND_DR) Icons.Rounded.AssignmentInd else  Icons.Rounded.MedicalInformation else null,
+                            icon = if (index == 0) if (assigned.requirement == Requirement.HAEND_DR) Icons.Rounded.AssignmentInd else Icons.Rounded.MedicalInformation else null,
                             employee = assigned.employee,
                             state = if (assigned.employee.guid == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
                             showInfoBadge = assigned.info.isNotEmpty() && assigned.requirement != Requirement.HAEND_DR,
