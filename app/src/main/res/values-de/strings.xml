@@ -106,4 +106,8 @@
     <string name="base_carousel_no_vehicle">Frei</string>
     <string name="data_org_we">Wels-Stadt</string>
     <string name="data_org_wl">Wels-Land</string>
+    <string name="create_duty_title">Dienst eintragen?</string>
+    <string name="create_duty_subtitle">Willst du dich für diesen Slot eintragen?</string>
+    <string name="create_duty_cancel">Abbrechen</string>
+    <string name="create_duty_confirm">Eintragen</string>
 </resources>

@@ -49,7 +49,7 @@ fun AppDutyCard(
     modifier: Modifier = Modifier,
     duty: DutyDefinition,
     onEmployeeClick: (AssignedEmployee) -> Unit = {},
-    onDutyClick: (String) -> Unit = {}
+    onDutyClick: (String?) -> Unit = {}
 ) {
     val emptyCar = Employee("", stringResource(R.string.base_dutycard_no_vehicle), "SEW")
     val emptySeat = Employee("", stringResource(R.string.base_dutycard_no_staff), "0000000")
@@ -59,7 +59,7 @@ fun AppDutyCard(
     val requirementsMetWarn =
         duty.sew.isNotEmpty() && duty.el.isNotEmpty() && duty.tf.isNotEmpty() || (duty.el.isNotEmpty() && !duty.tf.any { person -> person.requirement == Requirement.HAEND })
 
-    val selfId = PrepService.getSelf()?.guid;
+    val selfId = PrepService.getSelf()?.guid
     val containsSelf =
         duty.el.any { person -> person.employee.guid == selfId } || duty.tf.any { person -> person.employee.guid == selfId } || duty.rs.any { person -> person.employee.guid == selfId }
 
@@ -140,7 +140,7 @@ fun AppDutyCard(
                         icon = SteeringWheel,
                         employee = emptySeat,
                         state = PersonnelInfoState.DISABLED,
-//                        modifier = Modifier.clickable(onClick = { OnDutyClick(duty.el_slot_id) }),
+                        modifier = if (!duty.el_slot_id.isNullOrBlank()) Modifier.clickable(onClick = { onDutyClick(duty.el_slot_id) }) else Modifier,
                     )
                 } else {
                     duty.el.forEachIndexed { index, assigned ->
@@ -174,7 +174,8 @@ fun AppDutyCard(
                     AppPersonnelInfo(
                         icon = Icons.Rounded.MedicalInformation,
                         employee = emptySeat,
-                        state = PersonnelInfoState.DISABLED
+                        state = PersonnelInfoState.DISABLED,
+                        modifier = if (!duty.tf_slot_id.isNullOrBlank()) Modifier.clickable(onClick = { onDutyClick(duty.tf_slot_id) }) else Modifier,
                     )
                 } else {
                     duty.tf.forEachIndexed { index, assigned ->
@@ -208,7 +209,8 @@ fun AppDutyCard(
                     AppPersonnelInfo(
                         icon = Icons.Rounded.Badge,
                         employee = emptySeat,
-                        state = PersonnelInfoState.DISABLED
+                        state = PersonnelInfoState.DISABLED,
+                        modifier = if (!duty.rs_slot_id.isNullOrBlank()) Modifier.clickable(onClick = { onDutyClick(duty.rs_slot_id) }) else Modifier
                     )
                 } else {
                     duty.rs.forEachIndexed { index, assigned ->
