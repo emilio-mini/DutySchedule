@@ -41,7 +41,6 @@ import me.emiliomini.dutyschedule.ui.main.screens.LoadingScreen
 import me.emiliomini.dutyschedule.ui.main.screens.SettingsScreen
 import me.emiliomini.dutyschedule.ui.onboarding.activity.OnboardingActivity
 import me.emiliomini.dutyschedule.ui.theme.DutyScheduleTheme
-import me.emiliomini.dutyschedule.workers.WorkerService
 import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
@@ -53,7 +52,6 @@ class MainActivity : ComponentActivity() {
 
         DataStores.initialize(applicationContext)
         NotificationService.initialize(applicationContext)
-        WorkerService.scheduleUpdateCheckWorker(applicationContext)
 
         setContent {
             DutyScheduleTheme {

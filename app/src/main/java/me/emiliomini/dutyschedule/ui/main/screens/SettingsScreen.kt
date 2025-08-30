@@ -136,7 +136,7 @@ fun SettingsScreen(
                     },
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
+            /*Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 stringResource(R.string.main_settings_section_app),
@@ -144,7 +144,7 @@ fun SettingsScreen(
             )
             CardColumn {
                 VersionListItem()
-            }
+            }*/
         }
     })
 }

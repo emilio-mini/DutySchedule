@@ -26,8 +26,8 @@ android {
         applicationId = "me.emiliomini.dutyschedule"
         minSdk = 26
         targetSdk = 36
-        versionCode = 7
-        versionName = "v1.0-beta.7"
+        versionCode = 9
+        versionName = "v1.0-beta.9"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -102,5 +102,5 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation (libs.accompanist.permissions)
     implementation(libs.compose.markdown)
-    implementation("org.jsoup:jsoup:1.21.2")
+    implementation(libs.jsoup)
 }
