@@ -1,6 +1,8 @@
 package me.emiliomini.dutyschedule.services.network
 
-import me.emiliomini.dutyschedule.models.prep.Incode
+import me.emiliomini.dutyschedule.datastore.prep.IncodeProto
+import me.emiliomini.dutyschedule.util.toTimestamp
+import java.time.OffsetDateTime
 
 object DataExtractorService {
     private val INCODE_REGEX = "'(x-incode-[^']+)': '([^']+)'".toRegex()
@@ -8,13 +10,14 @@ object DataExtractorService {
     private val ORG_TREE_REGEX = "src=\"(.+org_tree\\.js[^\"]+)\">".toRegex()
     private val ALLOWED_ORGS_REGEX = "allowedOrgUnits = \\[([^]]+)];".toRegex()
 
-    fun extractIncode(input: String): Incode? {
+    fun extractIncode(input: String): IncodeProto? {
         val result = INCODE_REGEX.find(input) ?: return null
 
         val token = result.groups[1]?.value ?: return null
         val value = result.groups[2]?.value ?: return null
 
-        return Incode(token, value)
+        return IncodeProto.newBuilder().setToken(token).setValue(value)
+            .setLastUsed(OffsetDateTime.now().toTimestamp()).build()
     }
 
     fun extractGUID(input: String): String? {

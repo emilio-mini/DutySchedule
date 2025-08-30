@@ -54,11 +54,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.R
+import me.emiliomini.dutyschedule.datastore.alarm.AlarmItemsProto
 import me.emiliomini.dutyschedule.datastore.alarm.AlarmProto
 import me.emiliomini.dutyschedule.services.alarm.AlarmService
 import me.emiliomini.dutyschedule.services.storage.DataStores
-import me.emiliomini.dutyschedule.services.storage.viewmodels.AlarmListViewModel
-import me.emiliomini.dutyschedule.services.storage.viewmodels.AlarmListViewModelFactory
+import me.emiliomini.dutyschedule.services.storage.ProtoListViewModel
+import me.emiliomini.dutyschedule.services.storage.ProtoListViewModelFactory
 import me.emiliomini.dutyschedule.util.TimeUtil
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -69,8 +70,8 @@ import java.util.Locale
 fun AlarmsScreen(
     modifier: Modifier = Modifier,
     bottomBar: @Composable (() -> Unit) = {},
-    viewModel: AlarmListViewModel = viewModel(
-        factory = AlarmListViewModelFactory(DataStores.ALARM_ITEMS)
+    viewModel: ProtoListViewModel<AlarmItemsProto, AlarmProto> = viewModel(
+        factory = ProtoListViewModelFactory<AlarmItemsProto, AlarmProto>(DataStores.ALARM_ITEMS) { it.alarmsList }
     )
 ) {
     LaunchedEffect(Unit) {
@@ -82,7 +83,7 @@ fun AlarmsScreen(
     val context = LocalContext.current
     val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
     val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-    val alarms by viewModel.alarmsFlow.collectAsStateWithLifecycle(
+    val alarms by viewModel.flow.collectAsStateWithLifecycle(
         initialValue = emptyList<AlarmProto>()
     )
 

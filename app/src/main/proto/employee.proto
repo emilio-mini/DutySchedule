@@ -1,0 +1,37 @@
+syntax = "proto3";
+option java_package = "me.emiliomini.dutyschedule.datastore.prep.employee";
+option java_multiple_files = true;
+
+import "google/protobuf/timestamp.proto";
+
+message AssignedEmployeeProto {
+  string employeeGuid = 1;
+  RequirementProto requirement = 2;
+  google.protobuf.Timestamp begin = 3;
+  google.protobuf.Timestamp end = 4;
+  string info = 5;
+}
+
+message EmployeeItemsProto {
+  map<string, EmployeeProto> employees = 1;
+}
+
+message EmployeeProto {
+  string guid = 1;
+  string name = 2;
+  optional string identifier = 3;
+  string phone = 4;
+  string email = 5;
+  string defaultOrg = 6;
+  optional google.protobuf.Timestamp birthdate = 7;
+  string resourceTypeGuid = 8;
+  repeated SkillProto skills = 9;
+}
+
+message SkillProto {
+  string guid = 1;
+}
+
+message RequirementProto {
+  string guid = 1;
+}

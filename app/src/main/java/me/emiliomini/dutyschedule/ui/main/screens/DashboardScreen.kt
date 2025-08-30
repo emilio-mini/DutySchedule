@@ -1,18 +1,18 @@
 package me.emiliomini.dutyschedule.ui.main.screens
 
+import android.util.Log
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,7 +35,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import me.emiliomini.dutyschedule.R
-import me.emiliomini.dutyschedule.models.prep.MinimalDutyDefinition
+import me.emiliomini.dutyschedule.datastore.prep.duty.MinimalDutyDefinitionProto
 import me.emiliomini.dutyschedule.services.network.PrepService
 import me.emiliomini.dutyschedule.ui.components.ArcProgressIndicator
 import me.emiliomini.dutyschedule.ui.components.EmployeeAvatar
@@ -53,27 +53,28 @@ fun DashboardScreen(
     onLogout: () -> Unit
 ) {
     val currentYear = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy"))
-    var upcomingDuties by remember { mutableStateOf<List<MinimalDutyDefinition>>(emptyList()) }
-    var pastDuties by remember { mutableStateOf<List<MinimalDutyDefinition>>(emptyList()) }
+    var upcomingDuties by remember { mutableStateOf<List<MinimalDutyDefinitionProto>>(emptyList()) }
 
-    val requiredMinutes = 144 * 60
-    var minutesSum by remember { mutableFloatStateOf(0f) }
+    val requiredHours = 144
+    var hoursServed by remember { mutableFloatStateOf(0f) }
     var progress by remember { mutableFloatStateOf(0f) }
 
-    var pastLoaded by remember { mutableStateOf(false) }
+    var hoursLoaded by remember { mutableStateOf(false) }
     var upcomingLoaded by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        upcomingDuties = PrepService.loadUpcoming().getOrNull() ?: emptyList()
-        upcomingLoaded = true
-        pastDuties = PrepService.loadPast(currentYear).getOrNull() ?: emptyList()
-        minutesSum = pastDuties.sumOf { it.duration }.toFloat()
-        progress = minutesSum / requiredMinutes
-        pastLoaded = true
+    LaunchedEffect(PrepService.isLoggedIn) {
+        upcomingDuties = PrepService.loadUpcoming()
+        hoursServed = PrepService.loadHoursOfService(currentYear)
+        progress = hoursServed / requiredHours
+
+        if (PrepService.isLoggedIn) {
+            hoursLoaded = true
+            upcomingLoaded = true
+        }
     }
 
-    val animatedMinutes by animateFloatAsState(
-        targetValue = minutesSum,
+    val animatedHours by animateFloatAsState(
+        targetValue = hoursServed,
         animationSpec = tween(
             durationMillis = 500,
             easing = FastOutSlowInEasing
@@ -89,9 +90,8 @@ fun DashboardScreen(
                     Text(stringResource(R.string.main_dashboard_title))
                 },
                 actions = {
-                    val employee = PrepService.getSelf()
-                    if (employee != null) {
-                        EmployeeAvatar(employee = employee, onLogout = onLogout)
+                    if (PrepService.self != null) {
+                        EmployeeAvatar(employee = PrepService.self!!, onLogout = onLogout)
                         Spacer(Modifier.width(16.dp))
                     }
                 }
@@ -102,8 +102,7 @@ fun DashboardScreen(
             Column(
                 modifier = modifier
                     .padding(innerPadding)
-                    .padding(horizontal = 20.dp)
-                    .offset(y = 20.dp),
+                    .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 ArcProgressIndicator(
@@ -111,7 +110,7 @@ fun DashboardScreen(
                     sizeDp = 232.dp,
                     progress = progress,
                     strokeWidth = 24.dp,
-                    pending = !pastLoaded
+                    pending = !hoursLoaded
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -119,11 +118,11 @@ fun DashboardScreen(
                     ) {
                         Row(verticalAlignment = Alignment.Bottom) {
                             Text(
-                                String.format(Locale.getDefault(), "%.2f", animatedMinutes / 60f),
+                                String.format(Locale.getDefault(), "%.2f", animatedHours),
                                 style = MaterialTheme.typography.titleLarge
                             )
                             Text(
-                                " / ${requiredMinutes / 60}",
+                                " / $requiredHours",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Medium
                             )
@@ -132,21 +131,22 @@ fun DashboardScreen(
                     }
                 }
                 Spacer(Modifier.height(24.dp))
-                Text(
-                    stringResource(R.string.main_dashboard_section_upcoming_title),
-                    color = MaterialTheme.colorScheme.primary
-                )
-                if (!upcomingLoaded) {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        LoadingIndicator()
-                    }
-                } else {
-                    LazyCardColumn {
-                        itemsIndexed(
-                            items = upcomingDuties,
-                            key = { _, duty -> duty.guid }) { index, duty ->
-                            MinimalDutyCard(duty = duty)
-                        }
+                Row(
+                    Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        stringResource(R.string.main_dashboard_section_upcoming_title),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    if (!upcomingLoaded) LoadingIndicator(Modifier.size(24.dp))
+                }
+                LazyCardColumn {
+                    itemsIndexed(
+                        items = upcomingDuties,
+                        key = { _, duty -> duty.guid }) { index, duty ->
+                        MinimalDutyCard(duty = duty)
                     }
                 }
             }

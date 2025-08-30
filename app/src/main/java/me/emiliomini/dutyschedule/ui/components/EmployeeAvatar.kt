@@ -30,22 +30,23 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import me.emiliomini.dutyschedule.R
+import me.emiliomini.dutyschedule.datastore.prep.employee.EmployeeProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
-import me.emiliomini.dutyschedule.models.prep.Employee
 import me.emiliomini.dutyschedule.services.network.PrepService
+import me.emiliomini.dutyschedule.util.toOffsetDateTime
 import java.time.format.DateTimeFormatter
 
 @Composable
 fun EmployeeAvatar(
     modifier: Modifier = Modifier,
-    employee: Employee,
+    employee: EmployeeProto,
     canExpand: Boolean = true,
     onLogout: () -> Unit
 ) {
     val employeeNames = employee.name.split(" ")
-    val initial = if (employeeNames.size >= 2) employeeNames[1][0] else employeeNames[0][0]
+    val initial = if (employeeNames.size >= 2) employeeNames[1][0] else if (employeeNames.isNotEmpty() && employeeNames[0].isNotBlank()) employeeNames[0][0] else ""
 
-    val isSelf = employee.guid == PrepService.getSelf()?.guid
+    val isSelf = employee.guid == PrepService.self?.guid
 
     var expanded by remember { mutableStateOf(false) }
     var employeeOrg by remember { mutableStateOf<OrgProto?>(null) }
@@ -135,7 +136,7 @@ fun EmployeeAvatar(
                                     },
                                     headlineContent = {
                                         Text(
-                                            employee.birthdate!!.format(
+                                            employee.birthdate!!.toOffsetDateTime().format(
                                                 DateTimeFormatter.ofPattern("d MMMM yyyy")
                                             )
                                         )

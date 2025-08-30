@@ -1,5 +1,8 @@
 package me.emiliomini.dutyschedule.models.prep
 
+import me.emiliomini.dutyschedule.datastore.prep.employee.EmployeeProto
+import me.emiliomini.dutyschedule.datastore.prep.employee.SkillProto
+import me.emiliomini.dutyschedule.util.toTimestamp
 import java.time.OffsetDateTime
 
 data class Employee(
@@ -13,6 +16,27 @@ data class Employee(
     var resourceTypeGuid: String = "",
     var skill: MutableList<Skill> = mutableListOf()
 ) {
+    fun toProto(): EmployeeProto {
+        val employee = EmployeeProto.newBuilder()
+            .setGuid(guid)
+            .setName(name)
+            .setPhone(phone)
+            .setEmail(email)
+            .setDefaultOrg(defaultOrg)
+            .setResourceTypeGuid(resourceTypeGuid)
+            .addAllSkills(skill.map { SkillProto.newBuilder().setGuid(it.value).build() })
+
+        if (identifier != null) {
+            employee.setIdentifier(identifier)
+        }
+
+        if (birthdate != null) {
+            employee.setBirthdate(birthdate!!.toTimestamp())
+        }
+
+        return employee.build()
+    }
+
     companion object {
         val SEW_NAME = "SEW"
         val ITF_NAME = "ITF"

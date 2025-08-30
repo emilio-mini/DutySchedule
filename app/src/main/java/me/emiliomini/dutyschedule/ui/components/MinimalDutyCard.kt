@@ -21,9 +21,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import me.emiliomini.dutyschedule.datastore.prep.duty.DutyTypeProto
+import me.emiliomini.dutyschedule.datastore.prep.duty.MinimalDutyDefinitionProto
 import me.emiliomini.dutyschedule.models.prep.DutyType
 import me.emiliomini.dutyschedule.models.prep.MinimalDutyDefinition
+import me.emiliomini.dutyschedule.services.i18n.resourceString
 import me.emiliomini.dutyschedule.ui.components.icons.Ambulance
+import me.emiliomini.dutyschedule.util.toOffsetDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -31,7 +35,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun MinimalDutyCard(
     modifier: Modifier = Modifier,
-    duty: MinimalDutyDefinition
+    duty: MinimalDutyDefinitionProto
 ) {
     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
     val dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
@@ -41,14 +45,14 @@ fun MinimalDutyCard(
         CardListItem(
             modifier = Modifier.fillMaxSize(),
             headlineContent = {
-                Text(stringResource(duty.type.getResourceString()))
+                Text(stringResource(duty.type.resourceString()))
             },
             supportingContent = {
                 Column {
-                    if (duty.vehicle != null) {
+                    if (duty.vehicle != null && duty.vehicle.isNotBlank()) {
                         Text(duty.vehicle, fontWeight = FontWeight.SemiBold)
                     }
-                    for (employee in duty.staff) {
+                    for (employee in duty.staffList) {
                         Text(employee)
                     }
                     Spacer(Modifier.height(8.dp))
@@ -58,12 +62,12 @@ fun MinimalDutyCard(
                     ) {
                         Text(
                             "${
-                                duty.begin.atZoneSameInstant(localZoneId).format(timeFormatter)
+                                duty.begin.toOffsetDateTime().atZoneSameInstant(localZoneId).format(timeFormatter)
                             }-${
-                                duty.end.atZoneSameInstant(localZoneId).format(timeFormatter)
+                                duty.end.toOffsetDateTime().atZoneSameInstant(localZoneId).format(timeFormatter)
                             }"
                         )
-                        Text(duty.begin.atZoneSameInstant(localZoneId).format(dateFormatter))
+                        Text(duty.begin.toOffsetDateTime().atZoneSameInstant(localZoneId).format(dateFormatter))
                     }
                 }
             },
@@ -71,8 +75,8 @@ fun MinimalDutyCard(
                 Column(verticalArrangement = Arrangement.Top) {
                     Icon(
                         when (duty.type) {
-                            DutyType.EMS -> Ambulance
-                            DutyType.TRAINING -> Icons.Rounded.School
+                            DutyTypeProto.EMS -> Ambulance
+                            DutyTypeProto.TRAINING -> Icons.Rounded.School
                             else -> Icons.Rounded.QuestionMark
                         },
                         contentDescription = null,
@@ -81,21 +85,6 @@ fun MinimalDutyCard(
                 }
             },
         )
-        AlarmToggle(dutyBegin = duty.begin, guid = duty.guid)
+        AlarmToggle(dutyBegin = duty.begin.toOffsetDateTime(), guid = duty.guid)
     }
-}
-
-@Preview(showBackground = false)
-@Composable
-fun MinimalDutyCardPreview(modifier: Modifier = Modifier) {
-    MinimalDutyCard(
-        modifier = modifier,
-        duty = MinimalDutyDefinition(
-            "", OffsetDateTime.now(), OffsetDateTime.now(),
-            type = DutyType.EMS,
-            vehicle = "SEW 1613 V",
-            staff = mutableListOf(),
-            duration = 5
-        ),
-    )
 }

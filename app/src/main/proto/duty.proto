@@ -1,0 +1,39 @@
+syntax = "proto3";
+option java_package = "me.emiliomini.dutyschedule.datastore.prep.duty";
+option java_multiple_files = true;
+
+import "google/protobuf/timestamp.proto";
+import "employee.proto";
+
+message DutyDefinitionProto {
+  string guid = 1;
+  google.protobuf.Timestamp begin = 2;
+  google.protobuf.Timestamp end = 3;
+  repeated AssignedEmployeeProto sew = 4;
+  repeated AssignedEmployeeProto el = 5;
+  repeated AssignedEmployeeProto tf = 6;
+  repeated AssignedEmployeeProto rs = 7;
+  optional string elSlotId = 8;
+  optional string tfSlotId = 9;
+  optional string rsSlotId = 10;
+}
+
+message UpcomingDutyItemsProto {
+  repeated MinimalDutyDefinitionProto minimalDutyDefinitions = 1;
+}
+
+message MinimalDutyDefinitionProto {
+  string guid = 1;
+  google.protobuf.Timestamp begin = 2;
+  google.protobuf.Timestamp end = 3;
+  DutyTypeProto type = 4;
+  optional string vehicle = 5;
+  repeated string staff = 6;
+  int32 duration = 7;
+}
+
+enum DutyTypeProto {
+  UNKNOWN  = 0;
+  EMS      = 1;
+  TRAINING = 2;
+}

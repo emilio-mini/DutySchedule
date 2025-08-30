@@ -51,6 +51,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.R
+import me.emiliomini.dutyschedule.datastore.prep.org.OrgItemsProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
 import me.emiliomini.dutyschedule.models.network.CreateDutyResponse
 import me.emiliomini.dutyschedule.models.network.CreatedDuty
@@ -61,8 +62,8 @@ import me.emiliomini.dutyschedule.services.network.PrepService
 import me.emiliomini.dutyschedule.services.storage.DataKeys
 import me.emiliomini.dutyschedule.services.storage.DataStores
 import me.emiliomini.dutyschedule.services.storage.StorageService
-import me.emiliomini.dutyschedule.services.storage.viewmodels.OrgListViewModel
-import me.emiliomini.dutyschedule.services.storage.viewmodels.OrgListViewModelFactory
+import me.emiliomini.dutyschedule.services.storage.ProtoMapViewModel
+import me.emiliomini.dutyschedule.services.storage.ProtoMapViewModelFactory
 import me.emiliomini.dutyschedule.ui.components.AppDateInfo
 import me.emiliomini.dutyschedule.ui.components.AssignConfirmSheet
 import me.emiliomini.dutyschedule.ui.components.DutyCardCarousel
@@ -77,8 +78,10 @@ import java.time.ZoneId
 fun HomeScreen(
     modifier: Modifier = Modifier,
     bottomBar: @Composable (() -> Unit) = {},
-    viewModel: OrgListViewModel = viewModel(
-        factory = OrgListViewModelFactory(DataStores.ORG_ITEMS)
+    viewModel: ProtoMapViewModel<OrgItemsProto, OrgProto> = viewModel(
+        factory = ProtoMapViewModelFactory<OrgItemsProto, OrgProto>(
+            DataStores.ORG_ITEMS
+        ) { it.orgsMap }
     )
 ) {
     val defaultDateSpacing = 5 * 24 * 60 * 60 * 1000L
@@ -100,8 +103,8 @@ fun HomeScreen(
 
     var allowedOrgs by remember { mutableStateOf<List<String>?>(null) }
     var selectedOrg by remember { mutableStateOf<String?>(null) }
-    val orgs by viewModel.orgsFlow.collectAsStateWithLifecycle(
-        initialValue = emptyList<OrgProto>()
+    val orgs by viewModel.flow.collectAsStateWithLifecycle(
+        initialValue = emptyMap<String, OrgProto>()
     )
 
     var pendingPlanGuid by remember { mutableStateOf<String?>(null) }
@@ -119,11 +122,8 @@ fun HomeScreen(
     }
 
     LaunchedEffect(orgs, allowedOrgs) {
-
-        var primaryOrg = orgs.firstOrNull { it.abbreviation == PrepService.getSelf()?.defaultOrg }
-        if (primaryOrg == null) {
-            primaryOrg = orgs.firstOrNull { it.identifier == PrepService.getSelf()?.defaultOrg }
-        }
+        val default = PrepService.self?.defaultOrg
+        val primaryOrg = if (default != null) PrepService.getOrg(default) else null
 
         selectedOrg = if (primaryOrg != null) {
             primaryOrg.guid
@@ -132,8 +132,8 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(selectedStartDate, selectedEndDate, selectedOrg) {
-        if (selectedOrg == null) {
+    LaunchedEffect(PrepService.isLoggedIn, selectedStartDate, selectedEndDate, selectedOrg) {
+        if (selectedOrg == null || !PrepService.isLoggedIn) {
             return@LaunchedEffect
         }
 
@@ -187,7 +187,7 @@ fun HomeScreen(
                         .horizontalScroll(stationScrollState),
                     horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
                 ) {
-                    orgs.filter { allowedOrgs?.contains(it.guid) ?: false }
+                    orgs.values.filter { allowedOrgs?.contains(it.guid) ?: false }
                         .forEachIndexed { index, proto ->
                             ToggleButton(
                                 checked = selectedOrg == proto.guid,
@@ -228,12 +228,20 @@ fun HomeScreen(
                 ) {
                     items(timeline ?: emptyList()) { item ->
                         AppDateInfo(date = item.date)
-                        DutyCardCarousel(duties = item.dayShift, shiftType = ShiftType.DAY_SHIFT, onEmployeeClick = {
-                            detailViewEmployee = it
-                        }, onDutyClick = { planGuid -> pendingPlanGuid = planGuid })
-                        DutyCardCarousel(duties = item.nightShift, shiftType = ShiftType.NIGHT_SHIFT, onEmployeeClick = {
-                            detailViewEmployee = it
-                        }, onDutyClick = { planGuid -> pendingPlanGuid = planGuid })
+                        DutyCardCarousel(
+                            duties = item.dayShift,
+                            shiftType = ShiftType.DAY_SHIFT,
+                            onEmployeeClick = {
+                                detailViewEmployee = it
+                            },
+                            onDutyClick = { planGuid -> pendingPlanGuid = planGuid })
+                        DutyCardCarousel(
+                            duties = item.nightShift,
+                            shiftType = ShiftType.NIGHT_SHIFT,
+                            onEmployeeClick = {
+                                detailViewEmployee = it
+                            },
+                            onDutyClick = { planGuid -> pendingPlanGuid = planGuid })
                     }
                 }
             } else {
@@ -296,7 +304,7 @@ fun HomeScreen(
     if (detailViewEmployee != null) {
         EmployeeDetailSheet(
             employee = detailViewEmployee,
-            orgs = orgs,
+            orgs = orgs.values.toList(),
             onDismiss = { detailViewEmployee = null }
         )
     }
@@ -306,7 +314,9 @@ fun HomeScreen(
         loading = creating,
         error = createError,
         onDismiss = {
-            if (!creating) { pendingPlanGuid = null; createError = null }
+            if (!creating) {
+                pendingPlanGuid = null; createError = null
+            }
         },
         onConfirm = {
             val guid = pendingPlanGuid ?: return@AssignConfirmSheet
@@ -315,32 +325,33 @@ fun HomeScreen(
             scope.launch {
 
                 //val resp = PrepService.createAndAllocateDuty(guid)
-                val resp = Result.success(CreateDutyResponse(
-                    success = true,
-                    errorMessages = emptyList(),
-                    alertMessage = null,
-                    successMessage = "",
-                    changedDataId = "",
-                    duty = CreatedDuty(
-                        guid = "",
-                        dataGuid = "",
-                        orgUnitDataGuid = "",
-                        begin = OffsetDateTime.now(),
-                        end = OffsetDateTime.now(),
-                        requirementGroupChildDataGuid = "",
-                        resourceTypeDataGuid = "",
-                        skillDataGuid = "",
-                        skillCharacterisationDataGuid = "",
-                        shiftDataGuid = "",
-                        planBaseDataGuid = "",
-                        planBaseEntryDataGuid = "",
-                        allocationDataGuid = "",
-                        allocationRessourceDataGuid = "",
-                        released = 0,
-                        bookable = 0,
-                        resourceName = ""
+                val resp = Result.success(
+                    CreateDutyResponse(
+                        success = true,
+                        errorMessages = emptyList(),
+                        alertMessage = null,
+                        successMessage = "",
+                        changedDataId = "",
+                        duty = CreatedDuty(
+                            guid = "",
+                            dataGuid = "",
+                            orgUnitDataGuid = "",
+                            begin = OffsetDateTime.now(),
+                            end = OffsetDateTime.now(),
+                            requirementGroupChildDataGuid = "",
+                            resourceTypeDataGuid = "",
+                            skillDataGuid = "",
+                            skillCharacterisationDataGuid = "",
+                            shiftDataGuid = "",
+                            planBaseDataGuid = "",
+                            planBaseEntryDataGuid = "",
+                            allocationDataGuid = "",
+                            allocationRessourceDataGuid = "",
+                            released = 0,
+                            bookable = 0,
+                            resourceName = ""
+                        )
                     )
-                )
                 )
                 val ok = resp.getOrNull()?.success == true
 
@@ -350,13 +361,21 @@ fun HomeScreen(
                     // Timeline refreshen:
                     timeline = PrepService.loadTimeline(
                         selectedOrg!!,
-                        OffsetDateTime.ofInstant(Instant.ofEpochMilli(selectedStartDate!!), ZoneId.systemDefault()),
-                        OffsetDateTime.ofInstant(Instant.ofEpochMilli(selectedEndDate!!), ZoneId.systemDefault()),
+                        OffsetDateTime.ofInstant(
+                            Instant.ofEpochMilli(selectedStartDate!!),
+                            ZoneId.systemDefault()
+                        ),
+                        OffsetDateTime.ofInstant(
+                            Instant.ofEpochMilli(selectedEndDate!!),
+                            ZoneId.systemDefault()
+                        ),
                     ).getOrNull()
                 } else {
                     createError = resp.fold(
                         onSuccess = { r ->
-                            listOfNotNull(r.alertMessage, r.errorMessages.joinToString().ifBlank { null })
+                            listOfNotNull(
+                                r.alertMessage,
+                                r.errorMessages.joinToString().ifBlank { null })
                                 .joinToString(" – ")
                                 .ifBlank { "Unbekannter Fehler" }
                         },

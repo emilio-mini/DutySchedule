@@ -59,7 +59,7 @@ fun AppDutyCard(
     val requirementsMetWarn =
         duty.sew.isNotEmpty() && duty.el.isNotEmpty() && duty.tf.isNotEmpty() || (duty.el.isNotEmpty() && !duty.tf.any { person -> person.requirement == Requirement.HAEND })
 
-    val selfId = PrepService.getSelf()?.guid
+    val selfId = PrepService.self?.guid
     val containsSelf =
         duty.el.any { person -> person.employee.guid == selfId } || duty.tf.any { person -> person.employee.guid == selfId } || duty.rs.any { person -> person.employee.guid == selfId }
 

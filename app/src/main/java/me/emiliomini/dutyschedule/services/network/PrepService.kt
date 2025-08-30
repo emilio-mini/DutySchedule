@@ -1,8 +1,16 @@
 package me.emiliomini.dutyschedule.services.network
 
 import android.util.Log
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.datastore.core.DataStore
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
+import me.emiliomini.dutyschedule.datastore.prep.IncodeProto
+import me.emiliomini.dutyschedule.datastore.prep.duty.MinimalDutyDefinitionProto
+import me.emiliomini.dutyschedule.datastore.prep.employee.EmployeeProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgItemsProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
 import me.emiliomini.dutyschedule.debug.DebugFlags.AVOID_PREP_API
@@ -21,6 +29,7 @@ import me.emiliomini.dutyschedule.models.prep.OrgDay
 import me.emiliomini.dutyschedule.services.storage.DataKeys
 import me.emiliomini.dutyschedule.services.storage.DataStores
 import me.emiliomini.dutyschedule.services.storage.StorageService
+import me.emiliomini.dutyschedule.util.toOffsetDateTime
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okio.IOException
 import org.json.JSONException
@@ -36,8 +45,7 @@ import java.time.ZonedDateTime
 object PrepService {
     private const val TAG = "PrepService"
 
-    private var incode: Incode? = null
-    private var self: Employee? = null
+    private var incode: IncodeProto? = null
 
     private val messages = mutableMapOf<String, List<Message>>()
 
@@ -63,24 +71,19 @@ object PrepService {
         return@Comparator d1Count.compareTo(d2Count)
     }
 
-    fun getSelf(): Employee? {
-        return this.self
-    }
+    var isLoggedIn by mutableStateOf(false);
+    var self by mutableStateOf<EmployeeProto?>(null)
 
     fun getMessages(): Map<String, List<Message>> {
         return this.messages
     }
 
-    fun getIncode(): Incode? {
+    fun getIncode(): IncodeProto? {
         return this.incode
     }
 
-    fun isLoggedIn(): Boolean {
-        return this.incode != null
-    }
-
     suspend fun getOrg(abbreviationOrIdentifier: String): OrgProto? {
-        val orgs = this.loadOrgs()?.orgsList ?: return null
+        val orgs = this.loadOrgs()?.orgsMap?.values ?: return null
 
         var org = orgs.firstOrNull { it.abbreviation == abbreviationOrIdentifier }
         if (org == null) {
@@ -109,12 +112,16 @@ object PrepService {
 
             StorageService.save(DataKeys.USERNAME, username)
             StorageService.save(DataKeys.PASSWORD, password)
+            DataStores.INCODE.updateData {
+                this.incode!!
+            }
 
             Log.d(TAG, "Logged in!")
         } else {
             Log.w(TAG, "Could not find x-incode in response body")
             return false
         }
+        this.isLoggedIn = true
 
         var orgs: OrgItemsProto?
         var allowedOrgs: List<String>? = null
@@ -137,17 +144,9 @@ object PrepService {
         }
 
         val guid = DataExtractorService.extractGUID(responseBody)
+        Log.d(TAG, "Extracted self guid: $guid")
         if (guid != null && allowedOrgs != null) {
-            val staffResult = this.getStaff(
-                allowedOrgs.first(),
-                listOf(guid),
-                OffsetDateTime.now(),
-                OffsetDateTime.now()
-            ).getOrNull()
-            if (staffResult != null && staffResult.isNotEmpty()) {
-                this.self = staffResult.firstOrNull { it.guid == guid }
-            }
-
+            this.self = loadSelf(guid, allowedOrgs.first())
             Log.d(TAG, "Loaded self identity")
         } else {
             Log.w(TAG, "Could not find self dataGuid in response body")
@@ -166,6 +165,8 @@ object PrepService {
     suspend fun restoreLogin(): Boolean {
         val username = StorageService.load(DataKeys.USERNAME)
         val password = StorageService.load(DataKeys.PASSWORD)
+        val incode = DataStores.INCODE.data.firstOrNull()
+        val maxAge = 5L * 60L * 1_000L
 
         if (username.isNullOrBlank() || password.isNullOrBlank()) {
             return false
@@ -175,9 +176,14 @@ object PrepService {
             return this.login(username, password)
         }
 
-        val keepAlive = NetworkService.keepAlive().getOrNull()
-        if (keepAlive == "true") {
-            return true
+        val lastIncodeUseMillis = incode?.lastUsed?.toOffsetDateTime()?.toInstant()?.toEpochMilli() ?: 0L
+        if (incode != null && System.currentTimeMillis() - maxAge >= lastIncodeUseMillis) {
+            val keepAlive = NetworkService.keepAlive().getOrNull()
+            if (keepAlive == "true") {
+                this.incode = incode
+                this.isLoggedIn = true
+                return true
+            }
         }
 
         return this.login(username, password)
@@ -187,6 +193,37 @@ object PrepService {
         this.incode = null
         StorageService.clear(DataKeys.USERNAME)
         StorageService.clear(DataKeys.PASSWORD)
+    }
+
+    suspend fun loadSelf(guid: String?, org: String?): EmployeeProto? {
+        val localSelf = DataStores.SELF.data.firstOrNull()
+        if (localSelf != null && localSelf.guid.isNotBlank()) {
+            this.self = localSelf
+            return localSelf
+        }
+
+        if (guid == null || org == null) {
+            return null
+        }
+
+        val staffResult = this.getStaff(
+            org,
+            listOf(guid),
+            OffsetDateTime.now(),
+            OffsetDateTime.now()
+        ).getOrNull()
+        if (staffResult != null && staffResult.isNotEmpty()) {
+            this.self = staffResult.firstOrNull { it.guid == guid }?.toProto()
+            if (this.self != null) {
+                DataStores.SELF.updateData {
+                    this.self!!
+                }
+            }
+            return this.self
+        }
+
+        Log.d(TAG, "Loaded self identity")
+        return null
     }
 
     suspend fun loadOrgs(): OrgItemsProto? {
@@ -251,7 +288,7 @@ object PrepService {
     ): Result<List<DutyDefinition>> {
         Log.d(TAG, "Loading plan...")
 
-        if (!this.isLoggedIn()) {
+        if (!this.isLoggedIn) {
             return Result.failure(IOException("Not logged in!"))
         }
 
@@ -286,7 +323,7 @@ object PrepService {
     ): Result<List<Employee>> {
         Log.d(TAG, "Getting staff...")
 
-        if (!this.isLoggedIn()) {
+        if (!this.isLoggedIn) {
             return Result.failure(IOException("Not logged in!"))
         }
 
@@ -412,8 +449,8 @@ object PrepService {
         return Result.success(daysList)
     }
 
-    suspend fun loadPast(year: String): Result<List<MinimalDutyDefinition>> {
-        if (!isLoggedIn()) {
+    suspend fun loadPast(year: String): Result<List<MinimalDutyDefinitionProto>> {
+        if (!isLoggedIn) {
             return Result.failure(IOException("Not logged in!"))
         }
 
@@ -426,19 +463,47 @@ object PrepService {
         return Result.success(pastDuties)
     }
 
-    suspend fun loadUpcoming(): Result<List<MinimalDutyDefinition>> {
-        if (!isLoggedIn()) {
-            return Result.failure(IOException("Not logged in!"))
+    suspend fun loadHoursOfService(year: String): Float {
+        val localStats = DataStores.STATISTICS.data.firstOrNull()
+        if (localStats != null && !isLoggedIn) {
+            return localStats.minutesServed / 60f
+        }
+
+        val yearData = loadPast(year).getOrNull()
+        if (yearData == null) {
+            return 0f
+        }
+
+        val minutesServed = yearData.sumOf { it.duration }
+        DataStores.STATISTICS.updateData {
+            it.toBuilder()
+                .setMinutesServed(minutesServed)
+                .build()
+        }
+
+        return minutesServed / 60f
+    }
+
+    suspend fun loadUpcoming(): List<MinimalDutyDefinitionProto> {
+        val localUpcoming = DataStores.UPCOMING_DUTIES.data.firstOrNull()
+        if (localUpcoming != null && !isLoggedIn) {
+            return localUpcoming.minimalDutyDefinitionsList
         }
 
         val upcomingResponse = NetworkService.loadUpcoming(incode!!).getOrNull()
         if (upcomingResponse == null) {
-            return Result.failure(IOException("Failed to load upcoming duties!"))
+            return emptyList()
         }
 
-        val upcomingDuties =
-            DataParserService.parseLoadMinimalDutyDefinitions(JSONObject(upcomingResponse))
-        return Result.success(upcomingDuties)
+        val upcomingDuties = DataParserService.parseLoadMinimalDutyDefinitions(JSONObject(upcomingResponse))
+        DataStores.UPCOMING_DUTIES.updateData {
+            it.toBuilder()
+                .clearMinimalDutyDefinitions()
+                .addAllMinimalDutyDefinitions(upcomingDuties)
+                .build()
+        }
+
+        return upcomingDuties
     }
 
     suspend fun loadMessages(
@@ -446,7 +511,7 @@ object PrepService {
         from: OffsetDateTime,
         to: OffsetDateTime
     ): Result<List<Message>> {
-        if (!isLoggedIn()) {
+        if (!isLoggedIn) {
             return Result.failure(IOException("Not logged in!"))
         }
 

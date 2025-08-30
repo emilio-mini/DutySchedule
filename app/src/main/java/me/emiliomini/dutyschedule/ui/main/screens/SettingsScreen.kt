@@ -101,7 +101,7 @@ fun SettingsScreen(
                         }),
                     headlineContent = {
                         Text(
-                            PrepService.getSelf()?.name
+                            PrepService.self?.name
                                 ?: stringResource(R.string.main_settings_account_user_title_fallback)
                         )
                     }, supportingContent = {

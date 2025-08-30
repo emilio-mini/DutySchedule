@@ -5,6 +5,7 @@ import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import me.emiliomini.dutyschedule.BuildConfig
+import me.emiliomini.dutyschedule.datastore.prep.IncodeProto
 import me.emiliomini.dutyschedule.debug.DebugFlags
 import me.emiliomini.dutyschedule.enums.NetworkTarget
 import me.emiliomini.dutyschedule.models.github.GithubRelease
@@ -39,6 +40,7 @@ object NetworkService {
     private const val UNAUTHORIZED_MESSAGE = "Error 401: Unauthorized API Call"
     private val DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
 
+    // TODO: Persist cookies across sessions to avoid unnecessary calls to login.php
     private val cookieManager = CookieManager().apply {
         setCookiePolicy(CookiePolicy.ACCEPT_ALL)
     }
@@ -160,7 +162,7 @@ object NetworkService {
     }
 
     suspend fun loadPlan(
-        incode: Incode,
+        incode: IncodeProto,
         orgUnitDataGuid: String,
         from: OffsetDateTime,
         to: OffsetDateTime
@@ -187,7 +189,7 @@ object NetworkService {
     }
 
     suspend fun loadUpcoming(
-        incode: Incode
+        incode: IncodeProto
     ): Result<String?> {
         val form = FormBody.Builder()
             .add("year", "")
@@ -211,7 +213,7 @@ object NetworkService {
     }
 
     suspend fun loadPast(
-        incode: Incode,
+        incode: IncodeProto,
         year: String
     ): Result<String?> {
         val form = FormBody.Builder()
@@ -235,7 +237,7 @@ object NetworkService {
     }
 
     suspend fun getMessages(
-        incode: Incode,
+        incode: IncodeProto,
         orgUnitDataGuid: String,
         from: OffsetDateTime,
         to: OffsetDateTime
@@ -262,7 +264,7 @@ object NetworkService {
     }
 
     suspend fun getResources(
-        incode: Incode,
+        incode: IncodeProto,
         orgUnitDataGuid: String,
         from: OffsetDateTime,
         to: OffsetDateTime
@@ -288,7 +290,7 @@ object NetworkService {
     }
 
     suspend fun getStaff(
-        incode: Incode,
+        incode: IncodeProto,
         orgUnitDataGuid: String,
         staffDataGuid: List<String>,
         from: OffsetDateTime,
@@ -442,7 +444,7 @@ object NetworkService {
     }
 
     suspend fun createAndAllocateDuty(
-        incode: Incode,
+        incode: IncodeProto,
         planDataGuid: String,
         ignoreCache: Boolean = true
     ): Result<String?> {

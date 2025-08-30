@@ -1,6 +1,8 @@
 package me.emiliomini.dutyschedule.services.network
 
 import android.util.Log
+import me.emiliomini.dutyschedule.datastore.prep.duty.DutyTypeProto
+import me.emiliomini.dutyschedule.datastore.prep.duty.MinimalDutyDefinitionProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgItemsProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
 import me.emiliomini.dutyschedule.models.prep.AssignedEmployee
@@ -16,6 +18,8 @@ import me.emiliomini.dutyschedule.models.prep.Message
 import me.emiliomini.dutyschedule.models.prep.MinimalDutyDefinition
 import me.emiliomini.dutyschedule.models.prep.Resource
 import me.emiliomini.dutyschedule.models.prep.Skill
+import me.emiliomini.dutyschedule.util.TimeUtil
+import me.emiliomini.dutyschedule.util.toTimestamp
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.OffsetDateTime
@@ -69,7 +73,8 @@ object DataParserService {
             val abbreviation = additionalInfos.getString("orgUnitAbbreviation")
             val identifier = additionalInfos.getString("externalId")
 
-            orgItemsProto.addOrgs(
+            orgItemsProto.putOrgs(
+                guid,
                 OrgProto.newBuilder()
                     .setGuid(guid)
                     .setTitle(title)
@@ -241,9 +246,9 @@ object DataParserService {
         return sortedDuties
     }
 
-    fun parseLoadMinimalDutyDefinitions(root: JSONObject): List<MinimalDutyDefinition> {
+    fun parseLoadMinimalDutyDefinitions(root: JSONObject): List<MinimalDutyDefinitionProto> {
         val data = root.getJSONArray(this.DATA_ROOT_POSITION)
-        val duties = mutableListOf<MinimalDutyDefinition>()
+        val duties = mutableListOf<MinimalDutyDefinitionProto>()
 
         for (i in 0 until data.length()) {
             val obj = data.getJSONObject(i)
@@ -255,9 +260,9 @@ object DataParserService {
 
             val typeString = allocations?.getString(0)
             val type = when (typeString) {
-                "[ SEW ]" -> DutyType.EMS
-                "[ Schulung ]" -> DutyType.TRAINING
-                else -> DutyType.UNKNOWN
+                "[ SEW ]" -> DutyTypeProto.EMS
+                "[ Schulung ]" -> DutyTypeProto.TRAINING
+                else -> DutyTypeProto.UNKNOWN
             }
 
             val staffList = mutableListOf<String>()
@@ -271,16 +276,20 @@ object DataParserService {
                 staffList.find { it.contains("SEW") || it.contains("ITF") || it.contains("RTW") }
             staffList.filter { it != vehicle }
 
+            val def = MinimalDutyDefinitionProto.newBuilder()
+                .setGuid(obj.getString("guid"))
+                .setBegin(OffsetDateTime.parse(obj.getString("begin")).toTimestamp())
+                .setEnd(OffsetDateTime.parse(obj.getString("end")).toTimestamp())
+                .setType(type)
+                .addAllStaff(staffList)
+                .setDuration(obj.getInt("duration"))
+
+            if (vehicle != null) {
+                def.setVehicle(vehicle)
+            }
+
             duties.add(
-                MinimalDutyDefinition(
-                    obj.getString("guid"),
-                    OffsetDateTime.parse(obj.getString("begin")),
-                    OffsetDateTime.parse(obj.getString("end")),
-                    type,
-                    vehicle,
-                    staffList,
-                    obj.getInt("duration")
-                )
+                def.build()
             )
         }
 

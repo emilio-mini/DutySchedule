@@ -2,8 +2,11 @@ syntax = "proto3";
 option java_package = "me.emiliomini.dutyschedule.datastore.prep.org";
 option java_multiple_files = true;
 
+import "google/protobuf/timestamp.proto";
+import "duty.proto";
+
 message OrgItemsProto {
-  repeated OrgProto orgs = 1;
+  map<string, OrgProto> orgs = 1; // Key is OrgGuid
 }
 
 message OrgProto {
@@ -11,4 +14,21 @@ message OrgProto {
   string title = 2;
   string abbreviation = 3;
   string identifier = 4;
+}
+
+message OrgTimelineItemsProto {
+  map<string, OrgTimelineProto> orgTimelines = 1; // Key is OrgGuid
+}
+
+message OrgTimelineProto {
+  string guid = 1;
+  map<string, OrgDayProto> timeline = 2; // Key is OrgDayDate as millis
+}
+
+message OrgDayProto {
+  string orgGuid = 1;
+  google.protobuf.Timestamp date = 2;
+  google.protobuf.Timestamp lastUpdated = 3;
+  repeated DutyDefinitionProto dayShift = 4;
+  repeated DutyDefinitionProto nightShift = 5;
 }

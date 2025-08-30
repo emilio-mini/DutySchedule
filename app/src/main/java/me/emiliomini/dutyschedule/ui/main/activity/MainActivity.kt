@@ -62,7 +62,9 @@ class MainActivity : ComponentActivity() {
         }
 
         lifecycleScope.launch {
-            if (!PrepService.previouslyLoggedIn() || !PrepService.restoreLogin()) {
+            PrepService.loadSelf(null, null)
+
+            if (!PrepService.previouslyLoggedIn()) {
                 startActivity(Intent(this@MainActivity, OnboardingActivity::class.java))
                 finish()
             } else {
@@ -70,7 +72,7 @@ class MainActivity : ComponentActivity() {
                     LaunchedEffect(Unit) {
                         while (true) {
                             delay(TimeUnit.MINUTES.toMillis(5))
-                            if (PrepService.isLoggedIn()) {
+                            if (PrepService.isLoggedIn) {
                                 NetworkService.keepAlive()
                             }
                         }
@@ -187,6 +189,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
+                PrepService.restoreLogin()
             }
         }
     }
