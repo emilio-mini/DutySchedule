@@ -20,10 +20,8 @@ import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
 import me.emiliomini.dutyschedule.debug.DebugFlags
 import me.emiliomini.dutyschedule.enums.NetworkTarget
 import me.emiliomini.dutyschedule.models.network.CreateDutyResponse
-import me.emiliomini.dutyschedule.models.prep.DutyDefinition
 import me.emiliomini.dutyschedule.models.prep.Message
 import me.emiliomini.dutyschedule.models.prep.Org
-import me.emiliomini.dutyschedule.models.prep.OrgDay
 import me.emiliomini.dutyschedule.models.prep.Requirement
 import me.emiliomini.dutyschedule.services.network.DataExtractorService
 import me.emiliomini.dutyschedule.services.network.DataParserService
@@ -44,7 +42,6 @@ import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 
 object PrepService {
     private const val TAG = "PrepService"
@@ -377,7 +374,8 @@ object PrepService {
         if (missingEmployeeGuids.isNotEmpty()) {
             coroutineScope {
                 launch {
-                    val staff = getStaff(orgUnitDataGuid, missingEmployeeGuids, from, to).getOrNull()
+                    val staff =
+                        getStaff(orgUnitDataGuid, missingEmployeeGuids, from, to).getOrNull()
                     if (staff.isNullOrEmpty()) {
                         Log.e(TAG, "Failed to load missing staff $missingEmployeeGuids")
                     } else {
@@ -429,7 +427,8 @@ object PrepService {
                         && it.elList.isEmpty()
                         && it.rsList.isEmpty()
             }
-            dayShifts = if (lastDayShiftIndex > 0) dayShifts.dropLast(dayShifts.size - lastDayShiftIndex) else dayShifts
+            dayShifts =
+                if (lastDayShiftIndex > 0) dayShifts.dropLast(dayShifts.size - lastDayShiftIndex) else dayShifts
 
 
             var nightShifts = it.nightShiftList.toList().sortedWith(dutyComparator)
@@ -439,7 +438,8 @@ object PrepService {
                         && it.elList.isEmpty()
                         && it.rsList.isEmpty()
             }
-            nightShifts = if (lastNightShiftIndex > 0) nightShifts.dropLast(nightShifts.size - lastNightShiftIndex) else nightShifts
+            nightShifts =
+                if (lastNightShiftIndex > 0) nightShifts.dropLast(nightShifts.size - lastNightShiftIndex) else nightShifts
 
             it.toBuilder()
                 .clearDayShift()
