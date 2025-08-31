@@ -14,13 +14,29 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.protobuf.Timestamp
+import me.emiliomini.dutyschedule.datastore.prep.employee.EmployeeItemsProto
+import me.emiliomini.dutyschedule.datastore.prep.employee.EmployeeProto
+import me.emiliomini.dutyschedule.datastore.prep.employee.RequirementProto
 import me.emiliomini.dutyschedule.models.prep.Employee
+import me.emiliomini.dutyschedule.services.storage.DataStores
+import me.emiliomini.dutyschedule.services.storage.ProtoMapViewModel
+import me.emiliomini.dutyschedule.services.storage.ProtoMapViewModelFactory
+import me.emiliomini.dutyschedule.services.storage.ViewModelKeys
+import me.emiliomini.dutyschedule.util.format
 
 enum class PersonnelInfoState {
     DEFAULT, DISABLED, HIGHLIGHTED
@@ -31,24 +47,41 @@ enum class PersonnelInfoState {
 fun AppPersonnelInfo(
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
-    employee: Employee,
+    employeeGuid: String,
+    fallbackEmployee: EmployeeProto? = null,
+    customBegin: Timestamp? = null,
+    customEnd: Timestamp? = null,
     info: String? = null,
     state: PersonnelInfoState = PersonnelInfoState.DEFAULT,
-    showInfoBadge: Boolean = false
+    showInfoBadge: Boolean = false,
+    viewModel: ProtoMapViewModel<EmployeeItemsProto, EmployeeProto> = viewModel(
+        key = ViewModelKeys.EMPLOYEES,
+        factory = ProtoMapViewModelFactory<EmployeeItemsProto, EmployeeProto>(DataStores.EMPLOYEES) { it.employeesMap }
+    )
 ) {
+    val employees by viewModel.flow.collectAsStateWithLifecycle(
+        initialValue = emptyMap<String, EmployeeProto>()
+    )
+
     val contentColor = when (state) {
         PersonnelInfoState.HIGHLIGHTED -> MaterialTheme.colorScheme.primary
         PersonnelInfoState.DISABLED -> MaterialTheme.colorScheme.outline
         PersonnelInfoState.DEFAULT -> MaterialTheme.colorScheme.onSurface
     }
 
-    var infoText = ""
-    if (info != null) {
-        infoText = info
-    }
-    if (employee.identifier != null) {
-        infoText =
-            if (infoText.isBlank()) employee.identifier!! else "$infoText | ${employee.identifier}"
+    var employee by remember { mutableStateOf<EmployeeProto?>(null) }
+    var infoText by remember { mutableStateOf("") }
+
+    LaunchedEffect(employeeGuid, fallbackEmployee, employees) {
+        employee = employees[employeeGuid] ?: fallbackEmployee
+
+        var infoContents = mutableListOf<String>()
+        infoContents.add(employee?.identifier ?: "")
+        if (customBegin != null || customEnd != null) {
+            infoContents.add(customBegin?.format("HH:mm") + " - " + customEnd?.format("HH:mm"))
+        }
+        infoContents.add(info ?: "")
+        infoText = infoContents.filter { it.isNotBlank() }.joinToString(" | ")
     }
 
     Row(
@@ -79,37 +112,9 @@ fun AppPersonnelInfo(
                 fontWeight = FontWeight.Light
             )
             Text(
-                text = employee.name, color = contentColor,
+                text = employee?.name ?: "", color = contentColor,
                 fontWeight = if (state == PersonnelInfoState.HIGHLIGHTED) FontWeight.Bold else FontWeight.Normal
             )
         }
     }
-}
-
-@Preview(showBackground = true, backgroundColor = 0xFFE9E9E9, name = "Default State")
-@Composable
-fun AppPersonnelInfoPreviewDefault() {
-    AppPersonnelInfo(
-        icon = Icons.Outlined.Badge,
-        employee = Employee("", "Someone Else", "0012345"),
-        state = PersonnelInfoState.DEFAULT
-    )
-}
-
-@Preview(showBackground = true, backgroundColor = 0xFFE9E9E9, name = "Highlighted State")
-@Composable
-fun AppPersonnelInfoPreviewHighlighted() {
-    AppPersonnelInfo(
-        icon = Icons.Outlined.Badge,
-        employee = Employee("", "Your Name", "0012345"),
-        state = PersonnelInfoState.HIGHLIGHTED
-    )
-}
-
-@Preview(showBackground = true, backgroundColor = 0xFFE9E9E9, name = "Disabled State")
-@Composable
-fun AppPersonnelInfoPreviewDisabled() {
-    AppPersonnelInfo(
-        employee = Employee("", "Empty Seat"), state = PersonnelInfoState.DISABLED
-    )
 }

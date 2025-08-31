@@ -36,7 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.datastore.prep.duty.MinimalDutyDefinitionProto
-import me.emiliomini.dutyschedule.services.network.PrepService
+import me.emiliomini.dutyschedule.services.prep.PrepService
 import me.emiliomini.dutyschedule.ui.components.ArcProgressIndicator
 import me.emiliomini.dutyschedule.ui.components.EmployeeAvatar
 import me.emiliomini.dutyschedule.ui.components.LazyCardColumn

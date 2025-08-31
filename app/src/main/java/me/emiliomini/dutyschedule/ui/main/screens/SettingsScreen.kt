@@ -35,7 +35,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.R
-import me.emiliomini.dutyschedule.services.network.PrepService
+import me.emiliomini.dutyschedule.services.prep.PrepService
 import me.emiliomini.dutyschedule.ui.components.CardColumn
 import me.emiliomini.dutyschedule.ui.components.CardListItem
 import me.emiliomini.dutyschedule.ui.main.components.DutyAlarmListItem

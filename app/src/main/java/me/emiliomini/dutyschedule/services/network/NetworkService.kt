@@ -12,6 +12,7 @@ import me.emiliomini.dutyschedule.models.github.GithubRelease
 import me.emiliomini.dutyschedule.models.network.NetworkCacheData
 import me.emiliomini.dutyschedule.models.prep.Incode
 import me.emiliomini.dutyschedule.models.prep.Org
+import me.emiliomini.dutyschedule.services.prep.PrepService
 import okhttp3.CookieJar
 import okhttp3.FormBody
 import okhttp3.Headers

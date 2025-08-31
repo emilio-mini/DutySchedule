@@ -1,6 +1,7 @@
 package me.emiliomini.dutyschedule.models.prep
 
 import me.emiliomini.dutyschedule.R
+import me.emiliomini.dutyschedule.datastore.prep.employee.SkillProto
 
 enum class Skill(val value: String) {
 
@@ -12,25 +13,16 @@ enum class Skill(val value: String) {
     FK("c30671bcde60ec8b830ed13b01c8cc6fdab22b9d_2_1574063179_2314"),
     NOTKOMPETENZ("97c906abe22bedbc345b831bbbd8780202c0ac1d_2_1574062972_0977"),
     HAEND("5d94ed22ed92e0c83adab8a19ae3c72a41b0712b_2_1544534852_643"),
-
     ZUGSKOMMANDANT("f57c67a6b631fcc3c89d1e9ff7c98952cee9bed0_2_1551859929_7417"),
     GRUPPENKOMMANDANT("1f1c71b6deadcf9b8eef112e874cf337859dc618_2_1551859921_966"),
     OFFIZIER("6c13602611a9373baa3ee2948be3780939658a21_2_1551859940_445"),
 
     INVALID("");
 
-    fun getResourceString(): Int {
-        return when (this) {
-            RS -> R.string.data_skill_rs
-            AZUBI -> R.string.data_skill_azubi
-            HAEND -> R.string.data_skill_haend
-            FK -> R.string.data_skill_fk
-            PA -> R.string.data_skill_pa
-            SEF -> R.string.data_skill_sef
-            NOTKOMPETENZ -> R.string.data_skill_nkv
-            NFS -> R.string.data_skill_nfs
-            else -> R.string.data_requirement_none
-        }
+    fun asProto(): SkillProto {
+        return SkillProto.newBuilder()
+            .setGuid(this.value)
+            .build()
     }
 
     companion object {

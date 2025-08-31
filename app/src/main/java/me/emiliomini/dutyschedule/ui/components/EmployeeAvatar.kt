@@ -32,7 +32,7 @@ import androidx.compose.ui.window.Dialog
 import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.datastore.prep.employee.EmployeeProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
-import me.emiliomini.dutyschedule.services.network.PrepService
+import me.emiliomini.dutyschedule.services.prep.PrepService
 import me.emiliomini.dutyschedule.util.toOffsetDateTime
 import java.time.format.DateTimeFormatter
 

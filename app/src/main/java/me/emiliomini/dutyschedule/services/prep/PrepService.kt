@@ -1,46 +1,50 @@
-package me.emiliomini.dutyschedule.services.network
+package me.emiliomini.dutyschedule.services.prep
 
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.datastore.core.DataStore
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.datastore.prep.IncodeProto
+import me.emiliomini.dutyschedule.datastore.prep.duty.DutyDefinitionProto
 import me.emiliomini.dutyschedule.datastore.prep.duty.MinimalDutyDefinitionProto
+import me.emiliomini.dutyschedule.datastore.prep.employee.AssignedEmployeeProto
+import me.emiliomini.dutyschedule.datastore.prep.employee.EmployeeItemsProto
 import me.emiliomini.dutyschedule.datastore.prep.employee.EmployeeProto
+import me.emiliomini.dutyschedule.datastore.prep.employee.RequirementProto
+import me.emiliomini.dutyschedule.datastore.prep.org.OrgDayProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgItemsProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
-import me.emiliomini.dutyschedule.debug.DebugFlags.AVOID_PREP_API
+import me.emiliomini.dutyschedule.debug.DebugFlags
 import me.emiliomini.dutyschedule.enums.NetworkTarget
 import me.emiliomini.dutyschedule.models.network.CreateDutyResponse
-import me.emiliomini.dutyschedule.models.prep.AssignedEmployee
 import me.emiliomini.dutyschedule.models.prep.DutyDefinition
-import me.emiliomini.dutyschedule.models.prep.Employee
-import me.emiliomini.dutyschedule.models.prep.Incode
 import me.emiliomini.dutyschedule.models.prep.Message
-import me.emiliomini.dutyschedule.models.prep.MinimalDutyDefinition
 import me.emiliomini.dutyschedule.models.prep.Org
-import me.emiliomini.dutyschedule.models.prep.Requirement
-import me.emiliomini.dutyschedule.services.parsers.DocScedParserService
 import me.emiliomini.dutyschedule.models.prep.OrgDay
+import me.emiliomini.dutyschedule.models.prep.Requirement
+import me.emiliomini.dutyschedule.services.network.DataExtractorService
+import me.emiliomini.dutyschedule.services.network.DataParserService
+import me.emiliomini.dutyschedule.services.network.NetworkService
+import me.emiliomini.dutyschedule.services.parsers.DocScedParserService
 import me.emiliomini.dutyschedule.services.storage.DataKeys
 import me.emiliomini.dutyschedule.services.storage.DataStores
 import me.emiliomini.dutyschedule.services.storage.StorageService
+import me.emiliomini.dutyschedule.util.format
+import me.emiliomini.dutyschedule.util.isNightShift
 import me.emiliomini.dutyschedule.util.toOffsetDateTime
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okio.IOException
 import org.json.JSONException
 import org.json.JSONObject
 import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.OffsetDateTime
-import java.time.format.DateTimeFormatter
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
 object PrepService {
     private const val TAG = "PrepService"
@@ -49,19 +53,19 @@ object PrepService {
 
     private val messages = mutableMapOf<String, List<Message>>()
 
-    private val dutyComparator = Comparator<DutyDefinition> { d1, d2 ->
-        fun DutyDefinition.nonEmptySecondaryCount(): Int =
-            listOf(el, tf, rs).count { it.isNotEmpty() }
+    private val dutyComparator = Comparator<DutyDefinitionProto> { d1, d2 ->
+        fun DutyDefinitionProto.nonEmptySecondaryCount(): Int =
+            listOf(elList, tfList, rsList).count { it.isNotEmpty() }
 
-        val d1HasSew = d1.sew.isNotEmpty()
-        val d2HasSew = d2.sew.isNotEmpty()
+        val d1HasSew = d1.sewList.isNotEmpty()
+        val d2HasSew = d2.sewList.isNotEmpty()
 
         if (d1HasSew && !d2HasSew) return@Comparator -1
         if (!d1HasSew && d2HasSew) return@Comparator 1
 
         if (d1HasSew && d2HasSew) {
-            val name1 = d1.sew.first().employee.name
-            val name2 = d2.sew.first().employee.name
+            val name1 = d1.sewList.first().inlineEmployee.name
+            val name2 = d2.sewList.first().inlineEmployee.name
             val nameCmp = name1.compareTo(name2)
             if (nameCmp != 0) return@Comparator nameCmp
         }
@@ -94,7 +98,7 @@ object PrepService {
     }
 
     suspend fun login(username: String, password: String): Boolean {
-        val loginResult: Result<String?> = if (AVOID_PREP_API.active()) {
+        val loginResult: Result<String?> = if (DebugFlags.AVOID_PREP_API.active()) {
             Result.success("...{ headers: { 'x-incode-EXAMPLEKEY': 'EXAMPLEVALUE' } }...")
         } else {
             NetworkService.login(username, password)
@@ -172,11 +176,12 @@ object PrepService {
             return false
         }
 
-        if (AVOID_PREP_API.active()) {
+        if (DebugFlags.AVOID_PREP_API.active()) {
             return this.login(username, password)
         }
 
-        val lastIncodeUseMillis = incode?.lastUsed?.toOffsetDateTime()?.toInstant()?.toEpochMilli() ?: 0L
+        val lastIncodeUseMillis =
+            incode?.lastUsed?.toOffsetDateTime()?.toInstant()?.toEpochMilli() ?: 0L
         if (incode != null && System.currentTimeMillis() - maxAge >= lastIncodeUseMillis) {
             val keepAlive = NetworkService.keepAlive().getOrNull()
             if (keepAlive == "true") {
@@ -213,7 +218,7 @@ object PrepService {
             OffsetDateTime.now()
         ).getOrNull()
         if (staffResult != null && staffResult.isNotEmpty()) {
-            this.self = staffResult.firstOrNull { it.guid == guid }?.toProto()
+            this.self = staffResult.firstOrNull { it.guid == guid }
             if (this.self != null) {
                 DataStores.SELF.updateData {
                     this.self!!
@@ -241,7 +246,7 @@ object PrepService {
                 return null
             }
 
-            val orgTreeUrl = NetworkTarget.withScheduleBase(orgTreeLocation).toHttpUrl()
+            val orgTreeUrl = NetworkTarget.Companion.withScheduleBase(orgTreeLocation).toHttpUrl()
             val orgTreeBody = NetworkService.get(orgTreeUrl).getOrNull()
             if (orgTreeBody == null) {
                 Log.e(TAG, "Failed to load orgs - missing org tree body")
@@ -285,25 +290,20 @@ object PrepService {
         orgUnitDataGuid: String,
         from: OffsetDateTime,
         to: OffsetDateTime
-    ): Result<List<DutyDefinition>> {
+    ): Result<List<DutyDefinitionProto>> {
         Log.d(TAG, "Loading plan...")
 
         if (!this.isLoggedIn) {
-            return Result.failure(IOException("Not logged in!"))
+            return Result.failure(okio.IOException("Not logged in!"))
         }
 
-        if (AVOID_PREP_API.active()) {
-            delay(2000)
-            return Result.success(
-                listOf(
-                    DutyDefinition.getSample()
-                )
-            )
+        if (DebugFlags.AVOID_PREP_API.active()) { // TODO: Replace with demo mode
+            return Result.success(emptyList())
         }
 
         val planBody = NetworkService.loadPlan(incode!!, orgUnitDataGuid, from, to).getOrNull()
         if (planBody.isNullOrBlank()) {
-            return Result.failure(IOException("Failed to load plan!"))
+            return Result.failure(okio.IOException("Failed to load plan!"))
         }
 
         try {
@@ -320,31 +320,28 @@ object PrepService {
         staffDataGuid: List<String>,
         from: OffsetDateTime,
         to: OffsetDateTime
-    ): Result<List<Employee>> {
+    ): Result<List<EmployeeProto>> {
         Log.d(TAG, "Getting staff...")
 
         if (!this.isLoggedIn) {
-            return Result.failure(IOException("Not logged in!"))
+            return Result.failure(okio.IOException("Not logged in!"))
         }
 
-        if (AVOID_PREP_API.active()) {
-            return Result.success(
-                listOf(
-                    Employee("e0", "Your Name", "00001234"),
-                    Employee("e1", "John Doe", "00012345"),
-                    Employee("e2", "Jane Doe", "00023456")
-                )
-            )
+        if (DebugFlags.AVOID_PREP_API.active()) { // TODO: Replace with demo mode
+            return Result.success(emptyList())
         }
 
         val staffBody =
             NetworkService.getStaff(incode!!, orgUnitDataGuid, staffDataGuid, from, to).getOrNull()
         if (staffBody.isNullOrBlank()) {
-            return Result.failure(IOException("Failed to get staff!"))
+            return Result.failure(okio.IOException("Failed to get staff!"))
         }
 
         try {
             val staff = DataParserService.parseGetStaff(JSONObject(staffBody))
+            DataStores.EMPLOYEES.updateData {
+                it.toBuilder().putAllEmployees(staff.associateBy { it.guid }).build()
+            }
             return Result.success(staff)
         } catch (e: JSONException) {
             Log.e(TAG, "Invalid JSON! $staffBody")
@@ -356,41 +353,42 @@ object PrepService {
         orgUnitDataGuid: String,
         from: OffsetDateTime,
         to: OffsetDateTime
-    ): Result<List<OrgDay>> {
-        val plan = this.loadPlan(orgUnitDataGuid, from, to).getOrNull()
+    ): Result<List<OrgDayProto>> {
+        // Load plan
+        var plan = this.loadPlan(orgUnitDataGuid, from, to).getOrNull()
         if (plan.isNullOrEmpty()) {
             Log.e(TAG, "Failed to load plan")
-            return Result.failure(IOException("Failed to load plan!"))
+            return Result.failure(okio.IOException("Failed to load plan!"))
         }
 
+        // Ensure staff is loaded
         val employeeGuids = plan.flatMap { duty ->
             val guids = mutableListOf<String>()
-            guids.addAll(duty.el.map { it.employee.guid })
-            guids.addAll(duty.tf.map { it.employee.guid })
-            guids.addAll(duty.rs.map { it.employee.guid })
+            guids.addAll(duty.elList.map { it.employeeGuid })
+            guids.addAll(duty.tfList.map { it.employeeGuid })
+            guids.addAll(duty.rsList.map { it.employeeGuid })
             guids
         }.distinct()
-        val staff = this.getStaff(orgUnitDataGuid, employeeGuids, from, to).getOrNull()
-        if (staff.isNullOrEmpty()) {
-            Log.e(TAG, "Failed to get staff")
-            return Result.failure(IOException("Failed to get staff!"))
-        }
-        val staffMap = staff.associateBy { it.guid }
-
-        plan.forEach { dutyDefinition ->
-            dutyDefinition.el.forEach { assigned ->
-                assigned.employee = staffMap[assigned.employee.guid] ?: assigned.employee
-            }
-            dutyDefinition.tf.forEach { assigned ->
-                assigned.employee = staffMap[assigned.employee.guid] ?: assigned.employee
-            }
-            dutyDefinition.rs.forEach { assigned ->
-                assigned.employee = staffMap[assigned.employee.guid] ?: assigned.employee
+        val localEmployees =
+            DataStores.EMPLOYEES.data.firstOrNull() ?: EmployeeItemsProto.getDefaultInstance()
+        val missingEmployeeGuids =
+            employeeGuids.filter { !localEmployees.employeesMap.contains(it) }
+        Log.d(TAG, "Skipping ${localEmployees.employeesCount} local employees")
+        if (missingEmployeeGuids.isNotEmpty()) {
+            coroutineScope {
+                launch {
+                    val staff = getStaff(orgUnitDataGuid, missingEmployeeGuids, from, to).getOrNull()
+                    if (staff.isNullOrEmpty()) {
+                        Log.e(TAG, "Failed to load missing staff $missingEmployeeGuids")
+                    } else {
+                        Log.d(TAG, "Loaded ${staff.size} staff elements")
+                    }
+                }
             }
         }
 
         try {
-            augmentHaendWithDocScedTf(
+            plan = augmentHaendWithDocScedTf(
                 duties = plan,
                 selectedOrgGuid = orgUnitDataGuid,
                 from = from,
@@ -400,49 +398,55 @@ object PrepService {
             Log.w(TAG, "HÄND-Augmentierung fehlgeschlagen: ${e.message}")
         }
 
-        val days = mutableMapOf<String, OrgDay>()
-        val keyPattern = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        val days = mutableMapOf<String, OrgDayProto>()
         for (duty in plan) {
-            val date = duty.begin.format(keyPattern)
+            val date = duty.begin.format("yyyy-MM-dd")
             val day = days.getOrDefault(
                 date,
-                OrgDay(orgUnitDataGuid, duty.begin, emptyList(), emptyList())
+                OrgDayProto.newBuilder()
+                    .setOrgGuid(orgUnitDataGuid)
+                    .setDate(duty.begin)
+                    .build()
             )
 
-            if (duty.begin.hour <= 16) { // TODO: Check actual day/night-shift differentiation
-                day.dayShift = day.dayShift + listOf(duty)
+            if (duty.isNightShift()) {
+                days[date] = day.toBuilder()
+                    .addNightShift(duty)
+                    .build()
             } else {
-                day.nightShift = day.nightShift + listOf(duty)
+                days[date] = day.toBuilder()
+                    .addDayShift(duty)
+                    .build()
             }
-
-            days[date] = day
         }
 
-        val daysList = days.values.toList()
-        for (day in daysList) {
-            day.dayShift = day.dayShift.sortedWith(dutyComparator)
-            val lastDayIndex = 1 + day.dayShift.indexOfFirst {
-                it.sew.isEmpty()
-                        && it.tf.isEmpty()
-                        && it.el.isEmpty()
-                        && it.rs.isEmpty()
+        var daysList = days.values.toList()
+        daysList = daysList.map {
+            var dayShifts = it.dayShiftList.toList().sortedWith(dutyComparator)
+            val lastDayShiftIndex = 1 + dayShifts.indexOfFirst {
+                it.sewList.isEmpty()
+                        && it.tfList.isEmpty()
+                        && it.elList.isEmpty()
+                        && it.rsList.isEmpty()
             }
-            day.dayShift = if (lastDayIndex > 0) day.dayShift.dropLast(day.dayShift.size - lastDayIndex) else day.dayShift
+            dayShifts = if (lastDayShiftIndex > 0) dayShifts.dropLast(dayShifts.size - lastDayShiftIndex) else dayShifts
 
-            day.nightShift = day.nightShift.sortedWith(dutyComparator)
-            val lastNightIndex = 1 + day.nightShift.indexOfFirst {
-                it.sew.isEmpty()
-                        && it.tf.isEmpty()
-                        && it.el.isEmpty()
-                        && it.rs.isEmpty()
-            }
 
-            /*
-            if (!duty.el.isEmpty() && !duty.tf.isEmpty() || duty.sew.any { it.requirement == Requirement.HAEND }) {
-                timelineItems.add(TimelineItem.Duty(duty))
+            var nightShifts = it.nightShiftList.toList().sortedWith(dutyComparator)
+            val lastNightShiftIndex = 1 + nightShifts.indexOfFirst {
+                it.sewList.isEmpty()
+                        && it.tfList.isEmpty()
+                        && it.elList.isEmpty()
+                        && it.rsList.isEmpty()
             }
-             */
-            day.nightShift = if (lastNightIndex > 0) day.nightShift.dropLast(day.nightShift.size - lastNightIndex) else day.nightShift
+            nightShifts = if (lastNightShiftIndex > 0) nightShifts.dropLast(nightShifts.size - lastNightShiftIndex) else nightShifts
+
+            it.toBuilder()
+                .clearDayShift()
+                .clearNightShift()
+                .addAllDayShift(dayShifts)
+                .addAllNightShift(nightShifts)
+                .build()
         }
 
         Log.d(TAG, "Loaded ${days.size} days on the timeline")
@@ -451,12 +455,12 @@ object PrepService {
 
     suspend fun loadPast(year: String): Result<List<MinimalDutyDefinitionProto>> {
         if (!isLoggedIn) {
-            return Result.failure(IOException("Not logged in!"))
+            return Result.failure(okio.IOException("Not logged in!"))
         }
 
         val pastResponse = NetworkService.loadPast(incode!!, year).getOrNull()
         if (pastResponse == null) {
-            return Result.failure(IOException("Failed to load past duties!"))
+            return Result.failure(okio.IOException("Failed to load past duties!"))
         }
 
         val pastDuties = DataParserService.parseLoadMinimalDutyDefinitions(JSONObject(pastResponse))
@@ -495,7 +499,11 @@ object PrepService {
             return emptyList()
         }
 
-        val upcomingDuties = DataParserService.parseLoadMinimalDutyDefinitions(JSONObject(upcomingResponse))
+        val upcomingDuties = DataParserService.parseLoadMinimalDutyDefinitions(
+            JSONObject(
+                upcomingResponse
+            )
+        )
         DataStores.UPCOMING_DUTIES.updateData {
             it.toBuilder()
                 .clearMinimalDutyDefinitions()
@@ -512,27 +520,27 @@ object PrepService {
         to: OffsetDateTime
     ): Result<List<Message>> {
         if (!isLoggedIn) {
-            return Result.failure(IOException("Not logged in!"))
+            return Result.failure(okio.IOException("Not logged in!"))
         }
 
         val resourcesResponse =
             NetworkService.getResources(incode!!, orgUnitDataGuid, from, to).getOrNull()
         if (resourcesResponse == null) {
-            return Result.failure(IOException("Failed to get resources!"))
+            return Result.failure(okio.IOException("Failed to get resources!"))
         }
         val resources = DataParserService.parseGetResources(JSONObject(resourcesResponse))
         if (resources == null) {
-            return Result.failure(IOException("Failed to collect resources!"))
+            return Result.failure(okio.IOException("Failed to collect resources!"))
         }
 
         val messagesResponse =
             NetworkService.getMessages(incode!!, orgUnitDataGuid, from, to).getOrNull()
         if (messagesResponse == null) {
-            return Result.failure(IOException("Failed to get messages!"))
+            return Result.failure(okio.IOException("Failed to get messages!"))
         }
         val messages = DataParserService.parseGetMessages(JSONObject(messagesResponse))
         if (messages == null) {
-            return Result.failure(IOException("Failed to collect messages!"))
+            return Result.failure(okio.IOException("Failed to collect messages!"))
         }
 
         for (message in messages) {
@@ -555,34 +563,40 @@ object PrepService {
     }
 
     private suspend fun augmentHaendWithDocScedTf(
-        duties: List<DutyDefinition>,
+        duties: List<DutyDefinitionProto>,
         selectedOrgGuid: String,
         from: OffsetDateTime,
         to: OffsetDateTime
-    ) {
-        val config = Org.parse(selectedOrgGuid)
+    ): List<DutyDefinitionProto> {
+        val config = Org.Companion.parse(selectedOrgGuid)
         if (config == null || config == Org.INVALID) {
             Log.d(TAG, "DocSced: ausgewählte Org ist kein HÄND (Wels/Wels-Land) – skip")
-            return
+            return duties
         }
 
         val html = NetworkService.loadDocScedCalendar(config = config, gran = "ges").getOrNull()
         if (html.isNullOrBlank()) {
             Log.w(TAG, "DocSced: kein HTML geladen für $config")
-            return
+            return duties
         }
         val days = DocScedParserService.parseFahrdienst(html).getOrNull().orEmpty()
         val byDate = days.associateBy { it.date } // Map<LocalDate, FahrdienstDay>
         Log.d(TAG, "DocSced: ${days.size} Fahrdienst-Tage geparst für $config")
 
-        for (duty in duties) {
-            val haends = duty.sew.filter { it.requirement == Requirement.HAEND }
+        val mutableDuties = duties.toMutableList()
+        for (i in mutableDuties.indices) {
+            val duty = mutableDuties[i]
+            val haends = duty.sewList.filter { it.requirement.guid == Requirement.HAEND.value }
             if (haends.isEmpty()) continue
 
             for (haend in haends) {
                 val zone = ZoneId.systemDefault()
 
-                val mid = localMidpoint(haend.begin, haend.end, zone)
+                val mid = localMidpoint(
+                    haend.begin.toOffsetDateTime(),
+                    haend.end.toOffsetDateTime(),
+                    zone
+                )
                 val night = isNight(mid)
                 val dsDate = docscedRowDate(mid)
 
@@ -606,52 +620,45 @@ object PrepService {
                     continue
                 }
 
-                //val label = "HÄND ${stringResource(config.getResourceString())} (${if (night) "Nacht" else "Tag"})"
-                val label = "HÄND ${if (config == Org.WELS_LAND) "Wels-Land" else "Wels-Stadt"} (${if (night) "Nacht" else "Tag"})"
-                val docEmployee = Employee(
-                    guid = "docsced:$config:$dsDate:${if (night) "nacht" else "tag"}",
-                    name = candidate,
-                    //identifier = stringResource(R.string.data_requirement_haend_dr)
-                    identifier = "Dr."
-                )
+                val docEmployee = EmployeeProto.newBuilder()
+                    .setGuid("docsced:$config:$dsDate:${if (night) "nacht" else "tag"}")
+                    .setName(candidate)
+                    .setIdentifier("Dr.")
+                    .build()
 
-                val targetTf =
-                    duty.tf.firstOrNull { overlaps(it.begin, it.end, haend.begin, haend.end) }
-                        ?: duty.tf.firstOrNull()
-                if (targetTf != null) {
-                    targetTf.employee = docEmployee
-                    targetTf.info =
-                        (targetTf.info + if (targetTf.info.isBlank()) label else " | $label").trim()
-                    targetTf.requirement = Requirement.HAEND_DR
-                } else {
-                    duty.tf.add(
-                        AssignedEmployee(
-                            employee = docEmployee,
-                            begin = haend.begin,
-                            end = haend.end,
-                            requirement = Requirement.HAEND_DR,
-                            info = label
-                        )
+                mutableDuties[i] = duty.toBuilder()
+                    .addTf(
+                        AssignedEmployeeProto.newBuilder()
+                            .setBegin(haend.begin)
+                            .setEnd(haend.end)
+                            .setRequirement(
+                                RequirementProto.newBuilder().setGuid(Requirement.HAEND_DR.value)
+                                    .build()
+                            )
+                            .setInlineEmployee(docEmployee)
+                            .build()
                     )
-                }
+                    .build()
 
                 Log.d(
                     TAG,
                     "DocSced: ${docEmployee.name} → TF gesetzt ($config, $dsDate, ${if (night) "Nacht" else "Tag"}) " +
                             "für HÄND ${
-                                haend.begin.atZoneSameInstant(zone).toLocalTime()
-                            }–${haend.end.atZoneSameInstant(zone).toLocalTime()}"
+                                haend.begin.format("yyyy-MM-dd HH:mm")
+                            }–${haend.end.format("yyyy-MM-dd HH:mm")}"
                 )
 
             }
         }
+
+        return mutableDuties.toList()
     }
 
     suspend fun createAndAllocateDuty(planDataGuid: String): Result<CreateDutyResponse> {
-        val code = getIncode() ?: return Result.failure(IOException("Not logged in!"))
+        val code = getIncode() ?: return Result.failure(okio.IOException("Not logged in!"))
 
         val body = NetworkService.createAndAllocateDuty(code, planDataGuid).getOrNull()
-            ?: return Result.failure(IOException("Failed to create duty!"))
+            ?: return Result.failure(okio.IOException("Failed to create duty!"))
 
         val parsed = try {
             DataParserService.parseCreateAndAllocateDuty(JSONObject(body))
@@ -661,7 +668,7 @@ object PrepService {
         }
 
         return if (parsed == null) {
-            Result.failure(IOException("Failed to parse create duty response!"))
+            Result.failure(okio.IOException("Failed to parse create duty response!"))
         } else {
             Result.success(parsed)
         }
@@ -699,9 +706,4 @@ object PrepService {
         val bE = bEnd.toInstant()
         return aS < bE && bS < aE
     }
-
-    private fun isNight(begin: LocalTime, end: LocalTime): Boolean {
-        return begin >= LocalTime.of(19, 0) || end <= LocalTime.of(7, 0)
-    }
 }
-

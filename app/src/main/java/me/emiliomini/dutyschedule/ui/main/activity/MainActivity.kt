@@ -31,7 +31,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.services.network.NetworkService
-import me.emiliomini.dutyschedule.services.network.PrepService
+import me.emiliomini.dutyschedule.services.prep.PrepService
 import me.emiliomini.dutyschedule.services.notifications.NotificationService
 import me.emiliomini.dutyschedule.services.storage.DataStores
 import me.emiliomini.dutyschedule.ui.main.screens.AlarmsScreen

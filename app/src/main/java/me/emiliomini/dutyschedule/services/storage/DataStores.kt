@@ -9,6 +9,7 @@ import me.emiliomini.dutyschedule.datastore.alarm.AlarmItemsProto
 import me.emiliomini.dutyschedule.datastore.prep.IncodeProto
 import me.emiliomini.dutyschedule.datastore.prep.StatisticsProto
 import me.emiliomini.dutyschedule.datastore.prep.duty.UpcomingDutyItemsProto
+import me.emiliomini.dutyschedule.datastore.prep.employee.EmployeeItemsProto
 import me.emiliomini.dutyschedule.datastore.prep.employee.EmployeeProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgItemsProto
 
@@ -37,6 +38,10 @@ private val Context.store_upcoming_duties: DataStore<UpcomingDutyItemsProto> by 
     fileName = "prep_upcoming_duties.pb",
     serializer = ProtoSerializer<UpcomingDutyItemsProto>(UpcomingDutyItemsProto.parser(), UpcomingDutyItemsProto.getDefaultInstance())
 )
+private val Context.store_employees: DataStore<EmployeeItemsProto> by dataStore(
+    fileName = "prep_employees.pb",
+    serializer = ProtoSerializer<EmployeeItemsProto>(EmployeeItemsProto.parser(), EmployeeItemsProto.getDefaultInstance())
+)
 
 object DataStores {
     lateinit var PREFERENCES: DataStore<Preferences>
@@ -46,6 +51,7 @@ object DataStores {
     lateinit var SELF: DataStore<EmployeeProto>
     lateinit var STATISTICS: DataStore<StatisticsProto>
     lateinit var UPCOMING_DUTIES: DataStore<UpcomingDutyItemsProto>
+    lateinit var EMPLOYEES: DataStore<EmployeeItemsProto>
 
     fun initialize(context: Context) {
         if (!this::PREFERENCES.isInitialized) this.PREFERENCES = context.store_preferences
@@ -55,5 +61,6 @@ object DataStores {
         if (!this::SELF.isInitialized) this.SELF = context.store_prep_self
         if (!this::STATISTICS.isInitialized) this.STATISTICS = context.store_prep_statistic
         if (!this::UPCOMING_DUTIES.isInitialized) this.UPCOMING_DUTIES = context.store_upcoming_duties
+        if (!this::EMPLOYEES.isInitialized) this.EMPLOYEES = context.store_employees
     }
 }

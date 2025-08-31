@@ -10,6 +10,7 @@ message AssignedEmployeeProto {
   google.protobuf.Timestamp begin = 3;
   google.protobuf.Timestamp end = 4;
   string info = 5;
+  optional EmployeeProto inlineEmployee = 6;
 }
 
 message EmployeeItemsProto {

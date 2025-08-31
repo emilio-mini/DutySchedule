@@ -39,180 +39,88 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import me.emiliomini.dutyschedule.R
+import me.emiliomini.dutyschedule.datastore.prep.employee.AssignedEmployeeProto
+import me.emiliomini.dutyschedule.datastore.prep.employee.EmployeeItemsProto
+import me.emiliomini.dutyschedule.datastore.prep.employee.EmployeeProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
-import me.emiliomini.dutyschedule.models.prep.AssignedEmployee
-import me.emiliomini.dutyschedule.models.prep.Employee
 import me.emiliomini.dutyschedule.models.prep.Requirement
 import me.emiliomini.dutyschedule.models.prep.Skill
-import me.emiliomini.dutyschedule.services.network.PrepService
+import me.emiliomini.dutyschedule.services.prep.PrepService
+import me.emiliomini.dutyschedule.services.storage.DataStores
+import me.emiliomini.dutyschedule.services.storage.ProtoMapViewModel
+import me.emiliomini.dutyschedule.services.storage.ProtoMapViewModelFactory
+import me.emiliomini.dutyschedule.services.storage.ViewModelKeys
 import me.emiliomini.dutyschedule.ui.components.icons.Ambulance
 import me.emiliomini.dutyschedule.ui.components.icons.SteeringWheel
+import me.emiliomini.dutyschedule.ui.components.icons.Stethoscope
+import me.emiliomini.dutyschedule.ui.components.icons.Syringe
+import me.emiliomini.dutyschedule.util.format
+import me.emiliomini.dutyschedule.util.getIcon
+import me.emiliomini.dutyschedule.util.resourceString
 import java.time.OffsetDateTime
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun EmployeeDetailSheet(
-    employee: AssignedEmployee?,
+    assignedEmployee: AssignedEmployeeProto?,
     orgs: List<OrgProto>,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    viewModel: ProtoMapViewModel<EmployeeItemsProto, EmployeeProto> = viewModel(
+        key = ViewModelKeys.EMPLOYEES,
+        factory = ProtoMapViewModelFactory<EmployeeItemsProto, EmployeeProto>(DataStores.EMPLOYEES) { it.employeesMap }
+    )
 ) {
+    val employees by viewModel.flow.collectAsStateWithLifecycle(
+        initialValue = emptyMap<String, EmployeeProto>()
+    )
+
+    var employee by remember { mutableStateOf<EmployeeProto?>(null) }
+
+    LaunchedEffect(assignedEmployee, employees) {
+        if (assignedEmployee != null) {
+            employee = employees[assignedEmployee.employeeGuid] ?: assignedEmployee.inlineEmployee
+        }
+    }
+
     if (employee == null) return
     val sheetState = rememberModalBottomSheetState()
-    val timeFormatter = remember { DateTimeFormatter.ofPattern("HH:mm") }
-    val localZoneId = ZoneId.systemDefault()
+    val timeFormatter = "HH:mm"
     val detailActionsScrollState = rememberScrollState()
     val context = LocalContext.current
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+    if (employee != null && assignedEmployee != null) {
+        ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
 
-        Column(
-            modifier = Modifier.padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                employee.employee.name,
-                style = MaterialTheme.typography.titleLarge
-            )
-            Text(
-                employee.employee.identifier ?: "",
-                modifier = Modifier.padding(bottom = 4.dp),
-                style = MaterialTheme.typography.bodyMediumEmphasized
-            )
-            Card(colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    if (employee.info.isNotBlank()) {
-                        ListItem(
-                            modifier = Modifier
-                                .background(
-                                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                    shape = RoundedCornerShape(4.dp)
-                                ),
-                            leadingContent = {
-                                Icon(
-                                    Icons.Rounded.Info,
-                                    contentDescription = null
-                                )
-                            },
-                            headlineContent = {
-                                Text(employee.info)
-                            },
-                            supportingContent = {
-                                Text(stringResource(R.string.main_schedule_infobox_info))
-                            },
-                            colors = ListItemDefaults.colors(
-                                containerColor = Color.Transparent
-                            )
-                        )
-                    }
-                    ListItem(
-                        modifier = Modifier
-                            .background(
-                                color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                shape = RoundedCornerShape(4.dp)
-                            ),
-                        leadingContent = {
-                            when (employee.requirement) {
-                                Requirement.SEW -> Icon(
-                                    Ambulance,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-
-                                Requirement.EL -> Icon(
-                                    SteeringWheel,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-
-                                Requirement.TF -> Icon(
-                                    Icons.Rounded.MedicalInformation,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-
-                                else -> Icon(
-                                    Icons.Rounded.Badge,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        },
-                        headlineContent = {
-                            Text(
-                                stringResource(employee.requirement.getResourceString())
-                            )
-                        },
-                        supportingContent = {
-                            Text(stringResource(R.string.main_schedule_infobox_assigned_role))
-                        },
-                        colors = ListItemDefaults.colors(
-                            containerColor = Color.Transparent
-                        )
-                    )
-                    ListItem(
-                        modifier = Modifier
-                            .background(
-                                color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                shape = RoundedCornerShape(4.dp)
-                            ),
-                        leadingContent = {
-                            Icon(
-                                Icons.Rounded.Schedule,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        },
-                        headlineContent = {
-                            Text(
-                                "${
-                                    employee.begin.atZoneSameInstant(localZoneId)
-                                        .format(timeFormatter)
-                                } - ${
-                                    employee.end.atZoneSameInstant(localZoneId)
-                                        .format(timeFormatter)
-                                }"
-                            )
-                        },
-                        supportingContent = {
-                            Text(
-                                employee.begin.format(
-                                    DateTimeFormatter.ofPattern("d MMMM yyyy")
-                                )
-                            )
-                        },
-                        colors = ListItemDefaults.colors(
-                            containerColor = Color.Transparent
-                        )
-                    )
-                }
-            }
-
-            val nowMillis = OffsetDateTime.now().toInstant().toEpochMilli()
-            val messages =
-                PrepService.getMessages()[employee.employee.resourceTypeGuid]
-                    ?: emptyList()
-            val filteredMessages = messages.filter {
-                it.displayFrom.toInstant()
-                    .toEpochMilli() <= nowMillis && it.displayTo.toInstant()
-                    .toEpochMilli() >= nowMillis
-            }
-            if (filteredMessages.isNotEmpty()) {
-                Spacer(Modifier)
+            Column(
+                modifier = Modifier.padding(horizontal = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    employee!!.name,
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Text(
+                    employee!!.identifier ?: "",
+                    modifier = Modifier.padding(bottom = 4.dp),
+                    style = MaterialTheme.typography.bodyMediumEmphasized
+                )
                 Card(colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        for (message in messages) {
-
+                        if (assignedEmployee.info.isNotBlank()) {
                             ListItem(
                                 modifier = Modifier
                                     .background(
@@ -221,29 +129,21 @@ fun EmployeeDetailSheet(
                                     ),
                                 leadingContent = {
                                     Icon(
-                                        Icons.AutoMirrored.Rounded.Notes,
+                                        Icons.Rounded.Info,
                                         contentDescription = null
                                     )
                                 },
                                 headlineContent = {
-                                    Text(message.message)
+                                    Text(assignedEmployee.info)
                                 },
                                 supportingContent = {
-                                    Text(message.title)
+                                    Text(stringResource(R.string.main_schedule_infobox_info))
                                 },
                                 colors = ListItemDefaults.colors(
                                     containerColor = Color.Transparent
                                 )
                             )
-
                         }
-                    }
-                }
-            }
-            Spacer(Modifier)
-            Card(colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    if (employee.employee.defaultOrg.isNotBlank()) {
                         ListItem(
                             modifier = Modifier
                                 .background(
@@ -251,80 +151,50 @@ fun EmployeeDetailSheet(
                                     shape = RoundedCornerShape(4.dp)
                                 ),
                             leadingContent = {
-                                Icon(Icons.Rounded.Business, contentDescription = null)
-                            },
-                            headlineContent = {
-                                var primaryOrg =
-                                    orgs.firstOrNull { it.abbreviation == employee.employee.defaultOrg }
-                                if (primaryOrg == null) {
-                                    primaryOrg =
-                                        orgs.firstOrNull { it.identifier == employee.employee.defaultOrg }
-                                }
-
-                                Text(if (primaryOrg != null) primaryOrg.title else employee.employee.defaultOrg)
-                            },
-                            supportingContent = {
-                                Text(stringResource(R.string.main_schedule_infobox_primary))
-                            },
-                            colors = ListItemDefaults.colors(
-                                containerColor = Color.Transparent
-                            )
-                        )
-                    }
-                    if (employee.employee.skill.isNotEmpty()) {
-
-                        val skills = employee.employee.skill
-                        val filteredSkills = skills.toMutableList()
-
-                        if (skills.contains(Skill.RS) && skills.contains(Skill.AZUBI)) {
-                            filteredSkills.remove(Skill.AZUBI)
-                        }
-                        if (skills.contains(Skill.NFS) && skills.contains(Skill.RS)) {
-                            filteredSkills.remove(Skill.RS)
-                        }
-                        val skillTxt =
-                            filteredSkills.map { stringResource(it.getResourceString()) }
-                                .joinToString(", ")
-
-                        ListItem(
-                            modifier = Modifier
-                                .background(
-                                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                    shape = RoundedCornerShape(4.dp)
-                                ),
-                            leadingContent = {
-                                Icon(Icons.Rounded.Class, contentDescription = null)
-                            },
-                            headlineContent = {
-                                Text(skillTxt)
-                            },
-                            supportingContent = {
-                                Text(stringResource(R.string.main_schedule_infobox_skill))
-                            },
-                            colors = ListItemDefaults.colors(
-                                containerColor = Color.Transparent
-                            )
-                        )
-                    }
-                    if (employee.employee.birthdate != null) {
-                        ListItem(
-                            modifier = Modifier
-                                .background(
-                                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                    shape = RoundedCornerShape(4.dp)
-                                ),
-                            leadingContent = {
-                                Icon(Icons.Rounded.Cake, contentDescription = null)
+                                Icon(
+                                    assignedEmployee.requirement.getIcon(),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
                             },
                             headlineContent = {
                                 Text(
-                                    employee.employee.birthdate!!.format(
-                                        DateTimeFormatter.ofPattern("d MMMM yyyy")
-                                    )
+                                    stringResource(assignedEmployee.requirement.resourceString())
                                 )
                             },
                             supportingContent = {
-                                Text(stringResource(R.string.main_schedule_infobox_birthday))
+                                Text(stringResource(R.string.main_schedule_infobox_assigned_role))
+                            },
+                            colors = ListItemDefaults.colors(
+                                containerColor = Color.Transparent
+                            )
+                        )
+                        ListItem(
+                            modifier = Modifier
+                                .background(
+                                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                    shape = RoundedCornerShape(4.dp)
+                                ),
+                            leadingContent = {
+                                Icon(
+                                    Icons.Rounded.Schedule,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            },
+                            headlineContent = {
+                                Text(
+                                    "${
+                                        assignedEmployee.begin.format(timeFormatter)
+                                    } - ${
+                                        assignedEmployee.end.format(timeFormatter)
+                                    }"
+                                )
+                            },
+                            supportingContent = {
+                                Text(
+                                    assignedEmployee.begin.format("d MMMM yyyy")
+                                )
                             },
                             colors = ListItemDefaults.colors(
                                 containerColor = Color.Transparent
@@ -332,141 +202,251 @@ fun EmployeeDetailSheet(
                         )
                     }
                 }
-            }
-            if (employee.requirement != Requirement.SEW) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(detailActionsScrollState),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    AssistChip(
-                        onClick = {
-                            val uri = "tel:${employee.employee.phone}".toUri()
-                            val intent = Intent(Intent.ACTION_DIAL, uri)
-                            context.startActivity(intent)
-                        },
-                        leadingIcon = {
-                            Icon(
-                                Icons.Rounded.Phone,
-                                contentDescription = null,
-                                modifier = Modifier.size(
-                                    AssistChipDefaults.IconSize
-                                )
-                            )
-                        },
-                        label = {
-                            Text(stringResource(R.string.main_schedule_infobox_actions_call))
-                        },
-                        enabled = employee.employee.phone.isNotBlank()
-                    )
-                    AssistChip(
-                        onClick = {
-                            val uri = "smsto:${employee.employee.phone}".toUri()
-                            val intent = Intent(Intent.ACTION_SENDTO, uri)
-                            if (intent.resolveActivity(context.packageManager) != null) {
-                                context.startActivity(intent)
-                            }
-                        },
-                        leadingIcon = {
-                            Icon(
-                                Icons.Rounded.Textsms,
-                                contentDescription = null,
-                                modifier = Modifier.size(
-                                    AssistChipDefaults.IconSize
-                                )
-                            )
-                        },
-                        label = {
-                            Text(stringResource(R.string.main_schedule_infobox_actions_sms))
-                        },
-                        enabled = employee.employee.phone.isNotBlank()
-                    )
-                    AssistChip(
-                        onClick = {
-                            val fullNumber =
-                                employee.employee.phone.filter { it.isDigit() }
-                            val uri =
-                                "https://wa.me/$fullNumber/".toUri()
 
-                            val intent = Intent(Intent.ACTION_VIEW).apply {
-                                data = uri
-                                setPackage("com.whatsapp")
-                            }
+                val nowMillis = OffsetDateTime.now().toInstant().toEpochMilli()
+                val messages =
+                    PrepService.getMessages()[employee!!.resourceTypeGuid]
+                        ?: emptyList()
+                val filteredMessages = messages.filter {
+                    it.displayFrom.toInstant()
+                        .toEpochMilli() <= nowMillis && it.displayTo.toInstant()
+                        .toEpochMilli() >= nowMillis
+                }
+                if (filteredMessages.isNotEmpty()) {
+                    Spacer(Modifier)
+                    Card(colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            for (message in messages) {
 
-                            if (intent.resolveActivity(context.packageManager) != null) {
-                                context.startActivity(intent)
+                                ListItem(
+                                    modifier = Modifier
+                                        .background(
+                                            color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                            shape = RoundedCornerShape(4.dp)
+                                        ),
+                                    leadingContent = {
+                                        Icon(
+                                            Icons.AutoMirrored.Rounded.Notes,
+                                            contentDescription = null
+                                        )
+                                    },
+                                    headlineContent = {
+                                        Text(message.message)
+                                    },
+                                    supportingContent = {
+                                        Text(message.title)
+                                    },
+                                    colors = ListItemDefaults.colors(
+                                        containerColor = Color.Transparent
+                                    )
+                                )
+
                             }
-                        },
-                        leadingIcon = {
-                            Icon(
-                                Icons.Rounded.Whatsapp,
-                                contentDescription = null,
-                                modifier = Modifier.size(
-                                    AssistChipDefaults.IconSize
+                        }
+                    }
+                }
+                Spacer(Modifier)
+                Card(colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        if (employee!!.defaultOrg.isNotBlank()) {
+                            ListItem(
+                                modifier = Modifier
+                                    .background(
+                                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                        shape = RoundedCornerShape(4.dp)
+                                    ),
+                                leadingContent = {
+                                    Icon(Icons.Rounded.Business, contentDescription = null)
+                                },
+                                headlineContent = {
+                                    var primaryOrg =
+                                        orgs.firstOrNull { it.abbreviation == employee!!.defaultOrg }
+                                    if (primaryOrg == null) {
+                                        primaryOrg =
+                                            orgs.firstOrNull { it.identifier == employee!!.defaultOrg }
+                                    }
+
+                                    Text(if (primaryOrg != null) primaryOrg.title else employee!!.defaultOrg)
+                                },
+                                supportingContent = {
+                                    Text(stringResource(R.string.main_schedule_infobox_primary))
+                                },
+                                colors = ListItemDefaults.colors(
+                                    containerColor = Color.Transparent
                                 )
                             )
-                        },
-                        label = {
-                            Text(stringResource(R.string.main_schedule_infobox_actions_whatsapp))
-                        },
-                        enabled = employee.employee.phone.isNotBlank()
-                    )
-                    AssistChip(
-                        onClick = {
-                            val intent = Intent(Intent.ACTION_SENDTO).apply {
-                                data = "mailto:".toUri()
-                                putExtra(
-                                    Intent.EXTRA_EMAIL,
-                                    arrayOf(employee.employee.email)
-                                )
+                        }
+                        if (employee!!.skillsList.isNotEmpty()) {
+
+                            val skills = employee!!.skillsList
+                            val filteredSkills =
+                                skills.filter { Skill.parse(it.guid) != Skill.INVALID }
+                                    .toMutableList()
+
+                            if (skills.contains(Skill.RS.asProto()) && skills.contains(Skill.AZUBI.asProto())) {
+                                filteredSkills.remove(Skill.AZUBI.asProto())
                             }
-                            if (intent.resolveActivity(context.packageManager) != null) {
-                                context.startActivity(intent)
+                            if (skills.contains(Skill.NFS.asProto()) && skills.contains(Skill.RS.asProto())) {
+                                filteredSkills.remove(Skill.RS.asProto())
                             }
-                        },
-                        leadingIcon = {
-                            Icon(
-                                Icons.Rounded.AlternateEmail,
-                                contentDescription = null,
-                                modifier = Modifier.size(
-                                    AssistChipDefaults.IconSize
+                            val skillTxt =
+                                filteredSkills.map { stringResource(it.resourceString()) }
+                                    .joinToString(", ")
+
+                            ListItem(
+                                modifier = Modifier
+                                    .background(
+                                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                        shape = RoundedCornerShape(4.dp)
+                                    ),
+                                leadingContent = {
+                                    Icon(Icons.Rounded.Class, contentDescription = null)
+                                },
+                                headlineContent = {
+                                    Text(skillTxt)
+                                },
+                                supportingContent = {
+                                    Text(stringResource(R.string.main_schedule_infobox_skill))
+                                },
+                                colors = ListItemDefaults.colors(
+                                    containerColor = Color.Transparent
                                 )
                             )
-                        },
-                        label = {
-                            Text(stringResource(R.string.main_schedule_infobox_actions_mail))
-                        },
-                        enabled = employee.employee.email.isNotBlank()
-                    )
+                        }
+                        if (employee!!.hasBirthdate()) {
+                            ListItem(
+                                modifier = Modifier
+                                    .background(
+                                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                        shape = RoundedCornerShape(4.dp)
+                                    ),
+                                leadingContent = {
+                                    Icon(Icons.Rounded.Cake, contentDescription = null)
+                                },
+                                headlineContent = {
+                                    Text(
+                                        employee!!.birthdate!!.format("d MMMM yyyy")
+                                    )
+                                },
+                                supportingContent = {
+                                    Text(stringResource(R.string.main_schedule_infobox_birthday))
+                                },
+                                colors = ListItemDefaults.colors(
+                                    containerColor = Color.Transparent
+                                )
+                            )
+                        }
+                    }
+                }
+                if (assignedEmployee.requirement.guid != Requirement.SEW.value) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(detailActionsScrollState),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        AssistChip(
+                            onClick = {
+                                val uri = "tel:${employee!!.phone}".toUri()
+                                val intent = Intent(Intent.ACTION_DIAL, uri)
+                                context.startActivity(intent)
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Rounded.Phone,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(
+                                        AssistChipDefaults.IconSize
+                                    )
+                                )
+                            },
+                            label = {
+                                Text(stringResource(R.string.main_schedule_infobox_actions_call))
+                            },
+                            enabled = employee!!.phone.isNotBlank()
+                        )
+                        AssistChip(
+                            onClick = {
+                                val uri = "smsto:${employee!!.phone}".toUri()
+                                val intent = Intent(Intent.ACTION_SENDTO, uri)
+                                if (intent.resolveActivity(context.packageManager) != null) {
+                                    context.startActivity(intent)
+                                }
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Rounded.Textsms,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(
+                                        AssistChipDefaults.IconSize
+                                    )
+                                )
+                            },
+                            label = {
+                                Text(stringResource(R.string.main_schedule_infobox_actions_sms))
+                            },
+                            enabled = employee!!.phone.isNotBlank()
+                        )
+                        AssistChip(
+                            onClick = {
+                                val fullNumber =
+                                    employee!!.phone.filter { it.isDigit() }
+                                val uri =
+                                    "https://wa.me/$fullNumber/".toUri()
+
+                                val intent = Intent(Intent.ACTION_VIEW).apply {
+                                    data = uri
+                                    setPackage("com.whatsapp")
+                                }
+
+                                if (intent.resolveActivity(context.packageManager) != null) {
+                                    context.startActivity(intent)
+                                }
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Rounded.Whatsapp,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(
+                                        AssistChipDefaults.IconSize
+                                    )
+                                )
+                            },
+                            label = {
+                                Text(stringResource(R.string.main_schedule_infobox_actions_whatsapp))
+                            },
+                            enabled = employee!!.phone.isNotBlank()
+                        )
+                        AssistChip(
+                            onClick = {
+                                val intent = Intent(Intent.ACTION_SENDTO).apply {
+                                    data = "mailto:".toUri()
+                                    putExtra(
+                                        Intent.EXTRA_EMAIL,
+                                        arrayOf(employee!!.email)
+                                    )
+                                }
+                                if (intent.resolveActivity(context.packageManager) != null) {
+                                    context.startActivity(intent)
+                                }
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Rounded.AlternateEmail,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(
+                                        AssistChipDefaults.IconSize
+                                    )
+                                )
+                            },
+                            label = {
+                                Text(stringResource(R.string.main_schedule_infobox_actions_mail))
+                            },
+                            enabled = employee!!.email.isNotBlank()
+                        )
+                    }
                 }
             }
         }
     }
-}
-
-@Preview(showBackground = false)
-@Composable
-fun EmployeeDetailSheetPreview() {
-    EmployeeDetailSheet(
-        employee = AssignedEmployee(
-            employee = Employee(
-                guid = "blah",
-                name = "blah",
-                identifier = "blah",
-                phone = "blah",
-                email = "blah",
-                defaultOrg = "blah",
-                birthdate = OffsetDateTime.now(),
-                resourceTypeGuid = "blah",
-                skill = mutableListOf()
-            ),
-            requirement = Requirement.RS,
-            begin = OffsetDateTime.now(),
-            end = OffsetDateTime.now(),
-            info = "blah"
-        ),
-        orgs = emptyList(),
-        onDismiss = {}
-    )
 }

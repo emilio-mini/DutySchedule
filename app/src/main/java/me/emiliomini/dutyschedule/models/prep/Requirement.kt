@@ -1,6 +1,7 @@
 package me.emiliomini.dutyschedule.models.prep
 
 import me.emiliomini.dutyschedule.R
+import me.emiliomini.dutyschedule.datastore.prep.employee.RequirementProto
 
 enum class Requirement(val value: String) {
     TIMESLOT("fd4abb09f1cbf2687319798b396cc38255ffb817_2_1544535064_9602"),
@@ -20,23 +21,10 @@ enum class Requirement(val value: String) {
     RTW_RS("5e5dd6c0ea76308df39e5986aa814b6d3856f24c_2_1707217926_8039"),
     INVALID("");
 
-    fun getResourceString(): Int {
-        return when (this) {
-            SEW -> R.string.data_requirement_sew
-            RTW -> R.string.data_requirement_rtw
-            ITF -> R.string.data_requirement_itf
-            HAEND -> R.string.data_requirement_haend
-            EL -> R.string.data_requirement_el
-            TF -> R.string.data_requirement_tf
-            RS -> R.string.data_requirement_rs
-            HAEND_EL -> R.string.data_requirement_haend_el
-            HAEND_DR -> R.string.data_requirement_haend_dr
-            ITF_LKW -> R.string.data_requirement_itf_el
-            ITF_NFS -> R.string.data_requirement_itf_nfs
-            RTW_NFS -> R.string.data_requirement_rtw_nfs
-            RTW_RS -> R.string.data_requirement_rtw_rs
-            else -> R.string.data_requirement_none
-        }
+    fun toProto(): RequirementProto {
+        return RequirementProto.newBuilder()
+            .setGuid(this.value)
+            .build()
     }
 
     companion object {

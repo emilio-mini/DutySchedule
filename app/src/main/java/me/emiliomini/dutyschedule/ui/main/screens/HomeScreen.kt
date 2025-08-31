@@ -51,23 +51,26 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.R
+import me.emiliomini.dutyschedule.datastore.prep.employee.AssignedEmployeeProto
+import me.emiliomini.dutyschedule.datastore.prep.org.OrgDayProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgItemsProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
 import me.emiliomini.dutyschedule.models.network.CreateDutyResponse
 import me.emiliomini.dutyschedule.models.network.CreatedDuty
 import me.emiliomini.dutyschedule.models.prep.AssignedEmployee
-import me.emiliomini.dutyschedule.models.prep.OrgDay
 import me.emiliomini.dutyschedule.models.prep.ShiftType
-import me.emiliomini.dutyschedule.services.network.PrepService
+import me.emiliomini.dutyschedule.services.prep.PrepService
 import me.emiliomini.dutyschedule.services.storage.DataKeys
 import me.emiliomini.dutyschedule.services.storage.DataStores
-import me.emiliomini.dutyschedule.services.storage.StorageService
 import me.emiliomini.dutyschedule.services.storage.ProtoMapViewModel
 import me.emiliomini.dutyschedule.services.storage.ProtoMapViewModelFactory
+import me.emiliomini.dutyschedule.services.storage.StorageService
+import me.emiliomini.dutyschedule.services.storage.ViewModelKeys
 import me.emiliomini.dutyschedule.ui.components.AppDateInfo
 import me.emiliomini.dutyschedule.ui.components.AssignConfirmSheet
 import me.emiliomini.dutyschedule.ui.components.DutyCardCarousel
 import me.emiliomini.dutyschedule.ui.components.EmployeeDetailSheet
+import me.emiliomini.dutyschedule.util.toOffsetDateTime
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneId
@@ -79,6 +82,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     bottomBar: @Composable (() -> Unit) = {},
     viewModel: ProtoMapViewModel<OrgItemsProto, OrgProto> = viewModel(
+        key = ViewModelKeys.ORG_ITEMS,
         factory = ProtoMapViewModelFactory<OrgItemsProto, OrgProto>(
             DataStores.ORG_ITEMS
         ) { it.orgsMap }
@@ -99,7 +103,7 @@ fun HomeScreen(
     var selectedStartDate by remember { mutableStateOf<Long?>(currentMillis) }
     var selectedEndDate by remember { mutableStateOf<Long?>(currentMillis + defaultDateSpacing) }
 
-    var timeline by remember { mutableStateOf<List<OrgDay>?>(null) }
+    var timeline by remember { mutableStateOf<List<OrgDayProto>?>(null) }
 
     var allowedOrgs by remember { mutableStateOf<List<String>?>(null) }
     var selectedOrg by remember { mutableStateOf<String?>(null) }
@@ -165,7 +169,7 @@ fun HomeScreen(
     }
 
     val stationScrollState = rememberScrollState()
-    var detailViewEmployee by remember { mutableStateOf<AssignedEmployee?>(null) }
+    var detailViewEmployee by remember { mutableStateOf<AssignedEmployeeProto?>(null) }
 
     Scaffold(modifier = modifier, topBar = {
         TopAppBar(
@@ -227,16 +231,16 @@ fun HomeScreen(
                     contentPadding = PaddingValues(bottom = 20.dp)
                 ) {
                     items(timeline ?: emptyList()) { item ->
-                        AppDateInfo(date = item.date)
+                        AppDateInfo(date = item.date.toOffsetDateTime())
                         DutyCardCarousel(
-                            duties = item.dayShift,
+                            duties = item.dayShiftList,
                             shiftType = ShiftType.DAY_SHIFT,
                             onEmployeeClick = {
                                 detailViewEmployee = it
                             },
                             onDutyClick = { planGuid -> pendingPlanGuid = planGuid })
                         DutyCardCarousel(
-                            duties = item.nightShift,
+                            duties = item.nightShiftList,
                             shiftType = ShiftType.NIGHT_SHIFT,
                             onEmployeeClick = {
                                 detailViewEmployee = it
@@ -303,7 +307,7 @@ fun HomeScreen(
 
     if (detailViewEmployee != null) {
         EmployeeDetailSheet(
-            employee = detailViewEmployee,
+            assignedEmployee = detailViewEmployee,
             orgs = orgs.values.toList(),
             onDismiss = { detailViewEmployee = null }
         )
