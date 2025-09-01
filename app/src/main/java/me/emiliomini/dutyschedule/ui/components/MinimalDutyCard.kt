@@ -5,9 +5,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.QuestionMark
 import androidx.compose.material.icons.rounded.School
@@ -22,8 +22,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import me.emiliomini.dutyschedule.datastore.prep.duty.DutyTypeProto
 import me.emiliomini.dutyschedule.datastore.prep.duty.MinimalDutyDefinitionProto
-import me.emiliomini.dutyschedule.util.resourceString
 import me.emiliomini.dutyschedule.ui.components.icons.Ambulance
+import me.emiliomini.dutyschedule.util.resourceString
 import me.emiliomini.dutyschedule.util.toOffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -31,15 +31,15 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun MinimalDutyCard(
     modifier: Modifier = Modifier,
-    duty: MinimalDutyDefinitionProto
+    duty: MinimalDutyDefinitionProto,
+    demo: Boolean = false
 ) {
     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
     val dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
     val localZoneId = ZoneId.systemDefault()
 
-    Box(modifier = modifier, contentAlignment = Alignment.TopEnd) {
+    Box(modifier = modifier.wrapContentSize(), contentAlignment = Alignment.TopEnd) {
         CardListItem(
-            modifier = Modifier.fillMaxSize(),
             headlineContent = {
                 Text(stringResource(duty.type.resourceString()))
             },
@@ -58,12 +58,17 @@ fun MinimalDutyCard(
                     ) {
                         Text(
                             "${
-                                duty.begin.toOffsetDateTime().atZoneSameInstant(localZoneId).format(timeFormatter)
+                                duty.begin.toOffsetDateTime().atZoneSameInstant(localZoneId)
+                                    .format(timeFormatter)
                             }-${
-                                duty.end.toOffsetDateTime().atZoneSameInstant(localZoneId).format(timeFormatter)
+                                duty.end.toOffsetDateTime().atZoneSameInstant(localZoneId)
+                                    .format(timeFormatter)
                             }"
                         )
-                        Text(duty.begin.toOffsetDateTime().atZoneSameInstant(localZoneId).format(dateFormatter))
+                        Text(
+                            duty.begin.toOffsetDateTime().atZoneSameInstant(localZoneId)
+                                .format(dateFormatter)
+                        )
                     }
                 }
             },
@@ -81,6 +86,8 @@ fun MinimalDutyCard(
                 }
             },
         )
-        AlarmToggle(dutyBegin = duty.begin.toOffsetDateTime(), guid = duty.guid)
+        if (!demo) {
+            AlarmToggle(dutyBegin = duty.begin.toOffsetDateTime(), guid = duty.guid)
+        }
     }
 }

@@ -1,21 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Duty Schedule</string>
-    <string name="onboarding_welcome_title">Willkommen</string>
-    <string name="onboarding_welcome_subtitle">Ganz leicht und schnell den Dienstplan durchblättern und automatische Wecker vor Dienstbeginn erhalten</string>
-    <string name="onboarding_welcome_about">Mehr erfahren</string>
-    <string name="onboarding_welcome_continue">Weiter</string>
-    <string name="onboarding_permissions_title">Berechtigungen</string>
-    <string name="onboarding_permissions_subtitle">Bevor wir starten, brauchen wir noch ein paar Berechtigungen</string>
-    <string name="onboarding_permissions_alarms_subtitle">Um automatisch einen Wecker vor deinem nächsten Dienst stellen zu können</string>
-    <string name="onboarding_permissions_skip">Überspringen</string>
-    <string name="onboarding_permissions_notification_title">Benachrichtigungen</string>
-    <string name="onboarding_permissions_notification_subtitle">Um dich über offene Dienste zu informieren und um Wecker abschalten zu können</string>
-    <string name="onboarding_permissions_continue">Weiter</string>
-    <string name="onboarding_permissions_alarms_title">Wecker</string>
-    <string name="onboarding_login_title">Anmelden</string>
-    <string name="onboarding_login_subtitle">mit deinen RK Zugangsdaten</string>
-    <string name="onboarding_login_continue">Weiter</string>
     <string name="onboarding_login_email">Email</string>
     <string name="onboarding_login_password">Passwort</string>
     <string name="nav_schedule">Dienstplan</string>
@@ -102,7 +87,7 @@
     <string name="data_skill_fk">Führungskraft</string>
     <string name="data_skill_pa">Praxisanleiter</string>
     <string name="data_skill_sef">SEF</string>
-    <string name="data_requirement_haend_dr">Dr.</string>
+    <string name="data_requirement_haend_dr">Arzt</string>
     <string name="base_carousel_no_vehicle">Frei</string>
     <string name="data_org_we">Wels-Stadt</string>
     <string name="data_org_wl">Wels-Land</string>
@@ -110,4 +95,14 @@
     <string name="create_duty_subtitle">Willst du dich für diesen Slot eintragen?</string>
     <string name="create_duty_cancel">Abbrechen</string>
     <string name="create_duty_confirm">Eintragen</string>
+    <string name="onboarding_intro_title">Dienstplan</string>
+    <string name="onboarding_intro_body">Nie mehr unleserlich kleine Schrift im Browser. Alle Dienste im Blick in einer übersichtlichen und lesbaren Form.</string>
+    <string name="onboarding_alarms_title">Automatische Wecker</string>
+    <string name="onboarding_alarms_body">Kein manuelles Wecker-stellen mehr. Du wirst automatisch vor deinem Dienst geweckt!</string>
+    <string name="onboarding_notifications_title">Up-to-Date bleiben</string>
+    <string name="onboarding_notifications_body">Interessiert, welche Dienste noch frei sind und wo du helfen kannst? Wir schicken dir ab und zu, je nach deinen Einstellungen, Benachrichtigungen um dich auf neuestem Stand zu halten.</string>
+    <string name="onboarding_login_body">Wir benötigen nur noch deine PREP Zugangsdaten um dich anmelden zu können.</string>
+    <string name="onboarding_login_title">Konto</string>
+    <string name="onboarding_action_demo">Demo Modus</string>
+    <string name="onboarding_action_skip">Überspringen</string>
 </resources>

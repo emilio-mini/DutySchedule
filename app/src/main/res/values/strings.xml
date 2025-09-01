@@ -1,20 +1,5 @@
 <resources>
     <string name="app_name">Duty Schedule</string>
-    <string name="onboarding_welcome_title">Getting Started</string>
-    <string name="onboarding_welcome_subtitle">Quickly view your schedule at a glance and get reminders before the start of your shifts</string>
-    <string name="onboarding_welcome_about">About</string>
-    <string name="onboarding_welcome_continue">Continue</string>
-    <string name="onboarding_permissions_title">Permissions</string>
-    <string name="onboarding_permissions_subtitle">Before we get started, we\'ll need some permissions for this app to function properly</string>
-    <string name="onboarding_permissions_notification_title">Send Notifications</string>
-    <string name="onboarding_permissions_notification_subtitle">To inform you of upcoming duties and dismiss alarms</string>
-    <string name="onboarding_permissions_alarms_title">Create Alarms</string>
-    <string name="onboarding_permissions_alarms_subtitle">To automatically schedule alarms based on your preferences</string>
-    <string name="onboarding_permissions_skip">Skip</string>
-    <string name="onboarding_permissions_continue">Continue</string>
-    <string name="onboarding_login_title">Sign in</string>
-    <string name="onboarding_login_subtitle">with your Red Cross Account</string>
-    <string name="onboarding_login_continue">Continue</string>
     <string name="onboarding_login_email">Email</string>
     <string name="onboarding_login_password">Password</string>
     <string name="nav_schedule">Schedule</string>
@@ -101,12 +86,22 @@
     <string name="data_dutytype_training">Training</string>
     <string name="data_dutytype_unknown">Unknown</string>
     <string name="data_requirement_haend_el">SANHÄ</string>
-    <string name="data_requirement_haend_dr">Dr.</string>
+    <string name="data_requirement_haend_dr">Doctor</string>
     <string name="base_carousel_no_vehicle">Available</string>
     <string name="data_org_we">Wels-Stadt</string>
     <string name="data_org_wl">Wels-Land</string>
     <string name="create_duty_title">Add duty?</string>
     <string name="create_duty_subtitle">Do you want to allocate this slot?</string>
-    <string name="create_duty_cancel">abort</string>
-    <string name="create_duty_confirm">continue</string>
+    <string name="create_duty_cancel">Abort</string>
+    <string name="create_duty_confirm">Continue</string>
+    <string name="onboarding_intro_title">Schedule</string>
+    <string name="onboarding_intro_body">Never deal with an extremely small non-responsive duty schedule in your browser again. View all your duties at a glance.</string>
+    <string name="onboarding_alarms_title">Automatic Alarms</string>
+    <string name="onboarding_alarms_body">No manually setting alarms the evening before one of your duties again. We set them for you!</string>
+    <string name="onboarding_notifications_title">Keep up-to-date</string>
+    <string name="onboarding_notifications_body">Interested where personell is missing and how you can help? We\'ll send you some notifications, according to your preferences, to keep you informed.</string>
+    <string name="onboarding_login_body">We\'ll need your login information to sign you in. Use your PREP credentials.</string>
+    <string name="onboarding_login_title">Account</string>
+    <string name="onboarding_action_demo">Demo Mode</string>
+    <string name="onboarding_action_skip">Skip</string>
 </resources>
