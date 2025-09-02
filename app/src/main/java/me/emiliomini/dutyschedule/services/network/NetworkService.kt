@@ -120,7 +120,7 @@ object NetworkService {
         val request = Request(
             url = NetworkTarget.LATEST_RELEASE.httpUrl(),
             headers = headersOf(
-                "Authorization", "Bearer ${BuildConfig.GITHUB_API_TOKEN}"
+                // "Authorization", "Bearer ${BuildConfig.GITHUB_API_TOKEN}"
             )
         )
         val latestBody = send(request, true).getOrNull()

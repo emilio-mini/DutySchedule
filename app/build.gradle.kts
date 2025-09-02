@@ -1,6 +1,4 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import java.io.FileInputStream
-import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -14,15 +12,6 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        val properties = Properties()
-        val secretsFile = rootProject.file("secrets.properties")
-        if (secretsFile.exists()) {
-            properties.load(FileInputStream(secretsFile))
-        }
-
-        val githubToken = properties.getProperty("github_token", "")
-        buildConfigField("String", "GITHUB_API_TOKEN", "\"$githubToken\"")
-
         applicationId = "me.emiliomini.dutyschedule"
         minSdk = 26
         targetSdk = 36
@@ -100,7 +89,7 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-    implementation (libs.accompanist.permissions)
+    implementation(libs.accompanist.permissions)
     implementation(libs.compose.markdown)
     implementation(libs.jsoup)
 }

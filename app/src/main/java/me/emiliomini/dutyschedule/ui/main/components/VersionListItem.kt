@@ -77,7 +77,7 @@ fun VersionListItem(modifier: Modifier = Modifier) {
                             val updateFile = NetworkService.downloadFileWithProgress(
                                 context, latestRelease!!.downloadUrl,
                                 Headers.Builder()
-                                    .add("Authorization", "Bearer ${BuildConfig.GITHUB_API_TOKEN}")
+                                    // .add("Authorization", "Bearer ${BuildConfig.GITHUB_API_TOKEN}")
                                     .add("Accept", "application/octet-stream")
                                     .build(), "DutySchedule.apk"
                             ) {
