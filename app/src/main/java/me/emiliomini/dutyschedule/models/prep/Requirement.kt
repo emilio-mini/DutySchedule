@@ -1,25 +1,34 @@
 package me.emiliomini.dutyschedule.models.prep
 
-import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.datastore.prep.employee.RequirementProto
 
 enum class Requirement(val value: String) {
+    // Util
     TIMESLOT("fd4abb09f1cbf2687319798b396cc38255ffb817_2_1544535064_9602"),
+    INVALID(""),
+    TRAINING("451da18e7b16209a6a04071a274777cb3d362d43_2_1551892405_1111"),
+
+    // Vehicle
+    VEHICLE("bfce1996338b66a25fd523acf544acc5d295bb28_2_1551892388_1698"),
     SEW("d590f25129127adfdb7e994be630de152f5f1682_2_1544535093_4117"),
     RTW("390b263970bc93d4612d9a9544d50b1b6bc1d9a7_2_1551891770_4987"),
     ITF("297d898e34f3ce811302fbfd98c238d6adfc5617_2_1668611309_2843"),
     HAEND("efafdf85ad4b64da658b23b359a3a456fd340b35_2_1551887183_8843"),
-    HAEND_DR("123"),
 
+    // Driver
     EL("43e3811f89fea7883aa664c53b10f287fdf63020_2_1544535120_1506"),
-    TF("6509a03415cb338da9ffa9b2b849cd617bd756ca_2_1544535149_1171"),
-    RS("e022f1d19a68909adac66c55ce7adafb520a75ae_2_1544535615_1745"),
     HAEND_EL("1afcee15599a9d17e679b98bf46ad775b6408e8e_2_1570008349_4147"),
     ITF_LKW("72e19bdf669c42d2b8fbfe5be410d082690d2f0a_2_1668611327_4692"),
+
+    // Passenger
+    HAEND_DR("HAEND_DR"),
+    TF("6509a03415cb338da9ffa9b2b849cd617bd756ca_2_1544535149_1171"),
     ITF_NFS("946e81e89c32695625a890358c9ccb79fec693b6_2_1668611344_1827"),
     RTW_NFS("30b51644b352bb3df6b7c2ce86db5c0b2762d710_2_1551891794_834"),
-    RTW_RS("5e5dd6c0ea76308df39e5986aa814b6d3856f24c_2_1707217926_8039"),
-    INVALID("");
+
+    // Teammember
+    RS("e022f1d19a68909adac66c55ce7adafb520a75ae_2_1544535615_1745"),
+    RTW_RS("5e5dd6c0ea76308df39e5986aa814b6d3856f24c_2_1707217926_8039");
 
     fun toProto(): RequirementProto {
         return RequirementProto.newBuilder()

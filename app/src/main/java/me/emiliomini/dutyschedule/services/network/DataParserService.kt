@@ -136,6 +136,7 @@ object DataParserService {
                 .setName(name)
                 .setIdentifier(
                     when (requirement) {
+                        Requirement.VEHICLE.value -> Employee.Companion.VEHICLE_NAME
                         Requirement.SEW.value -> Employee.Companion.SEW_NAME
                         Requirement.ITF.value -> Employee.Companion.ITF_NAME
                         Requirement.RTW.value -> Employee.Companion.RTW_NAME
@@ -168,6 +169,7 @@ object DataParserService {
 
             when (requirement) {
                 // Vehicle
+                Requirement.VEHICLE.value,
                 Requirement.SEW.value,
                 Requirement.RTW.value,
                 Requirement.ITF.value,
@@ -188,6 +190,7 @@ object DataParserService {
                             ?.build() ?: continue
                 }
 
+                Requirement.TRAINING.value,
                 Requirement.TF.value,
                 Requirement.RTW_NFS.value-> {
                     duties[guid] =

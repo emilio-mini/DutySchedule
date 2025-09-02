@@ -25,6 +25,8 @@ fun DutyTypeProto.resourceString(): Int {
 
 fun RequirementProto.resourceString(): Int {
     return when (this.guid) {
+        Requirement.TRAINING.value -> R.string.data_requirement_training
+        Requirement.VEHICLE.value -> R.string.data_requirement_vehicle
         Requirement.SEW.value -> R.string.data_requirement_sew
         Requirement.RTW.value -> R.string.data_requirement_rtw
         Requirement.ITF.value -> R.string.data_requirement_itf

@@ -105,4 +105,6 @@
     <string name="onboarding_login_title">Konto</string>
     <string name="onboarding_action_demo">Demo Modus</string>
     <string name="onboarding_action_skip">Überspringen</string>
+    <string name="data_requirement_training">Schulung</string>
+    <string name="data_requirement_vehicle">Dienstfahrzeug</string>
 </resources>

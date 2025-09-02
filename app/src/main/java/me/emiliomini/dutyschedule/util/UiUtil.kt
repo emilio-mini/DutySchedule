@@ -3,6 +3,7 @@ package me.emiliomini.dutyschedule.util
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Badge
 import androidx.compose.material.icons.rounded.MedicalInformation
+import androidx.compose.material.icons.rounded.School
 import androidx.compose.ui.graphics.vector.ImageVector
 import me.emiliomini.dutyschedule.datastore.prep.employee.RequirementProto
 import me.emiliomini.dutyschedule.models.prep.Requirement
@@ -13,6 +14,7 @@ import me.emiliomini.dutyschedule.ui.components.icons.Syringe
 
 fun RequirementProto.getIcon(): ImageVector {
     return when (this.guid) {
+        Requirement.VEHICLE.value,
         Requirement.SEW.value,
         Requirement.RTW.value,
         Requirement.ITF.value,
@@ -28,6 +30,8 @@ fun RequirementProto.getIcon(): ImageVector {
 
         Requirement.ITF_NFS.value,
         Requirement.RTW_NFS.value -> Syringe
+
+        Requirement.TRAINING.value -> Icons.Rounded.School
 
         else -> Icons.Rounded.Badge
     }

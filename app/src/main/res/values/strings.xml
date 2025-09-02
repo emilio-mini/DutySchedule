@@ -104,4 +104,6 @@
     <string name="onboarding_login_title">Account</string>
     <string name="onboarding_action_demo">Demo Mode</string>
     <string name="onboarding_action_skip">Skip</string>
+    <string name="data_requirement_training">Training</string>
+    <string name="data_requirement_vehicle">Vehicle</string>
 </resources>
