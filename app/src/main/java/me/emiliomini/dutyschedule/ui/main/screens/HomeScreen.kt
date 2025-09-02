@@ -265,7 +265,7 @@ fun HomeScreen(
         }, confirmButton = {
             TextButton(onClick = {
                 selectedStartDate = dateRangePickerState.selectedStartDateMillis ?: currentMillis
-                selectedEndDate = dateRangePickerState.selectedEndDateMillis
+                selectedEndDate = dateRangePickerState.selectedEndDateMillis?.plus(24 * 60 * 60 * 1000L)
                     ?: (currentMillis + defaultDateSpacing)
 
                 showDatePicker = false
