@@ -17,7 +17,6 @@ import me.emiliomini.dutyschedule.models.prep.Employee
 import me.emiliomini.dutyschedule.models.prep.Message
 import me.emiliomini.dutyschedule.models.prep.Requirement
 import me.emiliomini.dutyschedule.models.prep.Resource
-import me.emiliomini.dutyschedule.models.prep.Skill
 import me.emiliomini.dutyschedule.models.prep.Type
 import me.emiliomini.dutyschedule.util.toEpochMilli
 import me.emiliomini.dutyschedule.util.toTimestamp
@@ -125,13 +124,49 @@ object DataParserService {
             }
 
             val employeeGuid = obj.getString("allocationRessourceDataGuid")
-            if (employeeGuid.isBlank()) {
-                continue
-            }
-
+            val guid = obj.getString("parentDataGuid")
+            val dataGuid = obj.getString("dataGuid")
             var name = obj.getJSONObject("additionalInfos").getString("ressource_name")
             val info = obj.getString("info")
             val requirement = obj.getString(Requirement.Companion.POSITION)
+
+            if (employeeGuid.isBlank()) {
+
+                when (requirement) {
+
+                    // Staff
+                    Requirement.EL.value,
+                    Requirement.RTW_RS.value,
+                    Requirement.HAEND_EL.value,
+                    Requirement.ITF_LKW.value-> {
+                        duties[guid] =
+                            duties[guid]?.toBuilder()
+                                ?.setElSlotId(dataGuid)
+                                ?.build() ?: continue
+                    }
+
+                    Requirement.TRAINING.value,
+                    Requirement.TF.value,
+                    Requirement.ITF_NFS.value,
+                    Requirement.RTW_NFS.value-> {
+                        duties[guid] =
+                            duties[guid]?.toBuilder()
+                                ?.setTfSlotId(dataGuid)
+                                ?.build() ?: continue
+                    }
+
+                    // Requirement.RS.value
+                    else -> {
+                        duties[guid] =
+                            duties[guid]?.toBuilder()
+                                ?.setRsSlotId(dataGuid)
+                                ?.build() ?: continue
+                    }
+                }
+
+                continue
+            }
+
             if (name.isBlank() || name == "Verplant") {
                 // Using INFO Tag as fallback
                 name = info
@@ -151,9 +186,6 @@ object DataParserService {
                 )
                 .setResourceTypeGuid(obj.getString("ressourceTypeDataGuid"))
                 .build()
-
-            val guid = obj.getString("parentDataGuid")
-            val dataGuid = obj.getString("dataGuid")
 
             val assignedEmployee = AssignedEmployeeProto.newBuilder()
                 .setEmployeeGuid(employeeGuid)

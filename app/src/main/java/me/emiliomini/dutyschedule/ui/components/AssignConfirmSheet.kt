@@ -2,15 +2,12 @@ package me.emiliomini.dutyschedule.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -30,32 +27,49 @@ fun AssignConfirmSheet(
     onConfirm: () -> Unit
 ) {
     if (planGuid == null) return
-    val sheetState = rememberModalBottomSheetState()
-    ModalBottomSheet(
+    AlertDialog(
         onDismissRequest = { if (!loading) onDismiss() },
-        sheetState = sheetState
-    ) {
-        Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(stringResource(R.string.create_duty_title)) // „Dienst eintragen?“
-            Text(
-                text = stringResource(R.string.create_duty_subtitle),     // “Willst du dich für diesen Slot eintragen?”
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            if (error != null) {
-                Text(error, color = MaterialTheme.colorScheme.error)
+        title = { Text(stringResource(R.string.create_duty_title)) }, // „Dienst eintragen?“
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = stringResource(R.string.create_duty_subtitle), // “Willst du dich für diesen Slot eintragen?”
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                if (!error.isNullOrBlank()) {
+                    Text(
+                        text = error,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                TextButton(enabled = !loading, onClick = onDismiss) {
-                    Text(stringResource(R.string.create_duty_cancel))
+        },
+        confirmButton = {
+            Button(
+                enabled = !loading,
+                onClick = onConfirm
+            ) {
+                if (loading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(stringResource(R.string.create_duty_confirm))
                 }
-                Button(enabled = !loading, onClick = onConfirm) {
-                    if (loading) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                    else Text(stringResource(R.string.create_duty_confirm))
-                }
+            }
+        },
+        dismissButton = {
+            TextButton(
+                enabled = !loading,
+                onClick = onDismiss
+            ) {
+                Text(stringResource(R.string.create_duty_cancel))
             }
         }
-    }
+    )
 }
 
 @Preview(showBackground = false)
@@ -65,7 +79,7 @@ fun AssignConfirmSheetPreview() {
         planGuid = "",
         loading = false,
         error = "",
-        onDismiss = { Unit },
-        onConfirm = { Unit },
+        onDismiss = {},
+        onConfirm = {},
     )
 }
