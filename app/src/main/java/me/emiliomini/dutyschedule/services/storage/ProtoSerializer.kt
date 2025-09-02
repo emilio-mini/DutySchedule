@@ -1,6 +1,6 @@
 package me.emiliomini.dutyschedule.services.storage
 
-import androidx.datastore.core.CorruptionException
+import android.util.Log
 import androidx.datastore.core.Serializer
 import com.google.protobuf.InvalidProtocolBufferException
 import com.google.protobuf.Parser
@@ -18,7 +18,8 @@ class ProtoSerializer<T : com.google.protobuf.MessageLite>(
     override suspend fun readFrom(input: InputStream): T = try {
         parser.parseFrom(input)
     } catch (e: InvalidProtocolBufferException) {
-        throw CorruptionException("Failed to parse protobuf.", e)
+        Log.e("ProtoSerializer", "Failed to parse protobuf; Using default as fallback", e)
+        defaultInstance
     }
 
     override suspend fun writeTo(t: T, output: OutputStream) = t.writeTo(output)

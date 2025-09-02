@@ -1,10 +1,6 @@
 package me.emiliomini.dutyschedule.ui.main.screens
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -30,11 +26,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.services.prep.DutyScheduleService
 import me.emiliomini.dutyschedule.ui.components.CardColumn
 import me.emiliomini.dutyschedule.ui.components.CardListItem
+import me.emiliomini.dutyschedule.ui.components.EmployeeAvatar
 import me.emiliomini.dutyschedule.ui.main.components.DutyAlarmListItem
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -76,25 +72,6 @@ fun SettingsScreen(
             )
             CardColumn {
                 CardListItem(
-                    modifier = Modifier
-                        .combinedClickable(onClick = {
-                            scope.launch {
-                                snackbarHostState.showSnackbar(
-                                    snackbarIncodeText
-                                )
-                            }
-                        }, onLongClick = {
-                            val incode = DutyScheduleService.getIncode()
-                            if (incode == null) {
-                                return@combinedClickable
-                            }
-                            val clipboardManager =
-                                context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                            val clipData = ClipData.newPlainText(
-                                "Incode", "${incode.token}:${incode.value}"
-                            )
-                            clipboardManager.setPrimaryClip(clipData)
-                        }),
                     headlineContent = {
                         Text(
                             DutyScheduleService.self?.name
@@ -107,11 +84,18 @@ fun SettingsScreen(
                             Text(stringResource(R.string.main_settings_account_user_content_fallback))
                         }
                     }, leadingContent = {
-                        Icon(
-                            Icons.Rounded.Person,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                        if (DutyScheduleService.self != null) {
+                            EmployeeAvatar(
+                                employee = DutyScheduleService.self!!,
+                                onLogout = onLogout
+                            )
+                        } else {
+                            Icon(
+                                Icons.Rounded.Person,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     })
                 CardListItem(
                     modifier = Modifier
@@ -131,15 +115,6 @@ fun SettingsScreen(
                     },
                 )
             }
-            /*Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                stringResource(R.string.main_settings_section_app),
-                color = MaterialTheme.colorScheme.primary
-            )
-            CardColumn {
-                VersionListItem()
-            }*/
         }
     })
 }
