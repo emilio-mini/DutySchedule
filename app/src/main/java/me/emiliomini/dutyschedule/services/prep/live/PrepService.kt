@@ -525,16 +525,6 @@ object PrepService : ScheduleService {
             return Result.failure(okio.IOException("Not logged in!"))
         }
 
-        val resourcesResponse =
-            NetworkService.getResources(incode!!, orgUnitDataGuid, from, to).getOrNull()
-        if (resourcesResponse == null) {
-            return Result.failure(okio.IOException("Failed to get resources!"))
-        }
-        val resources = DataParserService.parseGetResources(JSONObject(resourcesResponse))
-        if (resources == null) {
-            return Result.failure(okio.IOException("Failed to collect resources!"))
-        }
-
         val messagesResponse =
             NetworkService.getMessages(incode!!, orgUnitDataGuid, from, to).getOrNull()
         if (messagesResponse == null) {
@@ -546,18 +536,12 @@ object PrepService : ScheduleService {
         }
 
         for (message in messages) {
-            val matchingResource = resources.firstOrNull { it.messagesGuid == message.resourceGuid }
-            if (matchingResource == null) {
-                Log.w(TAG, "Message without resource. Skipping...")
-                continue
-            }
-
-            val messageList = this.messages.getOrDefault(matchingResource.employeeGuid, emptyList())
+            val messageList = this.messages.getOrDefault(message.resourceGuid, emptyList())
                 .toMutableList()
             if (messageList.find { it.guid == message.guid } == null) {
                 messageList.add(message)
             }
-            this.messages[matchingResource.employeeGuid] = messageList
+            this.messages[message.resourceGuid] = messageList
         }
 
         Log.d(TAG, "Loaded ${messages.size} messages")

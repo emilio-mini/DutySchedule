@@ -199,7 +199,7 @@ fun EmployeeDetailSheet(
 
                 val nowMillis = OffsetDateTime.now().toInstant().toEpochMilli()
                 val messages =
-                    DutyScheduleService.getMessages()[employee!!.resourceTypeGuid]
+                    DutyScheduleService.getMessages()[employee!!.guid]
                         ?: emptyList()
                 val filteredMessages = messages.filter {
                     it.displayFrom.toInstant()
