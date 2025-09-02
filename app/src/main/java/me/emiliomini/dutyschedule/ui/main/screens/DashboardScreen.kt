@@ -1,6 +1,5 @@
 package me.emiliomini.dutyschedule.ui.main.screens
 
-import android.util.Log
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -10,7 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -36,7 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.datastore.prep.duty.MinimalDutyDefinitionProto
-import me.emiliomini.dutyschedule.services.prep.PrepService
+import me.emiliomini.dutyschedule.services.prep.DutyScheduleService
 import me.emiliomini.dutyschedule.ui.components.ArcProgressIndicator
 import me.emiliomini.dutyschedule.ui.components.EmployeeAvatar
 import me.emiliomini.dutyschedule.ui.components.LazyCardColumn
@@ -62,12 +60,12 @@ fun DashboardScreen(
     var hoursLoaded by remember { mutableStateOf(false) }
     var upcomingLoaded by remember { mutableStateOf(false) }
 
-    LaunchedEffect(PrepService.isLoggedIn) {
-        upcomingDuties = PrepService.loadUpcoming()
-        hoursServed = PrepService.loadHoursOfService(currentYear)
+    LaunchedEffect(DutyScheduleService.isLoggedIn) {
+        upcomingDuties = DutyScheduleService.loadUpcoming()
+        hoursServed = DutyScheduleService.loadHoursOfService(currentYear)
         progress = hoursServed / requiredHours
 
-        if (PrepService.isLoggedIn) {
+        if (DutyScheduleService.isLoggedIn) {
             hoursLoaded = true
             upcomingLoaded = true
         }
@@ -90,8 +88,8 @@ fun DashboardScreen(
                     Text(stringResource(R.string.main_dashboard_title))
                 },
                 actions = {
-                    if (PrepService.self != null) {
-                        EmployeeAvatar(employee = PrepService.self!!, onLogout = onLogout)
+                    if (DutyScheduleService.self != null) {
+                        EmployeeAvatar(employee = DutyScheduleService.self!!, onLogout = onLogout)
                         Spacer(Modifier.width(16.dp))
                     }
                 }

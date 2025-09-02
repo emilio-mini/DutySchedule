@@ -31,8 +31,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.services.network.NetworkService
-import me.emiliomini.dutyschedule.services.prep.PrepService
 import me.emiliomini.dutyschedule.services.notifications.NotificationService
+import me.emiliomini.dutyschedule.services.prep.DutyScheduleService
 import me.emiliomini.dutyschedule.services.storage.DataStores
 import me.emiliomini.dutyschedule.ui.main.screens.AlarmsScreen
 import me.emiliomini.dutyschedule.ui.main.screens.DashboardScreen
@@ -62,9 +62,9 @@ class MainActivity : ComponentActivity() {
         }
 
         lifecycleScope.launch {
-            PrepService.loadSelf(null, null)
+            DutyScheduleService.loadSelf(null, null)
 
-            if (!PrepService.previouslyLoggedIn()) {
+            if (!DutyScheduleService.previouslyLoggedIn()) {
                 startActivity(Intent(this@MainActivity, OnboardingActivity::class.java))
                 finish()
             } else {
@@ -72,7 +72,7 @@ class MainActivity : ComponentActivity() {
                     LaunchedEffect(Unit) {
                         while (true) {
                             delay(TimeUnit.MINUTES.toMillis(5))
-                            if (PrepService.isLoggedIn) {
+                            if (DutyScheduleService.isLoggedIn) {
                                 NetworkService.keepAlive()
                             }
                         }
@@ -117,7 +117,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }, onLogout = {
                                     lifecycleScope.launch {
-                                        PrepService.logout()
+                                        DutyScheduleService.logout()
                                         startActivity(
                                             Intent(
                                                 this@MainActivity, OnboardingActivity::class.java
@@ -177,7 +177,7 @@ class MainActivity : ComponentActivity() {
                                 }
                             }, onLogout = {
                                 lifecycleScope.launch {
-                                    PrepService.logout()
+                                    DutyScheduleService.logout()
                                     startActivity(
                                         Intent(
                                             this@MainActivity, OnboardingActivity::class.java
@@ -189,7 +189,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
-                PrepService.restoreLogin()
+                DutyScheduleService.restoreLogin()
             }
         }
     }

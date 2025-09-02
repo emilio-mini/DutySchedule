@@ -1,13 +1,18 @@
-package me.emiliomini.dutyschedule.demo
+package me.emiliomini.dutyschedule.services.prep.demo
 
 import me.emiliomini.dutyschedule.datastore.prep.StatisticsProto
+import me.emiliomini.dutyschedule.datastore.prep.duty.DutyDefinitionProto
 import me.emiliomini.dutyschedule.datastore.prep.duty.DutyTypeProto
 import me.emiliomini.dutyschedule.datastore.prep.duty.MinimalDutyDefinitionProto
 import me.emiliomini.dutyschedule.datastore.prep.duty.UpcomingDutyItemsProto
+import me.emiliomini.dutyschedule.datastore.prep.employee.AssignedEmployeeProto
 import me.emiliomini.dutyschedule.datastore.prep.employee.EmployeeItemsProto
 import me.emiliomini.dutyschedule.datastore.prep.employee.EmployeeProto
+import me.emiliomini.dutyschedule.datastore.prep.employee.RequirementProto
+import me.emiliomini.dutyschedule.datastore.prep.org.OrgDayProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgItemsProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
+import me.emiliomini.dutyschedule.models.prep.Requirement
 import me.emiliomini.dutyschedule.util.toTimestamp
 
 /*
@@ -27,7 +32,18 @@ object DemoData {
         .setMinutesServed(4000)
         .build()
 
+    val self: EmployeeProto = EmployeeProto.newBuilder()
+        .setGuid("d4b7c9e2-3f6a-41b8-9e57-2a6f8c1d5b9e")
+        .setName("Aisha Patel")
+        .setIdentifier("73921")
+        .setPhone("+1 415 867 5309")
+        .setEmail("aisha.patel@example.org")
+        .setDefaultOrg("5124")
+        .setBirthdate("1988-03-22T00:00:00Z".toTimestamp())
+        .build()
+
     val employees: List<EmployeeProto> = listOf(
+        self,
         EmployeeProto.newBuilder()
             .setGuid("a1f2c9e4-6b3d-48e1-9a2f-5d7c9b1e8f33")
             .setName("Maya Alvarez")
@@ -172,6 +188,8 @@ object DemoData {
         .putAllOrgs(orgs.associateBy { it.guid })
         .build()
 
+    val allowedOrgs: List<String> = listOf("c5d8e9f0-1a2b-4c3d-9e5f-7b8c9d0e1f22")
+
     val upcoming: List<MinimalDutyDefinitionProto> = listOf(
         MinimalDutyDefinitionProto.newBuilder()
             .setGuid("a1f2c9e4-6b3d-48e1-9a2f-5d7c9b1e8f33")
@@ -215,5 +233,104 @@ object DemoData {
     )
     val upcomingItems: UpcomingDutyItemsProto = UpcomingDutyItemsProto.newBuilder()
         .addAllMinimalDutyDefinitions(upcoming)
+        .build()
+
+    val orgDay: OrgDayProto = OrgDayProto.newBuilder()
+        .setOrgGuid("c5d8e9f0-1a2b-4c3d-9e5f-7b8c9d0e1f22")
+        .setDate("2025-09-01T00:00:00Z".toTimestamp())
+        .addDayShift(
+            DutyDefinitionProto.newBuilder()
+                .setGuid("a1f2c9e4-6b3d-48e1-9a2f-5d7c9b1e8f33")
+                .setBegin("2025-09-01T05:00:00Z".toTimestamp())
+                .setEnd("2025-09-01T17:00:00Z".toTimestamp())
+                .addSew(
+                    AssignedEmployeeProto.newBuilder()
+                        .setBegin("2025-09-01T05:00:00Z".toTimestamp())
+                        .setEnd("2025-09-01T17:00:00Z".toTimestamp())
+                        .setRequirement(
+                            RequirementProto.newBuilder().setGuid(Requirement.SEW.value).build()
+                        )
+                        .setInlineEmployee(
+                            EmployeeProto.newBuilder()
+                                .setIdentifier("Amb 403")
+                                .setName("Ambulance 403")
+                                .build()
+                        )
+                        .build()
+                )
+                .addEl(
+                    AssignedEmployeeProto.newBuilder()
+                        .setBegin("2025-09-01T05:00:00Z".toTimestamp())
+                        .setEnd("2025-09-01T17:00:00Z".toTimestamp())
+                        .setEmployeeGuid("a9b8c7d6-5e4f-43a2-9b1c-8d7e6f5a4b33")
+                        .setRequirement(
+                            RequirementProto.newBuilder().setGuid(Requirement.EL.value).build()
+                        )
+                        .build()
+                )
+                .addTf(
+                    AssignedEmployeeProto.newBuilder()
+                        .setBegin("2025-09-01T05:00:00Z".toTimestamp())
+                        .setEnd("2025-09-01T17:00:00Z".toTimestamp())
+                        .setEmployeeGuid("d4b7c9e2-3f6a-41b8-9e57-2a6f8c1d5b9e")
+                        .setRequirement(
+                            RequirementProto.newBuilder().setGuid(Requirement.RTW_NFS.value).build()
+                        )
+                        .build()
+                )
+                .build()
+        )
+        .addDayShift(
+            DutyDefinitionProto.newBuilder()
+                .setGuid("a2f2c9e4-6b3d-45e1-9a2f-5d7c9b1e8f33")
+                .setBegin("2025-09-01T05:00:00Z".toTimestamp())
+                .setEnd("2025-09-01T17:00:00Z".toTimestamp())
+                .addSew(
+                    AssignedEmployeeProto.newBuilder()
+                        .setBegin("2025-09-01T05:00:00Z".toTimestamp())
+                        .setEnd("2025-09-01T17:00:00Z".toTimestamp())
+                        .setRequirement(
+                            RequirementProto.newBuilder().setGuid(Requirement.SEW.value).build()
+                        )
+                        .setInlineEmployee(
+                            EmployeeProto.newBuilder()
+                                .setIdentifier("Amb 1238")
+                                .setName("Ambulance 1238")
+                                .build()
+                        )
+                        .build()
+                )
+                .addEl(
+                    AssignedEmployeeProto.newBuilder()
+                        .setBegin("2025-09-01T05:00:00Z".toTimestamp())
+                        .setEnd("2025-09-01T12:00:00Z".toTimestamp())
+                        .setEmployeeGuid("d3e4f5a6-7b8c-49d0-9e1f-2a3b4c5d6e88")
+                        .setRequirement(
+                            RequirementProto.newBuilder().setGuid(Requirement.EL.value).build()
+                        )
+                        .build()
+                )
+                .addEl(
+                    AssignedEmployeeProto.newBuilder()
+                        .setBegin("2025-09-01T12:00:00Z".toTimestamp())
+                        .setEnd("2025-09-01T17:00:00Z".toTimestamp())
+                        .setEmployeeGuid("b3e7c1d2-8f4a-4b9c-9d5e-6a2f1c3b7e88")
+                        .setRequirement(
+                            RequirementProto.newBuilder().setGuid(Requirement.EL.value).build()
+                        )
+                        .build()
+                )
+                .addTf(
+                    AssignedEmployeeProto.newBuilder()
+                        .setBegin("2025-09-01T05:00:00Z".toTimestamp())
+                        .setEnd("2025-09-01T17:00:00Z".toTimestamp())
+                        .setEmployeeGuid("b2c3d4e5-6f7a-48b9-9c0d-3e4f5a6b7c99")
+                        .setRequirement(
+                            RequirementProto.newBuilder().setGuid(Requirement.TF.value).build()
+                        )
+                        .build()
+                )
+                .build()
+        )
         .build()
 }

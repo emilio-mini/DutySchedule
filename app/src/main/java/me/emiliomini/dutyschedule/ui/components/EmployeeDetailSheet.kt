@@ -15,12 +15,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material.icons.rounded.AlternateEmail
-import androidx.compose.material.icons.rounded.Badge
 import androidx.compose.material.icons.rounded.Business
 import androidx.compose.material.icons.rounded.Cake
 import androidx.compose.material.icons.rounded.Class
 import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material.icons.rounded.MedicalInformation
 import androidx.compose.material.icons.rounded.Phone
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Textsms
@@ -59,15 +57,11 @@ import me.emiliomini.dutyschedule.datastore.prep.employee.EmployeeProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
 import me.emiliomini.dutyschedule.models.prep.Requirement
 import me.emiliomini.dutyschedule.models.prep.Skill
-import me.emiliomini.dutyschedule.services.prep.PrepService
+import me.emiliomini.dutyschedule.services.prep.DutyScheduleService
 import me.emiliomini.dutyschedule.services.storage.DataStores
 import me.emiliomini.dutyschedule.services.storage.ProtoMapViewModel
 import me.emiliomini.dutyschedule.services.storage.ProtoMapViewModelFactory
 import me.emiliomini.dutyschedule.services.storage.ViewModelKeys
-import me.emiliomini.dutyschedule.ui.components.icons.Ambulance
-import me.emiliomini.dutyschedule.ui.components.icons.SteeringWheel
-import me.emiliomini.dutyschedule.ui.components.icons.Stethoscope
-import me.emiliomini.dutyschedule.ui.components.icons.Syringe
 import me.emiliomini.dutyschedule.util.format
 import me.emiliomini.dutyschedule.util.getIcon
 import me.emiliomini.dutyschedule.util.resourceString
@@ -205,7 +199,7 @@ fun EmployeeDetailSheet(
 
                 val nowMillis = OffsetDateTime.now().toInstant().toEpochMilli()
                 val messages =
-                    PrepService.getMessages()[employee!!.resourceTypeGuid]
+                    DutyScheduleService.getMessages()[employee!!.resourceTypeGuid]
                         ?: emptyList()
                 val filteredMessages = messages.filter {
                     it.displayFrom.toInstant()

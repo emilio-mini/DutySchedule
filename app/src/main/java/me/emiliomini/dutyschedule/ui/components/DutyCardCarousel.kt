@@ -87,7 +87,8 @@ fun DutyCardCarousel(
 
         HorizontalPager(
             state = pagerState,
-            pageSpacing = 8.dp
+            pageSpacing = 8.dp,
+            verticalAlignment = Alignment.Top
         ) { index ->
             AppDutyCard(
                 duty = duties[index],

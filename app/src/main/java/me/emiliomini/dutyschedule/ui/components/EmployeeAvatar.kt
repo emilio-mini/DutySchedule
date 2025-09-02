@@ -32,7 +32,7 @@ import androidx.compose.ui.window.Dialog
 import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.datastore.prep.employee.EmployeeProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
-import me.emiliomini.dutyschedule.services.prep.PrepService
+import me.emiliomini.dutyschedule.services.prep.DutyScheduleService
 import me.emiliomini.dutyschedule.util.toOffsetDateTime
 import java.time.format.DateTimeFormatter
 
@@ -46,13 +46,13 @@ fun EmployeeAvatar(
     val employeeNames = employee.name.split(" ")
     val initial = if (employeeNames.size >= 2) employeeNames[1][0] else if (employeeNames.isNotEmpty() && employeeNames[0].isNotBlank()) employeeNames[0][0] else ""
 
-    val isSelf = employee.guid == PrepService.self?.guid
+    val isSelf = employee.guid == DutyScheduleService.self?.guid
 
     var expanded by remember { mutableStateOf(false) }
     var employeeOrg by remember { mutableStateOf<OrgProto?>(null) }
 
     LaunchedEffect(employee) {
-        employeeOrg = PrepService.getOrg(employee.defaultOrg)
+        employeeOrg = DutyScheduleService.getOrg(employee.defaultOrg)
     }
 
     InitialsAvatar(

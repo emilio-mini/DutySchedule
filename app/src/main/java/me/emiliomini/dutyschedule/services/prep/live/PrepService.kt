@@ -1,4 +1,4 @@
-package me.emiliomini.dutyschedule.services.prep
+package me.emiliomini.dutyschedule.services.prep.live
 
 import android.util.Log
 import androidx.compose.runtime.getValue
@@ -27,6 +27,7 @@ import me.emiliomini.dutyschedule.services.network.DataExtractorService
 import me.emiliomini.dutyschedule.services.network.DataParserService
 import me.emiliomini.dutyschedule.services.network.NetworkService
 import me.emiliomini.dutyschedule.services.parsers.DocScedParserService
+import me.emiliomini.dutyschedule.services.prep.ScheduleService
 import me.emiliomini.dutyschedule.services.storage.DataKeys
 import me.emiliomini.dutyschedule.services.storage.DataStores
 import me.emiliomini.dutyschedule.services.storage.StorageService
@@ -42,8 +43,10 @@ import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import kotlin.collections.firstOrNull
+import kotlin.collections.isNotEmpty
 
-object PrepService {
+object PrepService : ScheduleService {
     private const val TAG = "PrepService"
 
     private var incode: IncodeProto? = null
@@ -72,18 +75,18 @@ object PrepService {
         return@Comparator d1Count.compareTo(d2Count)
     }
 
-    var isLoggedIn by mutableStateOf(false);
-    var self by mutableStateOf<EmployeeProto?>(null)
+    override var isLoggedIn by mutableStateOf(false);
+    override var self by mutableStateOf<EmployeeProto?>(null)
 
-    fun getMessages(): Map<String, List<Message>> {
+    override fun getMessages(): Map<String, List<Message>> {
         return this.messages
     }
 
-    fun getIncode(): IncodeProto? {
+    override fun getIncode(): IncodeProto? {
         return this.incode
     }
 
-    suspend fun getOrg(abbreviationOrIdentifier: String): OrgProto? {
+    override suspend fun getOrg(abbreviationOrIdentifier: String): OrgProto? {
         val orgs = this.loadOrgs()?.orgsMap?.values ?: return null
 
         var org = orgs.firstOrNull { it.abbreviation == abbreviationOrIdentifier }
@@ -94,7 +97,7 @@ object PrepService {
         return org
     }
 
-    suspend fun login(username: String, password: String): Boolean {
+    override suspend fun login(username: String, password: String): Boolean {
         val loginResult: Result<String?> = if (DebugFlags.AVOID_PREP_API.active()) {
             Result.success("...{ headers: { 'x-incode-EXAMPLEKEY': 'EXAMPLEVALUE' } }...")
         } else {
@@ -156,14 +159,14 @@ object PrepService {
         return true
     }
 
-    suspend fun previouslyLoggedIn(): Boolean {
+    override suspend fun previouslyLoggedIn(): Boolean {
         val username = StorageService.load(DataKeys.USERNAME)
         val password = StorageService.load(DataKeys.PASSWORD)
 
         return username != null && password != null
     }
 
-    suspend fun restoreLogin(): Boolean {
+    override suspend fun restoreLogin(): Boolean {
         val username = StorageService.load(DataKeys.USERNAME)
         val password = StorageService.load(DataKeys.PASSWORD)
         val incode = DataStores.INCODE.data.firstOrNull()
@@ -191,13 +194,12 @@ object PrepService {
         return this.login(username, password)
     }
 
-    suspend fun logout() {
+    override suspend fun logout() {
         this.incode = null
-        StorageService.clear(DataKeys.USERNAME)
-        StorageService.clear(DataKeys.PASSWORD)
+        DataStores.clearAndReset()
     }
 
-    suspend fun loadSelf(guid: String?, org: String?): EmployeeProto? {
+    override suspend fun loadSelf(guid: String?, org: String?): EmployeeProto? {
         val localSelf = DataStores.SELF.data.firstOrNull()
         if (localSelf != null && localSelf.guid.isNotBlank()) {
             this.self = localSelf
@@ -228,7 +230,7 @@ object PrepService {
         return null
     }
 
-    suspend fun loadOrgs(): OrgItemsProto? {
+    override suspend fun loadOrgs(): OrgItemsProto? {
         val orgs = DataStores.ORG_ITEMS.data.firstOrNull()
         if (orgs == null || orgs.orgsCount == 0) {
             val dispoBody = NetworkService.getDispo().getOrNull()
@@ -267,7 +269,7 @@ object PrepService {
         return orgs
     }
 
-    suspend fun loadAllowedOrgs(): List<String>? {
+    override suspend fun loadAllowedOrgs(): List<String>? {
         val dispoBody = NetworkService.getDispo().getOrNull()
         if (dispoBody == null) {
             Log.e(TAG, "Failed to load allowed orgs - missing dispo body")
@@ -283,7 +285,7 @@ object PrepService {
         return allowedOrgs
     }
 
-    suspend fun loadPlan(
+    override suspend fun loadPlan(
         orgUnitDataGuid: String,
         from: OffsetDateTime,
         to: OffsetDateTime
@@ -312,7 +314,7 @@ object PrepService {
         }
     }
 
-    suspend fun getStaff(
+    override suspend fun getStaff(
         orgUnitDataGuid: String,
         staffDataGuid: List<String>,
         from: OffsetDateTime,
@@ -346,7 +348,7 @@ object PrepService {
         }
     }
 
-    suspend fun loadTimeline(
+    override suspend fun loadTimeline(
         orgUnitDataGuid: String,
         from: OffsetDateTime,
         to: OffsetDateTime
@@ -453,7 +455,7 @@ object PrepService {
         return Result.success(daysList)
     }
 
-    suspend fun loadPast(year: String): Result<List<MinimalDutyDefinitionProto>> {
+    override suspend fun loadPast(year: String): Result<List<MinimalDutyDefinitionProto>> {
         if (!isLoggedIn) {
             return Result.failure(okio.IOException("Not logged in!"))
         }
@@ -467,7 +469,7 @@ object PrepService {
         return Result.success(pastDuties)
     }
 
-    suspend fun loadHoursOfService(year: String): Float {
+    override suspend fun loadHoursOfService(year: String): Float {
         val localStats = DataStores.STATISTICS.data.firstOrNull()
         if (localStats != null && !isLoggedIn) {
             return localStats.minutesServed / 60f
@@ -488,7 +490,7 @@ object PrepService {
         return minutesServed / 60f
     }
 
-    suspend fun loadUpcoming(): List<MinimalDutyDefinitionProto> {
+    override suspend fun loadUpcoming(): List<MinimalDutyDefinitionProto> {
         val localUpcoming = DataStores.UPCOMING_DUTIES.data.firstOrNull()
         if (localUpcoming != null && !isLoggedIn) {
             return localUpcoming.minimalDutyDefinitionsList
@@ -514,7 +516,7 @@ object PrepService {
         return upcomingDuties
     }
 
-    suspend fun loadMessages(
+    override suspend fun loadMessages(
         orgUnitDataGuid: String,
         from: OffsetDateTime,
         to: OffsetDateTime
@@ -560,6 +562,26 @@ object PrepService {
 
         Log.d(TAG, "Loaded ${messages.size} messages")
         return Result.success(messages)
+    }
+
+    override suspend fun createAndAllocateDuty(planDataGuid: String): Result<CreateDutyResponse> {
+        val code = getIncode() ?: return Result.failure(okio.IOException("Not logged in!"))
+
+        val body = NetworkService.createAndAllocateDuty(code, planDataGuid).getOrNull()
+            ?: return Result.failure(okio.IOException("Failed to create duty!"))
+
+        val parsed = try {
+            DataParserService.parseCreateAndAllocateDuty(JSONObject(body))
+        } catch (e: Exception) {
+            Log.e(TAG, "Invalid JSON! $body")
+            null
+        }
+
+        return if (parsed == null) {
+            Result.failure(okio.IOException("Failed to parse create duty response!"))
+        } else {
+            Result.success(parsed)
+        }
     }
 
     private suspend fun augmentHaendWithDocScedTf(
@@ -652,26 +674,6 @@ object PrepService {
         }
 
         return mutableDuties.toList()
-    }
-
-    suspend fun createAndAllocateDuty(planDataGuid: String): Result<CreateDutyResponse> {
-        val code = getIncode() ?: return Result.failure(okio.IOException("Not logged in!"))
-
-        val body = NetworkService.createAndAllocateDuty(code, planDataGuid).getOrNull()
-            ?: return Result.failure(okio.IOException("Failed to create duty!"))
-
-        val parsed = try {
-            DataParserService.parseCreateAndAllocateDuty(JSONObject(body))
-        } catch (e: Exception) {
-            Log.e(TAG, "Invalid JSON! $body")
-            null
-        }
-
-        return if (parsed == null) {
-            Result.failure(okio.IOException("Failed to parse create duty response!"))
-        } else {
-            Result.success(parsed)
-        }
     }
 
     private fun localMidpoint(b: OffsetDateTime, e: OffsetDateTime, zone: ZoneId): ZonedDateTime {

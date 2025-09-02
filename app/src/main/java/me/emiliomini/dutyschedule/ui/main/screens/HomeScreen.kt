@@ -57,9 +57,8 @@ import me.emiliomini.dutyschedule.datastore.prep.org.OrgItemsProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
 import me.emiliomini.dutyschedule.models.network.CreateDutyResponse
 import me.emiliomini.dutyschedule.models.network.CreatedDuty
-import me.emiliomini.dutyschedule.models.prep.AssignedEmployee
 import me.emiliomini.dutyschedule.models.prep.ShiftType
-import me.emiliomini.dutyschedule.services.prep.PrepService
+import me.emiliomini.dutyschedule.services.prep.DutyScheduleService
 import me.emiliomini.dutyschedule.services.storage.DataKeys
 import me.emiliomini.dutyschedule.services.storage.DataStores
 import me.emiliomini.dutyschedule.services.storage.ProtoMapViewModel
@@ -126,8 +125,8 @@ fun HomeScreen(
     }
 
     LaunchedEffect(orgs, allowedOrgs) {
-        val default = PrepService.self?.defaultOrg
-        val primaryOrg = if (default != null) PrepService.getOrg(default) else null
+        val default = DutyScheduleService.self?.defaultOrg
+        val primaryOrg = if (default != null) DutyScheduleService.getOrg(default) else null
 
         selectedOrg = if (primaryOrg != null) {
             primaryOrg.guid
@@ -136,8 +135,8 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(PrepService.isLoggedIn, selectedStartDate, selectedEndDate, selectedOrg) {
-        if (selectedOrg == null || !PrepService.isLoggedIn) {
+    LaunchedEffect(DutyScheduleService.isLoggedIn, selectedStartDate, selectedEndDate, selectedOrg) {
+        if (selectedOrg == null || !DutyScheduleService.isLoggedIn) {
             return@LaunchedEffect
         }
 
@@ -147,7 +146,7 @@ fun HomeScreen(
         }
 
         timeline = null
-        timeline = PrepService.loadTimeline(
+        timeline = DutyScheduleService.loadTimeline(
             selectedOrg!!,
             OffsetDateTime.ofInstant(
                 Instant.ofEpochMilli(selectedStartDate!!), ZoneId.systemDefault()
@@ -157,7 +156,7 @@ fun HomeScreen(
             ),
         ).getOrNull()
 
-        PrepService.loadMessages(
+        DutyScheduleService.loadMessages(
             selectedOrg!!,
             OffsetDateTime.ofInstant(
                 Instant.ofEpochMilli(selectedStartDate!!), ZoneId.systemDefault()
@@ -363,7 +362,7 @@ fun HomeScreen(
                 if (ok) {
                     pendingPlanGuid = null
                     // Timeline refreshen:
-                    timeline = PrepService.loadTimeline(
+                    timeline = DutyScheduleService.loadTimeline(
                         selectedOrg!!,
                         OffsetDateTime.ofInstant(
                             Instant.ofEpochMilli(selectedStartDate!!),

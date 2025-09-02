@@ -90,7 +90,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.currentStateAsState
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.R
-import me.emiliomini.dutyschedule.services.prep.PrepService
+import me.emiliomini.dutyschedule.services.prep.DutyScheduleService
+import me.emiliomini.dutyschedule.services.prep.demo.DemoService
 import me.emiliomini.dutyschedule.ui.main.activity.MainActivity
 import me.emiliomini.dutyschedule.ui.theme.DutyScheduleTheme
 
@@ -319,7 +320,7 @@ fun OnboardingScreen(successAction: () -> Unit = {}) {
 
                         blockContinue = true
                         scope.launch {
-                            val result = PrepService.login(
+                            val result = DutyScheduleService.login(
                                 email, password
                             )
                             if (result) {
@@ -414,7 +415,22 @@ fun OnboardingScreen(successAction: () -> Unit = {}) {
                     TextButton(
                         onClick = {
                             if (pageIndex == pages.lastIndex) {
-                                // TODO: Enter demo mode from this point
+                                if (blockContinue) {
+                                    return@TextButton
+                                }
+
+                                blockContinue = true
+                                DutyScheduleService = DemoService
+                                scope.launch {
+                                    val result = DutyScheduleService.login(
+                                        email, password
+                                    )
+                                    if (result) {
+                                        successAction()
+                                    }
+
+                                    blockContinue = false
+                                }
                             } else {
                                 pageIndex = pages.lastIndex
                             }
@@ -439,7 +455,7 @@ fun OnboardingScreen(successAction: () -> Unit = {}) {
 
                             blockContinue = true
                             scope.launch {
-                                val result = PrepService.login(
+                                val result = DutyScheduleService.login(
                                     email, password
                                 )
                                 if (result) {

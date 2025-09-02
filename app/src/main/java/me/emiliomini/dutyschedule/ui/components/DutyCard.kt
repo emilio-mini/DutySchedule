@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Warning
-import androidx.compose.material.icons.rounded.AssignmentInd
 import androidx.compose.material.icons.rounded.Badge
 import androidx.compose.material.icons.rounded.MedicalInformation
 import androidx.compose.material3.Card
@@ -28,25 +27,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.datastore.prep.duty.DutyDefinitionProto
 import me.emiliomini.dutyschedule.datastore.prep.employee.AssignedEmployeeProto
 import me.emiliomini.dutyschedule.datastore.prep.employee.EmployeeProto
-import me.emiliomini.dutyschedule.models.prep.AssignedEmployee
-import me.emiliomini.dutyschedule.models.prep.DutyDefinition
 import me.emiliomini.dutyschedule.models.prep.Requirement
-import me.emiliomini.dutyschedule.services.prep.PrepService
+import me.emiliomini.dutyschedule.services.prep.DutyScheduleService
 import me.emiliomini.dutyschedule.ui.components.icons.Ambulance
 import me.emiliomini.dutyschedule.ui.components.icons.SteeringWheel
 import me.emiliomini.dutyschedule.ui.theme.Yellow
 import me.emiliomini.dutyschedule.util.format
 import me.emiliomini.dutyschedule.util.getIcon
-import me.emiliomini.dutyschedule.util.isEqual
 import me.emiliomini.dutyschedule.util.isNotEqual
-import java.time.OffsetDateTime
-import java.time.ZoneId
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,7 +65,7 @@ fun AppDutyCard(
     val requirementsMetWarn =
         duty.sewList.isNotEmpty() && duty.elList.isNotEmpty() && duty.tfList.isNotEmpty() || (duty.elList.isNotEmpty() && !duty.tfList.any { person -> person.requirement.guid == Requirement.HAEND.value })
 
-    val selfId = PrepService.self?.guid
+    val selfId = DutyScheduleService.self?.guid
 
     val timeFormatter = "HH:mm"
 
@@ -130,8 +123,8 @@ fun AppDutyCard(
                             state = PersonnelInfoState.DEFAULT,
                             showInfoBadge = assigned.info.isNotEmpty(),
                             info = assigned.info,
-                            customBegin = if (assigned.begin.isNotEqual(duty.begin)) assigned.begin else null,
-                            customEnd = if (assigned.end.isNotEqual(duty.end)) assigned.end else null
+                            customBegin = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(duty.end)) assigned.begin else null,
+                            customEnd = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(duty.end)) assigned.end else null
                         )
                     }
                 }
@@ -158,8 +151,8 @@ fun AppDutyCard(
                             state = if (assigned.employeeGuid == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
                             showInfoBadge = assigned.info.isNotEmpty(),
                             info = assigned.info,
-                            customBegin = if (assigned.begin.isNotEqual(duty.begin)) assigned.begin else null,
-                            customEnd = if (assigned.end.isNotEqual(duty.end)) assigned.end else null
+                            customBegin = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(duty.end)) assigned.begin else null,
+                            customEnd = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(duty.end)) assigned.end else null
                         )
                     }
                 }
@@ -186,8 +179,8 @@ fun AppDutyCard(
                             state = if (assigned.employeeGuid == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
                             showInfoBadge = assigned.info.isNotEmpty() && assigned.requirement.guid != Requirement.HAEND_DR.value,
                             info = assigned.info,
-                            customBegin = if (assigned.begin.isNotEqual(duty.begin)) assigned.begin else null,
-                            customEnd = if (assigned.end.isNotEqual(duty.end)) assigned.end else null
+                            customBegin = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(duty.end)) assigned.begin else null,
+                            customEnd = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(duty.end)) assigned.end else null
                         )
                     }
                 }
@@ -214,8 +207,8 @@ fun AppDutyCard(
                             state = if (assigned.employeeGuid == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
                             showInfoBadge = assigned.info.isNotEmpty(),
                             info = assigned.info,
-                            customBegin = if (assigned.begin.isNotEqual(duty.begin)) assigned.begin else null,
-                            customEnd = if (assigned.end.isNotEqual(duty.end)) assigned.end else null
+                            customBegin = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(duty.end)) assigned.begin else null,
+                            customEnd = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(duty.end)) assigned.end else null
                         )
                     }
                 }

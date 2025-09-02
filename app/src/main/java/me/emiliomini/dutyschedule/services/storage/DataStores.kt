@@ -63,4 +63,19 @@ object DataStores {
         if (!this::UPCOMING_DUTIES.isInitialized) this.UPCOMING_DUTIES = context.store_upcoming_duties
         if (!this::EMPLOYEES.isInitialized) this.EMPLOYEES = context.store_employees
     }
+
+    suspend fun clearAndReset() {
+        PREFERENCES.updateData {
+            val mutable = it.toMutablePreferences()
+            mutable.clear()
+            mutable.toPreferences()
+        }
+        ALARM_ITEMS.updateData { AlarmItemsProto.getDefaultInstance() }
+        ORG_ITEMS.updateData { OrgItemsProto.getDefaultInstance() }
+        INCODE.updateData { IncodeProto.getDefaultInstance() }
+        SELF.updateData { EmployeeProto.getDefaultInstance() }
+        STATISTICS.updateData { StatisticsProto.getDefaultInstance() }
+        UPCOMING_DUTIES.updateData { UpcomingDutyItemsProto.getDefaultInstance() }
+        EMPLOYEES.updateData { EmployeeItemsProto.getDefaultInstance() }
+    }
 }

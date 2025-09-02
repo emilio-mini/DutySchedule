@@ -10,9 +10,8 @@ import me.emiliomini.dutyschedule.debug.DebugFlags
 import me.emiliomini.dutyschedule.enums.NetworkTarget
 import me.emiliomini.dutyschedule.models.github.GithubRelease
 import me.emiliomini.dutyschedule.models.network.NetworkCacheData
-import me.emiliomini.dutyschedule.models.prep.Incode
 import me.emiliomini.dutyschedule.models.prep.Org
-import me.emiliomini.dutyschedule.services.prep.PrepService
+import me.emiliomini.dutyschedule.services.prep.DutyScheduleService
 import okhttp3.CookieJar
 import okhttp3.FormBody
 import okhttp3.Headers
@@ -385,14 +384,14 @@ object NetworkService {
         var response = this.send(request, ignoreCache, identifier)
 
         if (response.isFailure && response.exceptionOrNull()?.message == this.UNAUTHORIZED_MESSAGE) {
-            PrepService.restoreLogin()
+            DutyScheduleService.restoreLogin()
         } else {
             return response
         }
 
         response = this.send(request, ignoreCache, identifier)
         if (response.isFailure && response.exceptionOrNull()?.message == this.UNAUTHORIZED_MESSAGE) {
-            PrepService.logout()
+            DutyScheduleService.logout()
         }
 
         return response
