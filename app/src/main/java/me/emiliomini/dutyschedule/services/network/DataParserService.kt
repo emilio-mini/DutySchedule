@@ -10,7 +10,13 @@ import me.emiliomini.dutyschedule.datastore.prep.employee.RequirementProto
 import me.emiliomini.dutyschedule.datastore.prep.employee.SkillProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgItemsProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
-import me.emiliomini.dutyschedule.models.github.GithubRelease
+import me.emiliomini.dutyschedule.json.mapping.DutyDefinitionProtoMapping
+import me.emiliomini.dutyschedule.json.mapping.MinimalDutyDefinitionProtoMapping
+import me.emiliomini.dutyschedule.json.mapping.OrgProtoMapping
+import me.emiliomini.dutyschedule.json.mapping.PrepResponseMapping
+import me.emiliomini.dutyschedule.json.util.forEach
+import me.emiliomini.dutyschedule.json.util.map
+import me.emiliomini.dutyschedule.json.util.value
 import me.emiliomini.dutyschedule.models.network.CreateDutyResponse
 import me.emiliomini.dutyschedule.models.network.CreatedDuty
 import me.emiliomini.dutyschedule.models.prep.Employee
@@ -29,142 +35,102 @@ object DataParserService {
     private const val TAG = "DataParserService"
     private const val DATA_ROOT_POSITION = "data"
 
-    fun parseGithubReleases(root: JSONArray): List<GithubRelease> {
-        val releases = mutableListOf<GithubRelease>()
-
-        for (i in 0 until root.length()) {
-            val obj = root.getJSONObject(i)
-
-            var downloadUrl = obj.getString("html_url")
-            val assets = obj.getJSONArray("assets")
-            for (j in 0 until assets.length()) {
-                val asset = assets.getJSONObject(j)
-                val url = asset.getString("browser_download_url")
-
-                if (url.endsWith(".apk")) {
-                    downloadUrl = asset.getString("url")
-                    break
-                }
-            }
-
-            releases.add(
-                GithubRelease(
-                    obj.getString("tag_name"),
-                    obj.getBoolean("prerelease"),
-                    OffsetDateTime.parse(obj.getString("published_at")),
-                    OffsetDateTime.parse(obj.getString("updated_at")),
-                    obj.getString("body"),
-                    downloadUrl
-                )
-            )
-        }
-
-        return releases
-    }
-
     fun parseOrgTree(root: JSONObject): OrgItemsProto? {
-        val orgItemsProto = OrgItemsProto.newBuilder()
-
-        for (key in root.keys()) {
-            val obj = root.getJSONObject(key)
-            val additionalInfos = obj.getJSONObject("additionalInfos")
-
-            val guid = key
-            val title = additionalInfos.getString("orgUnitName")
-            val abbreviation = additionalInfos.getString("orgUnitAbbreviation")
-            val identifier = additionalInfos.getString("externalId")
-
-            orgItemsProto.putOrgs(
-                guid,
-                OrgProto.newBuilder()
-                    .setGuid(guid)
-                    .setTitle(title)
-                    .setAbbreviation(abbreviation)
-                    .setIdentifier(identifier)
-                    .build()
+        return OrgItemsProto.newBuilder()
+            .putAllOrgs(
+                root.map({
+                    it.key
+                }, {
+                    OrgProto.newBuilder()
+                        .setGuid(it.key)
+                        .setTitle(it.o.value(OrgProtoMapping.TITLE))
+                        .setAbbreviation(it.o.value(OrgProtoMapping.ABBREVIATION))
+                        .setIdentifier(it.o.value(OrgProtoMapping.IDENTIFIER))
+                        .build()
+                })
             )
-        }
-
-        return orgItemsProto.build()
+            .build()
     }
 
     fun parseLoadPlan(root: JSONObject): List<DutyDefinitionProto> {
-        val data = root.getJSONObject(this.DATA_ROOT_POSITION)
-        val duties = mutableMapOf<String, DutyDefinitionProto>()
-
-        // Establish shifts
-        for (key in data.keys()) {
-            val obj = data.getJSONObject(key)
-            val type = obj.getInt(Type.Companion.POSITION)
-            if (type != Type.TIMESLOT.value) {
-                continue
-            }
-
-            val guid = obj.getString("dataGuid")
-            val def = DutyDefinitionProto.newBuilder()
-                .setGuid(guid)
-                .setBegin(OffsetDateTime.parse(obj.getString("begin")).toTimestamp())
-                .setEnd(OffsetDateTime.parse(obj.getString("end")).toTimestamp())
-
-            val info = obj.getString("info")
-            if (info.isNotBlank()) {
-                def.setInfo(info)
-            }
-
-            duties[guid] = def.build()
+        val data = root.value(PrepResponseMapping.DATA_AS_OBJECT)
+        if (data == null) {
+            return emptyList()
         }
+
+        val duties = mutableMapOf<String, DutyDefinitionProto>()
+        duties.putAll(
+            data.map({
+                it.o.value(DutyDefinitionProtoMapping.GUID)
+            }, {
+                val type = it.o.value(DutyDefinitionProtoMapping.TYPE)
+                if (type != Type.TIMESLOT.value) {
+                    it.skip()
+                    null
+                }
+
+                val def = DutyDefinitionProto.newBuilder()
+                    .setGuid(it.o.value(DutyDefinitionProtoMapping.GUID))
+                    .setBegin(it.o.value(DutyDefinitionProtoMapping.BEGIN))
+                    .setEnd(it.o.value(DutyDefinitionProtoMapping.END))
+
+                val info = it.o.value(DutyDefinitionProtoMapping.INFO)!!
+                if (info.isNotBlank()) {
+                    def.setInfo(info)
+                }
+
+                def.build()
+            })
+        )
         Log.d(TAG, "Established ${duties.size} shifts")
 
         // Assign staff
-        for (key in data.keys()) {
-            val obj = data.getJSONObject(key)
-            val type = obj.getInt(Type.Companion.POSITION)
+        data.forEach {
+            val type = it.o.value(DutyDefinitionProtoMapping.TYPE)
             if (type == Type.TIMESLOT.value) {
-                continue
+                return@forEach
             }
 
-            val employeeGuid = obj.getString("allocationRessourceDataGuid")
-            val guid = obj.getString("parentDataGuid")
-            val dataGuid = obj.getString("dataGuid")
-            var name = obj.getJSONObject("additionalInfos").getString("ressource_name")
-            val info = obj.getString("info")
-            val requirement = obj.getString(Requirement.Companion.POSITION)
+            val employeeGuid = it.o.value(DutyDefinitionProtoMapping.EMPLOYEE_GUID)!!
+            val parentGuid = it.o.value(DutyDefinitionProtoMapping.PARENT_GUID)!!
+            val guid = it.o.value(DutyDefinitionProtoMapping.GUID)!!
+            var name = it.o.value(DutyDefinitionProtoMapping.INLINE_NAME)!!
+            val info = it.o.value(DutyDefinitionProtoMapping.INFO)!!
+            val requirement = it.o.value(DutyDefinitionProtoMapping.REQUIREMENT)!!
 
             if (employeeGuid.isBlank()) {
-
                 when (requirement) {
-
                     // Staff
                     Requirement.EL.value,
                     Requirement.RTW_RS.value,
                     Requirement.HAEND_EL.value,
                     Requirement.ITF_LKW.value-> {
-                        duties[guid] =
-                            duties[guid]?.toBuilder()
-                                ?.setElSlotId(dataGuid)
-                                ?.build() ?: continue
+                        duties[parentGuid] =
+                            duties[parentGuid]?.toBuilder()
+                                ?.setElSlotId(guid)
+                                ?.build() ?: return@forEach
                     }
 
                     Requirement.TRAINING.value,
                     Requirement.TF.value,
                     Requirement.ITF_NFS.value,
                     Requirement.RTW_NFS.value-> {
-                        duties[guid] =
-                            duties[guid]?.toBuilder()
-                                ?.setTfSlotId(dataGuid)
-                                ?.build() ?: continue
+                        duties[parentGuid] =
+                            duties[parentGuid]?.toBuilder()
+                                ?.setTfSlotId(guid)
+                                ?.build() ?: return@forEach
                     }
 
                     // Requirement.RS.value
                     else -> {
-                        duties[guid] =
-                            duties[guid]?.toBuilder()
-                                ?.setRsSlotId(dataGuid)
-                                ?.build() ?: continue
+                        duties[parentGuid] =
+                            duties[parentGuid]?.toBuilder()
+                                ?.setRsSlotId(guid)
+                                ?.build() ?: return@forEach
                     }
                 }
 
-                continue
+                return@forEach
             }
 
             if (name.isBlank() || name == "Verplant") {
@@ -184,7 +150,7 @@ object DataParserService {
                         else -> ""
                     }
                 )
-                .setResourceTypeGuid(obj.getString("ressourceTypeDataGuid"))
+                .setResourceTypeGuid(it.o.value(DutyDefinitionProtoMapping.RESOURCE_TYPE_GUID))
                 .build()
 
             val assignedEmployee = AssignedEmployeeProto.newBuilder()
@@ -194,14 +160,14 @@ object DataParserService {
                         .setGuid(requirement)
                         .build()
                 )
-                .setBegin(OffsetDateTime.parse(obj.getString("begin")).toTimestamp())
-                .setEnd(OffsetDateTime.parse(obj.getString("end")).toTimestamp())
+                .setBegin(it.o.value(DutyDefinitionProtoMapping.BEGIN))
+                .setEnd(it.o.value(DutyDefinitionProtoMapping.END))
                 .setInfo(info)
                 .setInlineEmployee(employee)
                 .build()
 
-            if (duties[guid] == null) {
-                Log.e(TAG, "No duties found for $guid")
+            if (duties[parentGuid] == null) {
+                Log.e(TAG, "No duties found for $parentGuid")
             }
 
             when (requirement) {
@@ -211,8 +177,8 @@ object DataParserService {
                 Requirement.RTW.value,
                 Requirement.ITF.value,
                 Requirement.HAEND.value -> {
-                    duties[guid] =
-                        duties[guid]?.toBuilder()?.addSew(assignedEmployee)?.build() ?: continue
+                    duties[parentGuid] =
+                        duties[parentGuid]?.toBuilder()?.addSew(assignedEmployee)?.build() ?: return@forEach
                 }
 
                 // Staff
@@ -220,31 +186,31 @@ object DataParserService {
                 Requirement.RTW_RS.value,
                 Requirement.HAEND_EL.value,
                 Requirement.ITF_LKW.value-> {
-                    duties[guid] =
-                        duties[guid]?.toBuilder()
+                    duties[parentGuid] =
+                        duties[parentGuid]?.toBuilder()
                             ?.addEl(assignedEmployee)
-                            ?.setElSlotId(dataGuid)
-                            ?.build() ?: continue
+                            ?.setElSlotId(guid)
+                            ?.build() ?: return@forEach
                 }
 
                 Requirement.TRAINING.value,
                 Requirement.TF.value,
                 Requirement.ITF_NFS.value,
                 Requirement.RTW_NFS.value-> {
-                    duties[guid] =
-                        duties[guid]?.toBuilder()
+                    duties[parentGuid] =
+                        duties[parentGuid]?.toBuilder()
                             ?.addTf(assignedEmployee)
-                            ?.setTfSlotId(dataGuid)
-                            ?.build() ?: continue
+                            ?.setTfSlotId(guid)
+                            ?.build() ?: return@forEach
                 }
 
                 // Requirement.RS.value
                 else -> {
-                    duties[guid] =
-                        duties[guid]?.toBuilder()
+                    duties[parentGuid] =
+                        duties[parentGuid]?.toBuilder()
                             ?.addRs(assignedEmployee)
-                            ?.setRsSlotId(dataGuid)
-                            ?.build() ?: continue
+                            ?.setRsSlotId(guid)
+                            ?.build() ?: return@forEach
                 }
             }
         }
@@ -256,17 +222,9 @@ object DataParserService {
     }
 
     fun parseLoadMinimalDutyDefinitions(root: JSONObject): List<MinimalDutyDefinitionProto> {
-        val data = root.getJSONArray(this.DATA_ROOT_POSITION)
-        val duties = mutableListOf<MinimalDutyDefinitionProto>()
-
-        for (i in 0 until data.length()) {
-            val obj = data.getJSONObject(i)
-
-            val allocationInfo = obj.getJSONObject("allocationInfo")
-            val allocationKey = allocationInfo.keys().asSequence().firstOrNull()
-            val allocations =
-                if (allocationKey != null) allocationInfo.getJSONArray(allocationKey) else null
-
+        val data = root.value(PrepResponseMapping.DATA_AS_ARRAY)!!
+        return data.map {
+            val allocations = it.o.value(MinimalDutyDefinitionProtoMapping.ALLOCATION_INFO)
             val typeString = allocations?.getString(0)
             val type = when (typeString) {
                 "[ SEW ]" -> DutyTypeProto.EMS
@@ -286,23 +244,19 @@ object DataParserService {
             staffList.filter { it != vehicle }
 
             val def = MinimalDutyDefinitionProto.newBuilder()
-                .setGuid(obj.getString("guid"))
-                .setBegin(OffsetDateTime.parse(obj.getString("begin")).toTimestamp())
-                .setEnd(OffsetDateTime.parse(obj.getString("end")).toTimestamp())
+                .setGuid(it.o.value(MinimalDutyDefinitionProtoMapping.GUID))
+                .setBegin(it.o.value(MinimalDutyDefinitionProtoMapping.BEGIN))
+                .setEnd(it.o.value(MinimalDutyDefinitionProtoMapping.END))
                 .setType(type)
                 .addAllStaff(staffList)
-                .setDuration(obj.getInt("duration"))
+                .setDuration(it.o.value(MinimalDutyDefinitionProtoMapping.DURATION)!!)
 
             if (vehicle != null) {
                 def.setVehicle(vehicle)
             }
 
-            duties.add(
-                def.build()
-            )
+            def.build()
         }
-
-        return duties
     }
 
     fun parseGetStaff(root: JSONObject): List<EmployeeProto> {

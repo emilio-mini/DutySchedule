@@ -109,36 +109,6 @@ object NetworkService {
         }
     }
 
-    suspend fun getLatestVersion(force: Boolean = false): Result<GithubRelease?> {
-        if (!force) {
-            val cached = getCached<GithubRelease>(NetworkTarget.LATEST_RELEASE.url, 10)
-            if (cached != null) {
-                return Result.success(cached.data)
-            }
-        }
-
-        val request = Request(
-            url = NetworkTarget.LATEST_RELEASE.httpUrl(),
-            headers = headersOf(
-                // "Authorization", "Bearer ${BuildConfig.GITHUB_API_TOKEN}"
-            )
-        )
-        val latestBody = send(request, true).getOrNull()
-
-        if (latestBody == null) {
-            return Result.failure(IOException("Failed to get latest version!"))
-        }
-
-        val releases = DataParserService.parseGithubReleases(JSONArray(latestBody))
-        val latest = releases.maxByOrNull { it.publishedAt }
-        if (latest == null) {
-            return Result.failure(IOException("Failed to parse latest version!"))
-        }
-
-        addCache(request, latest)
-        return Result.success(latest)
-    }
-
     suspend fun login(username: String, password: String): Result<String?> {
         val form = FormBody.Builder()
             .add("client", "RKOOE")
