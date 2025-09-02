@@ -88,6 +88,7 @@
     <string name="base_carousel_no_vehicle">Frei</string>
     <string name="data_org_we">Wels-Stadt</string>
     <string name="data_org_wl">Wels-Land</string>
+    <string name="data_org_andorf">Andorf</string>
     <string name="create_duty_title">Dienst eintragen?</string>
     <string name="create_duty_subtitle">Willst du dich für diesen Slot eintragen?</string>
     <string name="create_duty_cancel">Abbrechen</string>
@@ -104,4 +105,22 @@
     <string name="onboarding_action_skip">Überspringen</string>
     <string name="data_requirement_training">Schulung</string>
     <string name="data_requirement_vehicle">Dienstfahrzeug</string>
+    <string name="data_org_braunau">Braunau</string>
+    <string name="data_org_freistadt">Freistadt</string>
+    <string name="data_org_gmunden">Gmunden</string>
+    <string name="data_org_gmunden_sued">Gmunden Süd</string>
+    <string name="data_org_kirchdorf">Kirchdorf</string>
+    <string name="data_org_kirchschlag">Kirchschlag</string>
+    <string name="data_org_linz_stadt">Linz-Stadt</string>
+    <string name="data_org_mattighofen">Mattighofen</string>
+    <string name="data_org_perg">Perg</string>
+    <string name="data_org_rohrbach">Rohrbach</string>
+    <string name="data_org_st_georgen">St. Georgen</string>
+    <string name="data_org_st_florian">St. Florian</string>
+    <string name="data_org_steyr_land">Steyr-Land</string>
+    <string name="data_org_steyr_stadt">Steyr-Stadt</string>
+    <string name="data_org_voecklabruck">Vöcklabruck</string>
+    <string name="data_org_traun">Traun</string>
+    <string name="data_org_gkr">Eferding-Grieskirchen</string>
+    <string name="data_org_waizenkirchen">Waizenkirchen</string>
 </resources>
