@@ -16,6 +16,7 @@ message DutyDefinitionProto {
   optional string elSlotId = 8;
   optional string tfSlotId = 9;
   optional string rsSlotId = 10;
+  optional string info = 11;
 }
 
 message UpcomingDutyItemsProto {

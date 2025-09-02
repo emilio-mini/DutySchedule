@@ -102,12 +102,17 @@ object DataParserService {
             }
 
             val guid = obj.getString("dataGuid")
-
-            duties[guid] = DutyDefinitionProto.newBuilder()
+            val def = DutyDefinitionProto.newBuilder()
                 .setGuid(guid)
                 .setBegin(OffsetDateTime.parse(obj.getString("begin")).toTimestamp())
                 .setEnd(OffsetDateTime.parse(obj.getString("end")).toTimestamp())
-                .build()
+
+            val info = obj.getString("info")
+            if (info.isNotBlank()) {
+                def.setInfo(info)
+            }
+
+            duties[guid] = def.build()
         }
         Log.d(TAG, "Established ${duties.size} shifts")
 

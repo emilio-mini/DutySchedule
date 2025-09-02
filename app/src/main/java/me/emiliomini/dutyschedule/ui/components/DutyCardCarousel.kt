@@ -24,7 +24,6 @@ import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.datastore.prep.duty.DutyDefinitionProto
 import me.emiliomini.dutyschedule.datastore.prep.employee.AssignedEmployeeProto
-import me.emiliomini.dutyschedule.models.prep.AssignedEmployee
 import me.emiliomini.dutyschedule.models.prep.ShiftType
 import me.emiliomini.dutyschedule.ui.components.icons.Moon
 import me.emiliomini.dutyschedule.ui.components.icons.Sunny
@@ -60,10 +59,13 @@ fun DutyCardCarousel(
             }
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), state = listState) {
                 itemsIndexed(duties, key = { _, duty -> duty.guid }) { index, duty ->
-                    val label = if (duty.sewList.isNotEmpty()) {
+                    var label = if (duty.sewList.isNotEmpty()) {
                         duty.sewList[0].inlineEmployee.name
                     } else {
                         context.getString(R.string.base_carousel_no_vehicle)
+                    }
+                    if (duty.hasInfo()) {
+                        label += " | ${duty.info}"
                     }
 
                     AssistChip(
