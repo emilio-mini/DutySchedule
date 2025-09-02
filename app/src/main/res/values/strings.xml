@@ -33,10 +33,10 @@
     <string name="data_requirement_el">Driver</string>
     <string name="data_requirement_tf">Medic</string>
     <string name="data_requirement_rs">Teammember</string>
-    <string name="data_requirement_rtw_rs">RTW RS</string>
-    <string name="data_requirement_itf_el">LKW Driver</string>
-    <string name="data_requirement_itf_nfs">ITF NFS</string>
-    <string name="data_requirement_rtw_nfs">RTW NFS</string>
+    <string name="data_requirement_rtw_rs">RTW Medic</string>
+    <string name="data_requirement_itf_el">Truck Driver</string>
+    <string name="data_requirement_itf_nfs">ITF Paramedic</string>
+    <string name="data_requirement_rtw_nfs">RTW Paramedic</string>
     <string name="data_requirement_none">None</string>
     <string name="main_schedule_infobox_assigned_role">Assigned role</string>
     <string name="main_schedule_infobox_birthday">Birthday</string>
@@ -63,15 +63,15 @@
     <string name="main_alarms_none">No alarms set</string>
     <string name="main_alarms_upcoming">Upcoming alarms</string>
     <string name="main_schedule_infobox_primary">Primary Station</string>
-    <string name="data_skill_rs">RS</string>
-    <string name="data_skill_nfs">NFS</string>
+    <string name="data_skill_rs">Medic</string>
+    <string name="data_skill_nfs" translatable="false">NFS</string>
     <string name="data_skill_azubi">Intern</string>
-    <string name="data_skill_haend">HÄND</string>
-    <string name="data_skill_fk">Officer</string>
+    <string name="data_skill_haend" translatable="false">HÄND</string>
+    <string name="data_skill_fk">Supervisor</string>
     <string name="data_skill_pa">Instructor</string>
     <string name="data_skill_sef">Driver</string>
-    <string name="data_skill_nkv">NKV</string>
-    <string name="main_schedule_infobox_skill">Skill</string>
+    <string name="data_skill_nkv" translatable="false">NKV</string>
+    <string name="main_schedule_infobox_skill">Qualifications</string>
     <string name="nav_dashboard">Dashboard</string>
     <string name="main_dashboard_title">Dashboard</string>
     <string name="main_dashboard_hours">Hours</string>
@@ -85,7 +85,7 @@
     <string name="data_dutytype_ems">EMS Duty</string>
     <string name="data_dutytype_training">Training</string>
     <string name="data_dutytype_unknown">Unknown</string>
-    <string name="data_requirement_haend_el">SANHÄ</string>
+    <string name="data_requirement_haend_el">HÄND Driver</string>
     <string name="data_requirement_haend_dr">Doctor</string>
     <string name="base_carousel_no_vehicle">Available</string>
     <string name="data_org_we">Wels-Stadt</string>

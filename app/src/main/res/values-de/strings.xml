@@ -30,14 +30,14 @@
     <string name="data_requirement_sew">Einsatzfahrzeug</string>
     <string name="data_requirement_itf">ITF</string>
     <string name="data_requirement_haend">HÄND</string>
-    <string name="data_requirement_haend_el">SANHÄ</string>
+    <string name="data_requirement_haend_el">HÄND Lenker</string>
     <string name="data_requirement_el">Einsatzlenker</string>
     <string name="data_requirement_tf">Transportführer</string>
     <string name="data_requirement_rs">Rettungssanitäter</string>
     <string name="data_requirement_rtw_rs">RTW RS</string>
     <string name="data_requirement_itf_el">LKW Lenker</string>
     <string name="data_requirement_rtw_nfs">RTW NFS</string>
-    <string name="data_requirement_none">Nichts</string>
+    <string name="data_requirement_none">Keine</string>
     <string name="main_schedule_infobox_assigned_role">Rolle</string>
     <string name="main_schedule_infobox_birthday">Geburtstag</string>
     <string name="main_schedule_infobox_actions_call">Anrufen</string>
@@ -67,9 +67,7 @@
     <string name="data_requirement_rtw">RTW</string>
     <string name="data_skill_rs">Rettungssanitäter</string>
     <string name="data_skill_azubi">AZUBI</string>
-    <string name="data_skill_nkv">NKV</string>
     <string name="main_schedule_infobox_skill">Ausbildung</string>
-    <string name="data_skill_nfs">NFS</string>
     <string name="nav_dashboard">Dashboard</string>
     <string name="main_dashboard_title">Dashboard</string>
     <string name="main_dashboard_hours">Dienststunden</string>
@@ -83,7 +81,6 @@
     <string name="data_dutytype_ems">Rettungsdienst</string>
     <string name="data_dutytype_training">Schulung</string>
     <string name="data_dutytype_unknown">Unbekannt</string>
-    <string name="data_skill_haend">HÄND</string>
     <string name="data_skill_fk">Führungskraft</string>
     <string name="data_skill_pa">Praxisanleiter</string>
     <string name="data_skill_sef">SEF</string>
