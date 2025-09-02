@@ -197,6 +197,7 @@ object DataParserService {
 
                 Requirement.TRAINING.value,
                 Requirement.TF.value,
+                Requirement.ITF_NFS.value,
                 Requirement.RTW_NFS.value-> {
                     duties[guid] =
                         duties[guid]?.toBuilder()

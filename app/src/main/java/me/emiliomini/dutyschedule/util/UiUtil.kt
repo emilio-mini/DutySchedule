@@ -22,6 +22,7 @@ fun RequirementProto.getIcon(): ImageVector {
 
         Requirement.EL.value,
         Requirement.HAEND_EL.value,
+        Requirement.RTW_RS.value,
         Requirement.ITF_LKW.value -> SteeringWheel
 
         Requirement.TF.value -> Icons.Rounded.MedicalInformation
