@@ -65,7 +65,7 @@
     <string name="main_schedule_infobox_primary">Primary Station</string>
     <string name="data_skill_rs">RS</string>
     <string name="data_skill_nfs">NFS</string>
-    <string name="data_skill_azubi">Slave</string>
+    <string name="data_skill_azubi">Intern</string>
     <string name="data_skill_haend">HÄND</string>
     <string name="data_skill_fk">Officer</string>
     <string name="data_skill_pa">Instructor</string>
