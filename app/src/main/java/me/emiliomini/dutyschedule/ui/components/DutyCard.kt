@@ -40,6 +40,7 @@ import me.emiliomini.dutyschedule.ui.theme.Yellow
 import me.emiliomini.dutyschedule.util.format
 import me.emiliomini.dutyschedule.util.getIcon
 import me.emiliomini.dutyschedule.util.isNotEqual
+import me.emiliomini.dutyschedule.util.toEpochMilli
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,11 +67,16 @@ fun AppDutyCard(
         duty.sewList.isNotEmpty() && duty.elList.isNotEmpty() && duty.tfList.isNotEmpty() || (duty.elList.isNotEmpty() && !duty.tfList.any { person -> person.requirement.guid == Requirement.HAEND.value })
 
     val selfId = DutyScheduleService.self?.guid
+    val isAssignedInDuty = duty.elList.any { it.employeeGuid == selfId } ||
+            duty.tfList.any { it.employeeGuid == selfId } ||
+            duty.rsList.any { it.employeeGuid == selfId }
 
     val timeFormatter = "HH:mm"
 
     val startTime = duty.begin.format(timeFormatter)
     val endTime = duty.end.format(timeFormatter)
+
+    val canSelfAssign = !isAssignedInDuty && duty.begin.toEpochMilli() >= System.currentTimeMillis()
 
     Card(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(8.dp)) {
         Row(
@@ -135,7 +141,7 @@ fun AppDutyCard(
                         employeeGuid = emptySeat.guid,
                         fallbackEmployee = emptySeat,
                         state = PersonnelInfoState.DISABLED,
-                        modifier = if (!duty.elSlotId.isNullOrBlank()) Modifier.clickable(onClick = {
+                        modifier = if (!duty.elSlotId.isNullOrBlank() && canSelfAssign) Modifier.clickable(onClick = {
                             onDutyClick(
                                 duty.elSlotId
                             )
@@ -163,7 +169,7 @@ fun AppDutyCard(
                         employeeGuid = emptySeat.guid,
                         fallbackEmployee = emptySeat,
                         state = PersonnelInfoState.DISABLED,
-                        modifier = if (!duty.tfSlotId.isNullOrBlank()) Modifier.clickable(onClick = {
+                        modifier = if (!duty.tfSlotId.isNullOrBlank() && canSelfAssign) Modifier.clickable(onClick = {
                             onDutyClick(
                                 duty.tfSlotId
                             )
@@ -191,7 +197,7 @@ fun AppDutyCard(
                         employeeGuid = emptySeat.guid,
                         fallbackEmployee = emptySeat,
                         state = PersonnelInfoState.DISABLED,
-                        modifier = if (!duty.rsSlotId.isNullOrBlank()) Modifier.clickable(onClick = {
+                        modifier = if (!duty.rsSlotId.isNullOrBlank() && canSelfAssign) Modifier.clickable(onClick = {
                             onDutyClick(
                                 duty.rsSlotId
                             )
