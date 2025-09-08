@@ -130,8 +130,14 @@ fun AppDutyCard(
                             state = PersonnelInfoState.DEFAULT,
                             showInfoBadge = assigned.info.isNotEmpty(),
                             info = assigned.info,
-                            customBegin = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(duty.end)) assigned.begin else null,
-                            customEnd = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(duty.end)) assigned.end else null
+                            customBegin = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(
+                                    duty.end
+                                )
+                            ) assigned.begin else null,
+                            customEnd = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(
+                                    duty.end
+                                )
+                            ) assigned.end else null
                         )
                     }
                 }
@@ -142,12 +148,13 @@ fun AppDutyCard(
                         employeeGuid = emptySeat.guid,
                         fallbackEmployee = emptySeat,
                         state = PersonnelInfoState.DISABLED,
-                        modifier = if (!duty.elSlotId.isNullOrBlank() && canSelfAssign) Modifier.clickable(onClick = {
-                            onDutyClick(
-                                duty.elSlotId,
-                                Requirement.EL.toProto()
-                            )
-                        }) else Modifier,
+                        modifier = if (duty.hasElSlotId() && canSelfAssign) Modifier.clickable(
+                            onClick = {
+                                onDutyClick(
+                                    duty.elSlotId,
+                                    Requirement.EL.toProto()
+                                )
+                            }) else Modifier,
                     )
                 } else {
                     duty.elList.forEachIndexed { index, assigned ->
@@ -159,8 +166,14 @@ fun AppDutyCard(
                             state = if (assigned.employeeGuid == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
                             showInfoBadge = assigned.info.isNotEmpty(),
                             info = assigned.info,
-                            customBegin = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(duty.end)) assigned.begin else null,
-                            customEnd = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(duty.end)) assigned.end else null
+                            customBegin = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(
+                                    duty.end
+                                )
+                            ) assigned.begin else null,
+                            customEnd = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(
+                                    duty.end
+                                )
+                            ) assigned.end else null
                         )
                     }
                 }
@@ -171,12 +184,13 @@ fun AppDutyCard(
                         employeeGuid = emptySeat.guid,
                         fallbackEmployee = emptySeat,
                         state = PersonnelInfoState.DISABLED,
-                        modifier = if (!duty.tfSlotId.isNullOrBlank() && canSelfAssign) Modifier.clickable(onClick = {
-                            onDutyClick(
-                                duty.tfSlotId,
-                                Requirement.TF.toProto()
-                            )
-                        }) else Modifier,
+                        modifier = if (duty.hasTfSlotId() && canSelfAssign) Modifier.clickable(
+                            onClick = {
+                                onDutyClick(
+                                    duty.tfSlotId,
+                                    Requirement.TF.toProto()
+                                )
+                            }) else Modifier,
                     )
                 } else {
                     duty.tfList.forEachIndexed { index, assigned ->
@@ -188,40 +202,56 @@ fun AppDutyCard(
                             state = if (assigned.employeeGuid == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
                             showInfoBadge = assigned.info.isNotEmpty() && assigned.requirement.guid != Requirement.HAEND_DR.value,
                             info = assigned.info,
-                            customBegin = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(duty.end)) assigned.begin else null,
-                            customEnd = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(duty.end)) assigned.end else null
+                            customBegin = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(
+                                    duty.end
+                                )
+                            ) assigned.begin else null,
+                            customEnd = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(
+                                    duty.end
+                                )
+                            ) assigned.end else null
                         )
                     }
                 }
 
-                if (duty.rsList.isEmpty()) {
-                    AppPersonnelInfo(
-                        icon = Icons.Rounded.Badge,
-                        employeeGuid = emptySeat.guid,
-                        fallbackEmployee = emptySeat,
-                        state = PersonnelInfoState.DISABLED,
-                        modifier = if (!duty.rsSlotId.isNullOrBlank() && canSelfAssign) Modifier.clickable(onClick = {
-                            onDutyClick(
-                                duty.rsSlotId,
-                                Requirement.RS.toProto()
-                            )
-                        }) else Modifier
-                    )
-                } else {
-                    duty.rsList.forEachIndexed { index, assigned ->
+                if ((duty.hasRsSlotId() && canSelfAssign) || duty.rsList.isNotEmpty()) {
+                    if (duty.rsList.isEmpty()) {
                         AppPersonnelInfo(
-                            modifier = Modifier.clickable(onClick = { onEmployeeClick(assigned) }),
-                            icon = if (index == 0) assigned.requirement.getIcon() else null,
-                            employeeGuid = assigned.employeeGuid,
-                            fallbackEmployee = assigned.inlineEmployee,
-                            state = if (assigned.employeeGuid == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
-                            showInfoBadge = assigned.info.isNotEmpty(),
-                            info = assigned.info,
-                            customBegin = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(duty.end)) assigned.begin else null,
-                            customEnd = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(duty.end)) assigned.end else null
+                            icon = Icons.Rounded.Badge,
+                            employeeGuid = emptySeat.guid,
+                            fallbackEmployee = emptySeat,
+                            state = PersonnelInfoState.DISABLED,
+                            modifier = if (duty.hasRsSlotId() && canSelfAssign) Modifier.clickable(
+                                onClick = {
+                                    onDutyClick(
+                                        duty.rsSlotId,
+                                        Requirement.RS.toProto()
+                                    )
+                                }) else Modifier
                         )
+                    } else {
+                        duty.rsList.forEachIndexed { index, assigned ->
+                            AppPersonnelInfo(
+                                modifier = Modifier.clickable(onClick = { onEmployeeClick(assigned) }),
+                                icon = if (index == 0) assigned.requirement.getIcon() else null,
+                                employeeGuid = assigned.employeeGuid,
+                                fallbackEmployee = assigned.inlineEmployee,
+                                state = if (assigned.employeeGuid == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
+                                showInfoBadge = assigned.info.isNotEmpty(),
+                                info = assigned.info,
+                                customBegin = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(
+                                        duty.end
+                                    )
+                                ) assigned.begin else null,
+                                customEnd = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(
+                                        duty.end
+                                    )
+                                ) assigned.end else null
+                            )
+                        }
                     }
                 }
+
             }
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
