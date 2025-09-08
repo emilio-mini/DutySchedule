@@ -53,6 +53,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.datastore.prep.employee.AssignedEmployeeProto
+import me.emiliomini.dutyschedule.datastore.prep.employee.RequirementProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgDayProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgItemsProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
@@ -112,6 +113,7 @@ fun HomeScreen(
     var showThanks by remember { mutableStateOf(false) }
 
     var pendingPlanGuid by remember { mutableStateOf<String?>(null) }
+    var reqirement by remember { mutableStateOf<RequirementProto?>(null) }
     var creating by remember { mutableStateOf(false) }
     var createError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
@@ -136,7 +138,12 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(DutyScheduleService.isLoggedIn, selectedStartDate, selectedEndDate, selectedOrg) {
+    LaunchedEffect(
+        DutyScheduleService.isLoggedIn,
+        selectedStartDate,
+        selectedEndDate,
+        selectedOrg
+    ) {
         if (selectedOrg == null || !DutyScheduleService.isLoggedIn) {
             return@LaunchedEffect
         }
@@ -238,14 +245,20 @@ fun HomeScreen(
                             onEmployeeClick = {
                                 detailViewEmployee = it
                             },
-                            onDutyClick = { planGuid -> pendingPlanGuid = planGuid })
+                            onDutyClick = { planGuid, req ->
+                                pendingPlanGuid = planGuid
+                                reqirement = req
+                            })
                         DutyCardCarousel(
                             duties = item.nightShiftList,
                             shiftType = ShiftType.NIGHT_SHIFT,
                             onEmployeeClick = {
                                 detailViewEmployee = it
                             },
-                            onDutyClick = { planGuid -> pendingPlanGuid = planGuid })
+                            onDutyClick = { planGuid, req ->
+                                pendingPlanGuid = planGuid
+                                reqirement = req
+                            })
                     }
                 }
             } else {
@@ -266,8 +279,9 @@ fun HomeScreen(
         }, confirmButton = {
             TextButton(onClick = {
                 selectedStartDate = dateRangePickerState.selectedStartDateMillis ?: currentMillis
-                selectedEndDate = dateRangePickerState.selectedEndDateMillis?.plus(24 * 60 * 60 * 1000L)
-                    ?: (currentMillis + defaultDateSpacing)
+                selectedEndDate =
+                    dateRangePickerState.selectedEndDateMillis?.plus(24 * 60 * 60 * 1000L)
+                        ?: (currentMillis + defaultDateSpacing)
 
                 showDatePicker = false
             }) {
@@ -315,6 +329,7 @@ fun HomeScreen(
 
     AssignConfirmSheet(
         planGuid = pendingPlanGuid,
+        req = reqirement,
         loading = creating,
         error = createError,
         onDismiss = {
@@ -396,7 +411,7 @@ fun HomeScreen(
         AlertDialog(
             onDismissRequest = { showThanks = false },
             title = { Text("Danke") },
-            text  = { Text("Dienst wurde eingetragen.") },
+            text = { Text("Dienst wurde eingetragen.") },
             confirmButton = {
                 TextButton(onClick = { showThanks = false }) { Text("OK") }
             }

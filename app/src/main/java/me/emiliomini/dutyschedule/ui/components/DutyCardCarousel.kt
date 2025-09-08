@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.datastore.prep.duty.DutyDefinitionProto
 import me.emiliomini.dutyschedule.datastore.prep.employee.AssignedEmployeeProto
+import me.emiliomini.dutyschedule.datastore.prep.employee.RequirementProto
 import me.emiliomini.dutyschedule.models.prep.ShiftType
 import me.emiliomini.dutyschedule.ui.components.icons.Moon
 import me.emiliomini.dutyschedule.ui.components.icons.Sunny
@@ -34,7 +35,7 @@ fun DutyCardCarousel(
     duties: List<DutyDefinitionProto>,
     shiftType: ShiftType,
     onEmployeeClick: (AssignedEmployeeProto) -> Unit = {},
-    onDutyClick: (String?) -> Unit
+    onDutyClick: (String?, RequirementProto) -> Unit = { _, _ -> },
 ) {
     if (duties.isEmpty()) {
         return

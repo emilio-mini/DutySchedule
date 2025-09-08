@@ -90,7 +90,7 @@
     <string name="data_org_wl">Wels-Land</string>
     <string name="data_org_andorf">Andorf</string>
     <string name="create_duty_title">Dienst eintragen?</string>
-    <string name="create_duty_subtitle">Willst du dich für diesen Slot eintragen?</string>
+    <string name="create_duty_subtitle">Willst du dich für diesen Slot als %1$s eintragen?</string>
     <string name="create_duty_cancel">Abbrechen</string>
     <string name="create_duty_confirm">Eintragen</string>
     <string name="onboarding_intro_title">Dienstplan</string>

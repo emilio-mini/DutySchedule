@@ -16,11 +16,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import me.emiliomini.dutyschedule.R
+import me.emiliomini.dutyschedule.datastore.prep.employee.RequirementProto
+import me.emiliomini.dutyschedule.models.prep.Requirement
+import me.emiliomini.dutyschedule.util.resourceString
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AssignConfirmSheet(
     planGuid: String?,
+    req: RequirementProto?,
     loading: Boolean,
     error: String?,
     onDismiss: () -> Unit,
@@ -33,7 +37,10 @@ fun AssignConfirmSheet(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    text = stringResource(R.string.create_duty_subtitle), // “Willst du dich für diesen Slot eintragen?”
+                    text = stringResource(
+                        R.string.create_duty_subtitle,
+                        if (req != null) stringResource(req.resourceString()) else ""
+                    ), // “Willst du dich für diesen Slot eintragen?”
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -77,6 +84,7 @@ fun AssignConfirmSheet(
 fun AssignConfirmSheetPreview() {
     AssignConfirmSheet(
         planGuid = "",
+        req = Requirement.RS.toProto(),
         loading = false,
         error = "",
         onDismiss = {},

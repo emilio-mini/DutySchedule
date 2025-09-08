@@ -32,6 +32,7 @@ import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.datastore.prep.duty.DutyDefinitionProto
 import me.emiliomini.dutyschedule.datastore.prep.employee.AssignedEmployeeProto
 import me.emiliomini.dutyschedule.datastore.prep.employee.EmployeeProto
+import me.emiliomini.dutyschedule.datastore.prep.employee.RequirementProto
 import me.emiliomini.dutyschedule.models.prep.Requirement
 import me.emiliomini.dutyschedule.services.prep.DutyScheduleService
 import me.emiliomini.dutyschedule.ui.components.icons.Ambulance
@@ -48,7 +49,7 @@ fun AppDutyCard(
     modifier: Modifier = Modifier,
     duty: DutyDefinitionProto,
     onEmployeeClick: (AssignedEmployeeProto) -> Unit = {},
-    onDutyClick: (String?) -> Unit = {}
+    onDutyClick: (String?, RequirementProto) -> Unit = { _, _ -> },
 ) {
     val emptyCar = EmployeeProto.newBuilder()
         .setGuid("")
@@ -143,7 +144,8 @@ fun AppDutyCard(
                         state = PersonnelInfoState.DISABLED,
                         modifier = if (!duty.elSlotId.isNullOrBlank() && canSelfAssign) Modifier.clickable(onClick = {
                             onDutyClick(
-                                duty.elSlotId
+                                duty.elSlotId,
+                                Requirement.EL.toProto()
                             )
                         }) else Modifier,
                     )
@@ -171,7 +173,8 @@ fun AppDutyCard(
                         state = PersonnelInfoState.DISABLED,
                         modifier = if (!duty.tfSlotId.isNullOrBlank() && canSelfAssign) Modifier.clickable(onClick = {
                             onDutyClick(
-                                duty.tfSlotId
+                                duty.tfSlotId,
+                                Requirement.TF.toProto()
                             )
                         }) else Modifier,
                     )
@@ -199,7 +202,8 @@ fun AppDutyCard(
                         state = PersonnelInfoState.DISABLED,
                         modifier = if (!duty.rsSlotId.isNullOrBlank() && canSelfAssign) Modifier.clickable(onClick = {
                             onDutyClick(
-                                duty.rsSlotId
+                                duty.rsSlotId,
+                                Requirement.RS.toProto()
                             )
                         }) else Modifier
                     )
