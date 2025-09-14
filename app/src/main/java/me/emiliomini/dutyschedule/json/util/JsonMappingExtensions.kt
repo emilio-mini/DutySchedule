@@ -24,15 +24,24 @@ fun <T> JSONObject.value(mapping: JsonMapping<T>): T? {
     var obj = this
     for (i in mapping.path.indices) {
         val key = when (mapping.path[i]) {
-            JsonMappingPathVariables.FIRST_KEY -> obj.keys().asSequence().first()
+            JsonMappingPathVariables.FIRST_KEY -> obj.keys().asSequence().firstOrNull()
             else -> mapping.path[i]
+        }
+
+        if (key == null) {
+            return null
         }
 
         if (i == mapping.path.lastIndex) {
             return obj.valueBySingleKey(mapping, key)
         }
 
-        obj = obj.getJSONObject(key)
+        obj = try {
+            obj.getJSONObject(key)
+        } catch (e: JSONException) {
+            Log.w(TAG, "Failed to get nested object with key $key in mapping ${mapping.path.joinToString(";")}", e)
+            return null
+        }
     }
 
     return null
@@ -43,15 +52,20 @@ private fun <T> JSONObject.valueBySingleKey(mapping: JsonMapping<T>, key: String
         return null
     }
 
-    return when (mapping) {
-        is JsonMapping.ARRAY -> this.getJSONArray(key)
-        is JsonMapping.OBJECT -> this.getJSONObject(key)
-        is JsonMapping.BOOLEAN -> this.getBoolean(key)
-        is JsonMapping.INT -> this.getInt(key)
-        is JsonMapping.FLOAT -> this.getDouble(key).toFloat()
-        is JsonMapping.TIMESTAMP -> this.getString(key).toTimestamp()
-        is JsonMapping.STRING -> this.getString(key)
-    } as T
+    return try {
+        when (mapping) {
+            is JsonMapping.ARRAY -> this.getJSONArray(key)
+            is JsonMapping.OBJECT -> this.getJSONObject(key)
+            is JsonMapping.BOOLEAN -> this.getBoolean(key)
+            is JsonMapping.INT -> this.getInt(key)
+            is JsonMapping.FLOAT -> this.getDouble(key).toFloat()
+            is JsonMapping.TIMESTAMP -> this.getString(key).toTimestamp()
+            is JsonMapping.STRING -> this.getString(key)
+        } as T
+    } catch (e: JSONException) {
+        Log.w(TAG, "Failed to map value for key $key in mapping ${mapping.path.joinToString(";")}", e)
+        null
+    }
 }
 
 fun JSONArray.forEach(action: (JsonIndexedObject) -> Unit) {
