@@ -11,7 +11,9 @@ import me.emiliomini.dutyschedule.datastore.prep.employee.SkillProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgItemsProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
 import me.emiliomini.dutyschedule.json.mapping.DutyDefinitionProtoMapping
+import me.emiliomini.dutyschedule.json.mapping.DutyTypeProtoMapping
 import me.emiliomini.dutyschedule.json.mapping.EmployeeProtoMapping
+import me.emiliomini.dutyschedule.json.mapping.MappingConstants
 import me.emiliomini.dutyschedule.json.mapping.MessageMapping
 import me.emiliomini.dutyschedule.json.mapping.MinimalDutyDefinitionProtoMapping
 import me.emiliomini.dutyschedule.json.mapping.OrgProtoMapping
@@ -137,7 +139,7 @@ object DataParserService {
                 return@forEach
             }
 
-            if (name == null || name.isBlank() || name == "Verplant") {
+            if (name == null || name.isBlank() || MappingConstants.EMPLOYEE_NAME_PLACEHOLDERS.contains(name)) {
                 // Using INFO Tag as fallback
                 name = info
             }
@@ -229,11 +231,7 @@ object DataParserService {
         return data.map {
             val allocations = it.o.value(MinimalDutyDefinitionProtoMapping.ALLOCATION_INFO)
             val typeString = allocations?.optString(0)
-            val type = when (typeString) {
-                "[ SEW ]" -> DutyTypeProto.EMS
-                "[ Schulung ]" -> DutyTypeProto.TRAINING
-                else -> DutyTypeProto.UNKNOWN
-            }
+            val type = DutyTypeProtoMapping.get(typeString)
 
             val staffList = mutableListOf<String>()
             if (allocations != null) {
@@ -243,7 +241,7 @@ object DataParserService {
             }
             staffList.filter { it.isNotBlank() }
             val vehicle =
-                staffList.find { it.contains("SEW") || it.contains("ITF") || it.contains("RTW") }
+                staffList.find { MappingConstants.VEHICLE_DESIGNATIONS.contains(it) }
             staffList.filter { it != vehicle }
 
             MinimalDutyDefinitionProto.newBuilder()
@@ -314,6 +312,7 @@ object DataParserService {
         }
     }
 
+    // TODO: Clean this function up and use mapping constants as well as utils and extensions
     fun parseCreateAndAllocateDuty(json: JSONObject): CreateDutyResponse? {
         val errors = json.optJSONArray("errorMessages")?.toListOfStrings().orEmpty()
         val successMsg = json.optString("successMessage", "").takeIf { it.isNotBlank() }
