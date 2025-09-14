@@ -6,7 +6,6 @@ import java.time.Instant
 import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.time.ZoneId
-import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -20,18 +19,38 @@ object TimeUtil {
     }
 }
 
-fun String.toTimestamp(): Timestamp {
+fun String.toTimestamp(): Timestamp? {
     val instant: Instant = try {
         Instant.parse(this) // "2025-08-31T14:22:05Z"
     } catch (e: DateTimeParseException) {
         try {
             OffsetDateTime.parse("${this}T00:00:00Z").toInstant() // Fallback if time is missing
         } catch (e: DateTimeParseException) {
-            ZonedDateTime.parse(this).toInstant() // Fallback if timestamp contains ZoneId
+            try {
+                ZonedDateTime.parse(this).toInstant() // Fallback if timestamp contains ZoneId
+            } catch (e: DateTimeParseException) {
+                return null
+            }
         }
     }
 
     return instant.toTimestamp()
+}
+
+fun String.toOffsetDateTime(): OffsetDateTime? {
+    return try {
+        OffsetDateTime.parse(this)
+    } catch (e: DateTimeParseException) {
+        try {
+            OffsetDateTime.parse("${this}T00:00:00Z") // Fallback if time is missing
+        } catch (e: DateTimeParseException) {
+            try {
+                ZonedDateTime.parse(this).toOffsetDateTime() // Fallback if timestamp contains ZoneId
+            } catch (e: DateTimeParseException) {
+                return null
+            }
+        }
+    }
 }
 
 fun OffsetDateTime.toTimestamp(): Timestamp {

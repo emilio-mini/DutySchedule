@@ -202,9 +202,12 @@ fun EmployeeDetailSheet(
                     DutyScheduleService.getMessages()[employee!!.guid]
                         ?: emptyList()
                 val filteredMessages = messages.filter {
-                    it.displayFrom.toInstant()
-                        .toEpochMilli() <= nowMillis && it.displayTo.toInstant()
-                        .toEpochMilli() >= nowMillis
+                    (it.displayTo == null ||
+                            it.displayTo.toInstant()
+                                .toEpochMilli() >= nowMillis) &&
+                            (it.displayFrom == null ||
+                                    it.displayFrom.toInstant()
+                                        .toEpochMilli() <= nowMillis)
                 }
                 if (filteredMessages.isNotEmpty()) {
                     Spacer(Modifier)

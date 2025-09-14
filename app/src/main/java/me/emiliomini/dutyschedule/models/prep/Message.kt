@@ -8,6 +8,6 @@ data class Message(
     val title: String,
     val message: String,
     val priority: Int,
-    val displayFrom: OffsetDateTime,
-    val displayTo: OffsetDateTime
+    val displayFrom: OffsetDateTime?,
+    val displayTo: OffsetDateTime?
 )

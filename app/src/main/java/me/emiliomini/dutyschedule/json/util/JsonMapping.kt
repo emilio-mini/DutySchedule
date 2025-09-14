@@ -3,6 +3,7 @@ package me.emiliomini.dutyschedule.json.util
 import com.google.protobuf.Timestamp
 import org.json.JSONArray
 import org.json.JSONObject
+import java.time.OffsetDateTime
 
 sealed class JsonMapping<T>(vararg val path: String, open val transform: (T) -> T = { it }) {
     class ARRAY(vararg key: String) : JsonMapping<JSONArray>(*key)
@@ -11,6 +12,7 @@ sealed class JsonMapping<T>(vararg val path: String, open val transform: (T) -> 
     class INT(vararg key: String, override val transform: (Int) -> Int = { it }) : JsonMapping<Int>(*key, transform = transform)
     class FLOAT(vararg key: String, override val transform: (Float) -> Float = { it }) : JsonMapping<Float>(*key, transform = transform)
     class TIMESTAMP(vararg key: String, override val transform: (Timestamp) -> Timestamp = { it }) : JsonMapping<Timestamp>(*key, transform = transform)
+    class OFFSET_DATE_TIME(vararg key: String, override val transform: (OffsetDateTime) -> OffsetDateTime = { it }) : JsonMapping<OffsetDateTime>(*key, transform = transform)
     class STRING(vararg key: String, override val transform: (String) -> String = { it }) : JsonMapping<String>(*key, transform = transform)
 }
 

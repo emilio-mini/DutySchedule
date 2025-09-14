@@ -12,9 +12,11 @@ import me.emiliomini.dutyschedule.datastore.prep.org.OrgItemsProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
 import me.emiliomini.dutyschedule.json.mapping.DutyDefinitionProtoMapping
 import me.emiliomini.dutyschedule.json.mapping.EmployeeProtoMapping
+import me.emiliomini.dutyschedule.json.mapping.MessageMapping
 import me.emiliomini.dutyschedule.json.mapping.MinimalDutyDefinitionProtoMapping
 import me.emiliomini.dutyschedule.json.mapping.OrgProtoMapping
 import me.emiliomini.dutyschedule.json.mapping.PrepResponseMapping
+import me.emiliomini.dutyschedule.json.mapping.ResourceMapping
 import me.emiliomini.dutyschedule.json.mapping.SkillProtoMapping
 import me.emiliomini.dutyschedule.json.util.forEach
 import me.emiliomini.dutyschedule.json.util.map
@@ -280,64 +282,35 @@ object DataParserService {
     }
 
     fun parseGetResources(root: JSONObject): List<Resource>? {
-        val data = root.getJSONObject(this.DATA_ROOT_POSITION)
-        val resources = mutableListOf<Resource>()
-
-        for (key in data.keys()) {
-            val obj = data.getJSONObject(key)
-
-            resources.add(
-                Resource(
-                    obj.getString("ressourceTypeDataGuid"),
-                    obj.getString("dataGuid")
-                )
-            )
+        val data = root.value(PrepResponseMapping.DATA_AS_OBJECT)
+        if (data == null) {
+            return emptyList()
         }
 
-        return resources
+        return data.map {
+            Resource(
+                it.o.value(ResourceMapping.EMPLOYEE_GUID) ?: "",
+                it.o.value(ResourceMapping.MESSAGES_GUID) ?: ""
+            )
+        }
     }
 
     fun parseGetMessages(root: JSONObject): List<Message>? {
+        val data = root.value(PrepResponseMapping.DATA_AS_OBJECT)
+        if (data == null) {
+            return emptyList()
+        }
 
-        try {
-            if (!root.has("data")) {
-                Log.w(TAG, "parseGetMessages: 'data' field missing in JSON root.")
-                return listOf()
-            }
-
-            val dataNode =
-                root.opt("data") // opt verwenden, um keine Exception bei falschem Typ zu werfen
-
-            if (dataNode == null) { // Sollte durch root.has abgedeckt sein, aber doppelt sicher
-                Log.w(TAG, "parseGetMessages: 'data' field is null.")
-                return listOf()
-            }
-
-
-            val data = root.getJSONObject(this.DATA_ROOT_POSITION)
-            val messages = mutableListOf<Message>()
-
-            for (key in data.keys()) {
-                val obj = data.getJSONObject(key)
-
-                messages.add(
-                    Message(
-                        obj.getString("dataGuid"),
-                        obj.getString("typeGuid"),
-                        obj.getString("title"),
-                        obj.getString("message"),
-                        obj.getInt("messagePriority"),
-                        OffsetDateTime.parse(obj.getString("displayFrom")),
-                        OffsetDateTime.parse(obj.getString("displayTo"))
-                    )
-                )
-            }
-
-            return messages
-        } catch (e: Exception) {
-            Log.e(TAG, "Error parsing JSON", e)
-            return listOf()
-
+        return data.map {
+            Message(
+                it.o.value(MessageMapping.GUID) ?: "",
+                it.o.value(MessageMapping.RESOURCE_GUID) ?: "",
+                it.o.value(MessageMapping.TITLE) ?: "",
+                it.o.value(MessageMapping.MESSAGE) ?: "",
+                it.o.value(MessageMapping.PRIORITY) ?: -1,
+                it.o.value(MessageMapping.DISPLAY_FROM),
+                it.o.value(MessageMapping.DISPLAY_TO)
+            )
         }
     }
 

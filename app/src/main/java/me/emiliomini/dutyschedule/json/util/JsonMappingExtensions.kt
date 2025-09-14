@@ -3,6 +3,7 @@
 package me.emiliomini.dutyschedule.json.util
 
 import android.util.Log
+import me.emiliomini.dutyschedule.util.toOffsetDateTime
 import me.emiliomini.dutyschedule.util.toTimestamp
 import org.json.JSONArray
 import org.json.JSONException
@@ -61,6 +62,7 @@ private fun <T> JSONObject.valueBySingleKey(mapping: JsonMapping<T>, key: String
             is JsonMapping.INT -> this.getInt(key)
             is JsonMapping.FLOAT -> this.getDouble(key).toFloat()
             is JsonMapping.TIMESTAMP -> this.getString(key).toTimestamp()
+            is JsonMapping.OFFSET_DATE_TIME -> this.getString(key).toOffsetDateTime()
             is JsonMapping.STRING -> this.getString(key)
         } as T
     } catch (e: JSONException) {
