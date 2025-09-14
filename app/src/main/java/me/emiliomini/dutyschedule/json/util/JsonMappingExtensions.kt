@@ -16,30 +16,31 @@ data class JsonKeyedObject(val key: String, val o: JSONObject)
 data class JsonIndexedObjectSkippable(val index: Int, val o: JSONObject, val skip: () -> Unit)
 data class JsonKeyedObjectSkippable(val key: String, val o: JSONObject, val skip: () -> Unit)
 
-fun <T> JSONObject.value(mapping: JsonMapping<T>): T? {
-    if (mapping.path.isEmpty()) {
+fun <T> JSONObject.value(m: JsonMapping<T>): T? {
+    if (m.path.isEmpty()) {
         return null
     }
 
     var obj = this
-    for (i in mapping.path.indices) {
-        val key = when (mapping.path[i]) {
+    for (i in m.path.indices) {
+        val key = when (m.path[i]) {
             JsonMappingPathVariables.FIRST_KEY -> obj.keys().asSequence().firstOrNull()
-            else -> mapping.path[i]
+            else -> m.path[i]
         }
 
         if (key == null) {
             return null
         }
 
-        if (i == mapping.path.lastIndex) {
-            return obj.valueBySingleKey(mapping, key)
+        if (i == m.path.lastIndex) {
+            val result = obj.valueBySingleKey(m, key)
+            return if (result == null) null else m.transform(result)
         }
 
         obj = try {
             obj.getJSONObject(key)
         } catch (e: JSONException) {
-            Log.w(TAG, "Failed to get nested object with key $key in mapping ${mapping.path.joinToString(";")}", e)
+            Log.w(TAG, "Failed to get nested object with key $key in mapping ${m.path.joinToString(";")}", e)
             return null
         }
     }

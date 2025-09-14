@@ -11,11 +11,14 @@ import me.emiliomini.dutyschedule.datastore.prep.employee.SkillProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgItemsProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
 import me.emiliomini.dutyschedule.json.mapping.DutyDefinitionProtoMapping
+import me.emiliomini.dutyschedule.json.mapping.EmployeeProtoMapping
 import me.emiliomini.dutyschedule.json.mapping.MinimalDutyDefinitionProtoMapping
 import me.emiliomini.dutyschedule.json.mapping.OrgProtoMapping
 import me.emiliomini.dutyschedule.json.mapping.PrepResponseMapping
+import me.emiliomini.dutyschedule.json.mapping.SkillProtoMapping
 import me.emiliomini.dutyschedule.json.util.forEach
 import me.emiliomini.dutyschedule.json.util.map
+import me.emiliomini.dutyschedule.json.util.s
 import me.emiliomini.dutyschedule.json.util.value
 import me.emiliomini.dutyschedule.models.network.CreateDutyResponse
 import me.emiliomini.dutyschedule.models.network.CreatedDuty
@@ -25,8 +28,7 @@ import me.emiliomini.dutyschedule.models.prep.Requirement
 import me.emiliomini.dutyschedule.models.prep.Resource
 import me.emiliomini.dutyschedule.models.prep.Type
 import me.emiliomini.dutyschedule.util.toEpochMilli
-import me.emiliomini.dutyschedule.util.toTimestamp
-import me.emiliomini.dutyschedule.util.trimLeadingZeros
+
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.OffsetDateTime
@@ -42,10 +44,10 @@ object DataParserService {
                     it.key
                 }, {
                     OrgProto.newBuilder()
-                        .setGuid(it.key)
-                        .setTitle(it.o.value(OrgProtoMapping.TITLE))
-                        .setAbbreviation(it.o.value(OrgProtoMapping.ABBREVIATION))
-                        .setIdentifier(it.o.value(OrgProtoMapping.IDENTIFIER))
+                        .s(it.key) { setGuid(it) }
+                        .s(it.o.value(OrgProtoMapping.TITLE)) { setTitle(it) }
+                        .s(it.o.value(OrgProtoMapping.ABBREVIATION)) { setAbbreviation(it) }
+                        .s(it.o.value(OrgProtoMapping.IDENTIFIER)) { setIdentifier(it) }
                         .build()
                 })
             )
@@ -69,17 +71,12 @@ object DataParserService {
                     null
                 }
 
-                val def = DutyDefinitionProto.newBuilder()
-                    .setGuid(it.o.value(DutyDefinitionProtoMapping.GUID))
-                    .setBegin(it.o.value(DutyDefinitionProtoMapping.BEGIN))
-                    .setEnd(it.o.value(DutyDefinitionProtoMapping.END))
-
-                val info = it.o.value(DutyDefinitionProtoMapping.INFO)!!
-                if (info.isNotBlank()) {
-                    def.setInfo(info)
-                }
-
-                def.build()
+                DutyDefinitionProto.newBuilder()
+                    .s(it.o.value(DutyDefinitionProtoMapping.GUID)) { setGuid(it) }
+                    .s(it.o.value(DutyDefinitionProtoMapping.BEGIN)) { setBegin(it) }
+                    .s(it.o.value(DutyDefinitionProtoMapping.END)) { setEnd(it) }
+                    .s(it.o.value(DutyDefinitionProtoMapping.INFO), additionalCondition = { it.isNotBlank() }) { setInfo(it) }
+                    .build()
             })
         )
         Log.d(TAG, "Established ${duties.size} shifts")
@@ -91,20 +88,25 @@ object DataParserService {
                 return@forEach
             }
 
-            val employeeGuid = it.o.value(DutyDefinitionProtoMapping.EMPLOYEE_GUID)!!
-            val parentGuid = it.o.value(DutyDefinitionProtoMapping.PARENT_GUID)!!
-            val guid = it.o.value(DutyDefinitionProtoMapping.GUID)!!
-            var name = it.o.value(DutyDefinitionProtoMapping.INLINE_NAME)!!
-            val info = it.o.value(DutyDefinitionProtoMapping.INFO)!!
-            val requirement = it.o.value(DutyDefinitionProtoMapping.REQUIREMENT)!!
+            val employeeGuid = it.o.value(DutyDefinitionProtoMapping.EMPLOYEE_GUID)
+            val parentGuid = it.o.value(DutyDefinitionProtoMapping.PARENT_GUID)
+            val guid = it.o.value(DutyDefinitionProtoMapping.GUID)
+            var name = it.o.value(DutyDefinitionProtoMapping.INLINE_NAME)
+            val info = it.o.value(DutyDefinitionProtoMapping.INFO)
+            val requirement = it.o.value(DutyDefinitionProtoMapping.REQUIREMENT)
 
-            if (employeeGuid.isBlank()) {
+            if (parentGuid == null) {
+                Log.w(TAG, "Unable to map staff as parentGuid is null")
+                return@forEach
+            }
+
+            if (employeeGuid?.isBlank() ?: true) {
                 when (requirement) {
                     // Staff
                     Requirement.EL.value,
                     Requirement.RTW_RS.value,
                     Requirement.HAEND_EL.value,
-                    Requirement.ITF_LKW.value-> {
+                    Requirement.ITF_LKW.value -> {
                         duties[parentGuid] =
                             duties[parentGuid]?.toBuilder()
                                 ?.setElSlotId(guid)
@@ -114,7 +116,7 @@ object DataParserService {
                     Requirement.TRAINING.value,
                     Requirement.TF.value,
                     Requirement.ITF_NFS.value,
-                    Requirement.RTW_NFS.value-> {
+                    Requirement.RTW_NFS.value -> {
                         duties[parentGuid] =
                             duties[parentGuid]?.toBuilder()
                                 ?.setTfSlotId(guid)
@@ -133,37 +135,35 @@ object DataParserService {
                 return@forEach
             }
 
-            if (name.isBlank() || name == "Verplant") {
+            if (name == null || name.isBlank() || name == "Verplant") {
                 // Using INFO Tag as fallback
                 name = info
             }
             val employee = EmployeeProto.newBuilder()
-                .setGuid(employeeGuid)
-                .setName(name)
-                .setIdentifier(
-                    when (requirement) {
-                        Requirement.VEHICLE.value -> Employee.Companion.VEHICLE_NAME
-                        Requirement.SEW.value -> Employee.Companion.SEW_NAME
-                        Requirement.ITF.value -> Employee.Companion.ITF_NAME
-                        Requirement.RTW.value -> Employee.Companion.RTW_NAME
-                        Requirement.HAEND.value -> Employee.Companion.HAEND_NAME
-                        else -> ""
-                    }
-                )
-                .setResourceTypeGuid(it.o.value(DutyDefinitionProtoMapping.RESOURCE_TYPE_GUID))
+                .s(employeeGuid) { setGuid(it) }
+                .s(name) { setName(it) }
+                .s(when (requirement) {
+                    Requirement.VEHICLE.value -> Employee.Companion.VEHICLE_NAME
+                    Requirement.SEW.value -> Employee.Companion.SEW_NAME
+                    Requirement.ITF.value -> Employee.Companion.ITF_NAME
+                    Requirement.RTW.value -> Employee.Companion.RTW_NAME
+                    Requirement.HAEND.value -> Employee.Companion.HAEND_NAME
+                    else -> ""
+                }) { setIdentifier(it) }
+                .s(it.o.value(DutyDefinitionProtoMapping.RESOURCE_TYPE_GUID)) { setResourceTypeGuid(it) }
                 .build()
 
             val assignedEmployee = AssignedEmployeeProto.newBuilder()
-                .setEmployeeGuid(employeeGuid)
-                .setRequirement(
+                .s(employeeGuid) { setEmployeeGuid(it) }
+                .s(
                     RequirementProto.newBuilder()
-                        .setGuid(requirement)
+                        .s(requirement) { setGuid(it) }
                         .build()
-                )
-                .setBegin(it.o.value(DutyDefinitionProtoMapping.BEGIN))
-                .setEnd(it.o.value(DutyDefinitionProtoMapping.END))
-                .setInfo(info)
-                .setInlineEmployee(employee)
+                ) { setRequirement(it) }
+                .s(it.o.value(DutyDefinitionProtoMapping.BEGIN)) { setBegin(it) }
+                .s(it.o.value(DutyDefinitionProtoMapping.END)) { setEnd(it) }
+                .s(info) { setInfo(it) }
+                .s(employee) { setInlineEmployee(it) }
                 .build()
 
             if (duties[parentGuid] == null) {
@@ -178,14 +178,15 @@ object DataParserService {
                 Requirement.ITF.value,
                 Requirement.HAEND.value -> {
                     duties[parentGuid] =
-                        duties[parentGuid]?.toBuilder()?.addSew(assignedEmployee)?.build() ?: return@forEach
+                        duties[parentGuid]?.toBuilder()?.addSew(assignedEmployee)?.build()
+                            ?: return@forEach
                 }
 
                 // Staff
                 Requirement.EL.value,
                 Requirement.RTW_RS.value,
                 Requirement.HAEND_EL.value,
-                Requirement.ITF_LKW.value-> {
+                Requirement.ITF_LKW.value -> {
                     duties[parentGuid] =
                         duties[parentGuid]?.toBuilder()
                             ?.addEl(assignedEmployee)
@@ -196,7 +197,7 @@ object DataParserService {
                 Requirement.TRAINING.value,
                 Requirement.TF.value,
                 Requirement.ITF_NFS.value,
-                Requirement.RTW_NFS.value-> {
+                Requirement.RTW_NFS.value -> {
                     duties[parentGuid] =
                         duties[parentGuid]?.toBuilder()
                             ?.addTf(assignedEmployee)
@@ -222,7 +223,7 @@ object DataParserService {
     }
 
     fun parseLoadMinimalDutyDefinitions(root: JSONObject): List<MinimalDutyDefinitionProto> {
-        val data = root.value(PrepResponseMapping.DATA_AS_ARRAY)!!
+        val data = root.value(PrepResponseMapping.DATA_AS_ARRAY) ?: JSONArray()
         return data.map {
             val allocations = it.o.value(MinimalDutyDefinitionProtoMapping.ALLOCATION_INFO)
             val typeString = allocations?.getString(0)
@@ -243,58 +244,39 @@ object DataParserService {
                 staffList.find { it.contains("SEW") || it.contains("ITF") || it.contains("RTW") }
             staffList.filter { it != vehicle }
 
-            val def = MinimalDutyDefinitionProto.newBuilder()
-                .setGuid(it.o.value(MinimalDutyDefinitionProtoMapping.GUID))
-                .setBegin(it.o.value(MinimalDutyDefinitionProtoMapping.BEGIN))
-                .setEnd(it.o.value(MinimalDutyDefinitionProtoMapping.END))
-                .setType(type)
+            MinimalDutyDefinitionProto.newBuilder()
+                .s(it.o.value(MinimalDutyDefinitionProtoMapping.GUID)) { setGuid(it) }
+                .s(it.o.value(MinimalDutyDefinitionProtoMapping.BEGIN)) { setBegin(it) }
+                .s(it.o.value(MinimalDutyDefinitionProtoMapping.END)) { setEnd(it) }
+                .s(it.o.value(MinimalDutyDefinitionProtoMapping.DURATION)) { setDuration(it) }
+                .s(type) { setType(it) }
+                .s(vehicle) { setVehicle(it) }
                 .addAllStaff(staffList)
-                .setDuration(it.o.value(MinimalDutyDefinitionProtoMapping.DURATION)!!)
-
-            if (vehicle != null) {
-                def.setVehicle(vehicle)
-            }
-
-            def.build()
+                .build()
         }
     }
 
     fun parseGetStaff(root: JSONObject): List<EmployeeProto> {
-        val data = root.getJSONArray(this.DATA_ROOT_POSITION)
-        val employees = mutableListOf<EmployeeProto>()
-
-        for (i in 0 until data.length()) {
-            val obj = data.getJSONObject(i)
-
-            val staffToSkillsArray = obj.optJSONArray("staffToSkills")
-            val skills = mutableSetOf<SkillProto>()
-            if (staffToSkillsArray != null) {
-                for (j in 0 until staffToSkillsArray.length()) {
-                    val skillObject = staffToSkillsArray.getJSONObject(j)
-                    val skillDataGuid = skillObject.optString("skillDataGuid")
-                    skills.add(SkillProto.newBuilder().setGuid(skillDataGuid).build())
-                }
-            }
-
-            val employee = EmployeeProto.newBuilder()
-                .setGuid(obj.getString("dataGuid"))
-                .setName(obj.getString("name"))
-                .setIdentifier(obj.getString("personalnummer").trimLeadingZeros())
-                .setPhone(obj.getString("telefon"))
-                .setEmail(obj.getString("email"))
-                .setDefaultOrg(obj.getString("externalIsRegularOrgUnit"))
-                .setResourceTypeGuid(obj.getString("ressourceTypeDataGuid"))
-                .addAllSkills(skills)
-
-            val birthDate = obj.getString("birthdate")
-            if (birthDate.isNotBlank()) {
-                employee.setBirthdate(birthDate.toTimestamp())
-            }
-
-            employees.add(employee.build())
+        val data = root.value(PrepResponseMapping.DATA_AS_ARRAY) ?: JSONArray()
+        return data.map {
+            EmployeeProto.newBuilder()
+                .s(it.o.value(EmployeeProtoMapping.GUID)) { setGuid(it) }
+                .s(it.o.value(EmployeeProtoMapping.NAME)) { setName(it) }
+                .s(it.o.value(EmployeeProtoMapping.IDENTIFIER)) { setIdentifier(it) }
+                .s(it.o.value(EmployeeProtoMapping.PHONE)) { setPhone(it) }
+                .s(it.o.value(EmployeeProtoMapping.EMAIL)) { setEmail(it) }
+                .s(it.o.value(EmployeeProtoMapping.DEFAULT_ORG)) { setDefaultOrg(it) }
+                .s(it.o.value(EmployeeProtoMapping.RESOURCE_TYPE_GUID)) { setResourceTypeGuid(it) }
+                .s(it.o.value(EmployeeProtoMapping.BIRTHDATE)) { setBirthdate(it) }
+                .s(
+                    it.o.value(EmployeeProtoMapping.STAFF_TO_SKILLS)?.map {
+                        SkillProto.newBuilder()
+                            .s(it.o.value(SkillProtoMapping.GUID)) { setGuid(it) }
+                            .build()
+                    }
+                ) { addAllSkills(it) }
+                .build()
         }
-
-        return employees
     }
 
     fun parseGetResources(root: JSONObject): List<Resource>? {
