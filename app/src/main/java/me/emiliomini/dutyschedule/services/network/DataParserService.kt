@@ -226,7 +226,7 @@ object DataParserService {
         val data = root.value(PrepResponseMapping.DATA_AS_ARRAY) ?: JSONArray()
         return data.map {
             val allocations = it.o.value(MinimalDutyDefinitionProtoMapping.ALLOCATION_INFO)
-            val typeString = allocations?.getString(0)
+            val typeString = allocations?.optString(0)
             val type = when (typeString) {
                 "[ SEW ]" -> DutyTypeProto.EMS
                 "[ Schulung ]" -> DutyTypeProto.TRAINING
