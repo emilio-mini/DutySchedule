@@ -123,4 +123,7 @@
     <string name="data_org_traun">Traun</string>
     <string name="data_org_gkr">Eferding-Grieskirchen</string>
     <string name="data_org_waizenkirchen">Waizenkirchen</string>
+    <string name="data_requirement_kfz">Fahrzeug</string>
+    <string name="data_role_developer">App Entwickler</string>
+    <string name="data_role_info_developer">Hi. Ich bin einer der Entwickler dieser App. Danke, für deine Unterstützung!</string>
 </resources>

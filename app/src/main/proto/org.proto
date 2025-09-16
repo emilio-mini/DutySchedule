@@ -31,4 +31,5 @@ message OrgDayProto {
   google.protobuf.Timestamp lastUpdated = 3;
   repeated DutyDefinitionProto dayShift = 4;
   repeated DutyDefinitionProto nightShift = 5;
+  map<string, DutyGroupProto> groups = 6;
 }

@@ -52,8 +52,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.R
-import me.emiliomini.dutyschedule.datastore.prep.employee.AssignedEmployeeProto
 import me.emiliomini.dutyschedule.datastore.prep.employee.RequirementProto
+import me.emiliomini.dutyschedule.datastore.prep.employee.SlotProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgDayProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgItemsProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
@@ -176,7 +176,7 @@ fun HomeScreen(
     }
 
     val stationScrollState = rememberScrollState()
-    var detailViewEmployee by remember { mutableStateOf<AssignedEmployeeProto?>(null) }
+    var detailViewEmployee by remember { mutableStateOf<SlotProto?>(null) }
 
     Scaffold(modifier = modifier, topBar = {
         TopAppBar(
@@ -241,6 +241,7 @@ fun HomeScreen(
                         AppDateInfo(date = item.date.toOffsetDateTime())
                         DutyCardCarousel(
                             duties = item.dayShiftList,
+                            groups = item.groupsMap,
                             shiftType = ShiftType.DAY_SHIFT,
                             onEmployeeClick = {
                                 detailViewEmployee = it
@@ -251,6 +252,7 @@ fun HomeScreen(
                             })
                         DutyCardCarousel(
                             duties = item.nightShiftList,
+                            groups = item.groupsMap,
                             shiftType = ShiftType.NIGHT_SHIFT,
                             onEmployeeClick = {
                                 detailViewEmployee = it
@@ -321,7 +323,7 @@ fun HomeScreen(
 
     if (detailViewEmployee != null) {
         EmployeeDetailSheet(
-            assignedEmployee = detailViewEmployee,
+            slot = detailViewEmployee,
             orgs = orgs.values.toList(),
             onDismiss = { detailViewEmployee = null }
         )

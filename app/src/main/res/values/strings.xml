@@ -125,4 +125,7 @@
     <string name="onboarding_action_skip">Skip</string>
     <string name="data_requirement_training">Training</string>
     <string name="data_requirement_vehicle">Vehicle</string>
+    <string name="data_requirement_kfz">Vehicle</string>
+    <string name="data_role_developer">App Developer</string>
+    <string name="data_role_info_developer">Hi. I\'m one of the developers of this app. Thanks for your support!</string>
 </resources>

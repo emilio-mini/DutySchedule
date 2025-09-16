@@ -38,6 +38,7 @@ data class Employee(
     }
 
     companion object {
+        val KFZ_NAME = "KFZ"
         val VEHICLE_NAME = "DFZ"
         val SEW_NAME = "SEW"
         val ITF_NAME = "ITF"

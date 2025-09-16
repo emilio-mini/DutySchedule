@@ -9,16 +9,18 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.datastore.prep.IncodeProto
 import me.emiliomini.dutyschedule.datastore.prep.duty.DutyDefinitionProto
+import me.emiliomini.dutyschedule.datastore.prep.duty.DutyGroupProto
 import me.emiliomini.dutyschedule.datastore.prep.duty.MinimalDutyDefinitionProto
-import me.emiliomini.dutyschedule.datastore.prep.employee.AssignedEmployeeProto
 import me.emiliomini.dutyschedule.datastore.prep.employee.EmployeeItemsProto
 import me.emiliomini.dutyschedule.datastore.prep.employee.EmployeeProto
 import me.emiliomini.dutyschedule.datastore.prep.employee.RequirementProto
+import me.emiliomini.dutyschedule.datastore.prep.employee.SlotProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgDayProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgItemsProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
 import me.emiliomini.dutyschedule.debug.DebugFlags
 import me.emiliomini.dutyschedule.enums.NetworkTarget
+import me.emiliomini.dutyschedule.json.util.s
 import me.emiliomini.dutyschedule.models.network.CreateDutyResponse
 import me.emiliomini.dutyschedule.models.prep.Message
 import me.emiliomini.dutyschedule.models.prep.Org
@@ -32,6 +34,9 @@ import me.emiliomini.dutyschedule.services.storage.DataKeys
 import me.emiliomini.dutyschedule.services.storage.DataStores
 import me.emiliomini.dutyschedule.services.storage.StorageService
 import me.emiliomini.dutyschedule.util.format
+import me.emiliomini.dutyschedule.util.getAllVehicles
+import me.emiliomini.dutyschedule.util.getAllocatedSlotsCount
+import me.emiliomini.dutyschedule.util.getVehicle
 import me.emiliomini.dutyschedule.util.isNightShift
 import me.emiliomini.dutyschedule.util.toOffsetDateTime
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -54,24 +59,33 @@ object PrepService : ScheduleService {
     private val messages = mutableMapOf<String, List<Message>>()
 
     private val dutyComparator = Comparator<DutyDefinitionProto> { d1, d2 ->
-        fun DutyDefinitionProto.nonEmptySecondaryCount(): Int =
-            listOf(elList, tfList, rsList).count { it.isNotEmpty() }
+        val d1Sew = d1.getVehicle()
+        val d2Sew = d2.getVehicle()
+        val d1HasSew = d1Sew != null
+        val d2HasSew = d2Sew != null
 
-        val d1HasSew = d1.sewList.isNotEmpty()
-        val d2HasSew = d2.sewList.isNotEmpty()
+        if (d1.hasGroupGuid() && !d2.hasGroupGuid()) return@Comparator 1
+        if (!d1.hasGroupGuid() && d2.hasGroupGuid()) return@Comparator -1
+
+        if (d1.hasGroupGuid() && d2.hasGroupGuid()) {
+            val gGuid1 = d1.groupGuid
+            val gGuid2 = d2.groupGuid
+            val groupCmp = gGuid1.compareTo(gGuid2)
+            if (groupCmp != 0) return@Comparator groupCmp
+        }
 
         if (d1HasSew && !d2HasSew) return@Comparator -1
         if (!d1HasSew && d2HasSew) return@Comparator 1
 
         if (d1HasSew && d2HasSew) {
-            val name1 = d1.sewList.first().inlineEmployee.name
-            val name2 = d2.sewList.first().inlineEmployee.name
+            val name1 = d1Sew.inlineEmployee.name
+            val name2 = d2Sew.inlineEmployee.name
             val nameCmp = name1.compareTo(name2)
             if (nameCmp != 0) return@Comparator nameCmp
         }
 
-        val d1Count = d1.nonEmptySecondaryCount()
-        val d2Count = d2.nonEmptySecondaryCount()
+        val d1Count = d1.getAllocatedSlotsCount()
+        val d2Count = d2.getAllocatedSlotsCount()
         return@Comparator d1Count.compareTo(d2Count)
     }
 
@@ -289,7 +303,7 @@ object PrepService : ScheduleService {
         orgUnitDataGuid: String,
         from: OffsetDateTime,
         to: OffsetDateTime
-    ): Result<List<DutyDefinitionProto>> {
+    ): Result<Pair<List<DutyDefinitionProto>, Map<String, DutyGroupProto>>> {
         Log.d(TAG, "Loading plan...")
 
         if (!this.isLoggedIn) {
@@ -297,7 +311,7 @@ object PrepService : ScheduleService {
         }
 
         if (DebugFlags.AVOID_PREP_API.active()) { // TODO: Replace with demo mode
-            return Result.success(emptyList())
+            return Result.success(Pair(emptyList(), emptyMap()))
         }
 
         val planBody = NetworkService.loadPlan(incode!!, orgUnitDataGuid, from, to).getOrNull()
@@ -306,8 +320,8 @@ object PrepService : ScheduleService {
         }
 
         try {
-            val duties = DataParserService.parseLoadPlan(JSONObject(planBody))
-            return Result.success(duties)
+            val result = DataParserService.parseLoadPlan(JSONObject(planBody))
+            return Result.success(result)
         } catch (e: JSONException) {
             Log.e(TAG, "Invalid JSON! $planBody")
             return Result.failure(e)
@@ -354,20 +368,16 @@ object PrepService : ScheduleService {
         to: OffsetDateTime
     ): Result<List<OrgDayProto>> {
         // Load plan
-        var plan = this.loadPlan(orgUnitDataGuid, from, to).getOrNull()
-        if (plan.isNullOrEmpty()) {
+        var (duties, groups) = this.loadPlan(orgUnitDataGuid, from, to).getOrDefault(Pair(emptyList(), emptyMap()))
+        if (duties.isEmpty()) {
             Log.e(TAG, "Failed to load plan")
             return Result.failure(okio.IOException("Failed to load plan!"))
         }
 
         // Ensure staff is loaded
-        val employeeGuids = plan.flatMap { duty ->
-            val guids = mutableListOf<String>()
-            guids.addAll(duty.elList.map { it.employeeGuid })
-            guids.addAll(duty.tfList.map { it.employeeGuid })
-            guids.addAll(duty.rsList.map { it.employeeGuid })
-            guids
-        }.distinct()
+        val employeeGuids = duties.flatMap { it.slotsList.map {
+            if (it.hasEmployeeGuid()) it.employeeGuid else null
+        } }.filterNotNull().distinct()
         val localEmployees =
             DataStores.EMPLOYEES.data.firstOrNull() ?: EmployeeItemsProto.getDefaultInstance()
         val missingEmployeeGuids =
@@ -388,8 +398,8 @@ object PrepService : ScheduleService {
         }
 
         try {
-            plan = augmentHaendWithDocScedTf(
-                duties = plan,
+            duties = augmentHaendWithDocScedTf(
+                duties = duties,
                 selectedOrgGuid = orgUnitDataGuid,
                 from = from,
                 to = to
@@ -399,7 +409,7 @@ object PrepService : ScheduleService {
         }
 
         val days = mutableMapOf<String, OrgDayProto>()
-        for (duty in plan) {
+        for (duty in duties) {
             val date = duty.begin.format("yyyy-MM-dd")
             val day = days.getOrDefault(
                 date,
@@ -411,10 +421,12 @@ object PrepService : ScheduleService {
 
             if (duty.isNightShift()) {
                 days[date] = day.toBuilder()
+                    .s(duty.groupGuid, additionalCondition = { it.isNotBlank() && groups.containsKey(it) }) { putGroups(it, groups.getValue(it)) }
                     .addNightShift(duty)
                     .build()
             } else {
                 days[date] = day.toBuilder()
+                    .s(duty.groupGuid, additionalCondition = { it.isNotBlank() && groups.containsKey(it) }) { putGroups(it, groups.getValue(it)) }
                     .addDayShift(duty)
                     .build()
             }
@@ -423,25 +435,18 @@ object PrepService : ScheduleService {
         var daysList = days.values.toList()
         daysList = daysList.map {
             var dayShifts = it.dayShiftList.toList().sortedWith(dutyComparator)
-            val lastDayShiftIndex = 1 + dayShifts.indexOfFirst {
-                it.sewList.isEmpty()
-                        && it.tfList.isEmpty()
-                        && it.elList.isEmpty()
-                        && it.rsList.isEmpty()
+            /*val lastDayShiftIndex = 1 + dayShifts.indexOfFirst {
+                it.getAllocatedSlotsCount() == 0
             }
             dayShifts =
-                if (lastDayShiftIndex > 0) dayShifts.dropLast(dayShifts.size - lastDayShiftIndex) else dayShifts
-
+                if (lastDayShiftIndex > 0) dayShifts.dropLast(dayShifts.size - lastDayShiftIndex) else dayShifts*/
 
             var nightShifts = it.nightShiftList.toList().sortedWith(dutyComparator)
-            val lastNightShiftIndex = 1 + nightShifts.indexOfFirst {
-                it.sewList.isEmpty()
-                        && it.tfList.isEmpty()
-                        && it.elList.isEmpty()
-                        && it.rsList.isEmpty()
+            /*val lastNightShiftIndex = 1 + nightShifts.indexOfFirst {
+                it.getAllocatedSlotsCount() == 0
             }
             nightShifts =
-                if (lastNightShiftIndex > 0) nightShifts.dropLast(nightShifts.size - lastNightShiftIndex) else nightShifts
+                if (lastNightShiftIndex > 0) nightShifts.dropLast(nightShifts.size - lastNightShiftIndex) else nightShifts*/
 
             it.toBuilder()
                 .clearDayShift()
@@ -592,7 +597,7 @@ object PrepService : ScheduleService {
         val mutableDuties = duties.toMutableList()
         for (i in mutableDuties.indices) {
             val duty = mutableDuties[i]
-            val haends = duty.sewList.filter { it.requirement.guid == Requirement.HAEND.value }
+            val haends = duty.getAllVehicles(listOf(Requirement.HAEND.value))
             if (haends.isEmpty()) continue
 
             for (haend in haends) {
@@ -633,8 +638,8 @@ object PrepService : ScheduleService {
                     .build()
 
                 mutableDuties[i] = duty.toBuilder()
-                    .addTf(
-                        AssignedEmployeeProto.newBuilder()
+                    .addSlots(
+                        SlotProto.newBuilder()
                             .setBegin(haend.begin)
                             .setEnd(haend.end)
                             .setRequirement(

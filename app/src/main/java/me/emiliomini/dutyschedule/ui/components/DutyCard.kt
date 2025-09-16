@@ -30,17 +30,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.datastore.prep.duty.DutyDefinitionProto
-import me.emiliomini.dutyschedule.datastore.prep.employee.AssignedEmployeeProto
 import me.emiliomini.dutyschedule.datastore.prep.employee.EmployeeProto
 import me.emiliomini.dutyschedule.datastore.prep.employee.RequirementProto
+import me.emiliomini.dutyschedule.datastore.prep.employee.SlotProto
 import me.emiliomini.dutyschedule.models.prep.Requirement
 import me.emiliomini.dutyschedule.services.prep.DutyScheduleService
 import me.emiliomini.dutyschedule.ui.components.icons.Ambulance
 import me.emiliomini.dutyschedule.ui.components.icons.SteeringWheel
 import me.emiliomini.dutyschedule.ui.theme.Yellow
+import me.emiliomini.dutyschedule.util.allRequirementsMet
 import me.emiliomini.dutyschedule.util.format
 import me.emiliomini.dutyschedule.util.getIcon
+import me.emiliomini.dutyschedule.util.getPriority
 import me.emiliomini.dutyschedule.util.isNotEqual
+import me.emiliomini.dutyschedule.util.resourceString
+import me.emiliomini.dutyschedule.util.staffRequirementsMet
 import me.emiliomini.dutyschedule.util.toEpochMilli
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,7 +52,7 @@ import me.emiliomini.dutyschedule.util.toEpochMilli
 fun AppDutyCard(
     modifier: Modifier = Modifier,
     duty: DutyDefinitionProto,
-    onEmployeeClick: (AssignedEmployeeProto) -> Unit = {},
+    onEmployeeClick: (SlotProto) -> Unit = {},
     onDutyClick: (String?, RequirementProto) -> Unit = { _, _ -> },
 ) {
     val emptyCar = EmployeeProto.newBuilder()
@@ -62,15 +66,11 @@ fun AppDutyCard(
         .setIdentifier("0000000")
         .build()
 
-    val requirementsMetError =
-        (duty.elList.isNotEmpty() && duty.tfList.isNotEmpty()) || (duty.elList.isNotEmpty() && !duty.tfList.any { person -> person.requirement.guid == Requirement.HAEND.value })
-    val requirementsMetWarn =
-        duty.sewList.isNotEmpty() && duty.elList.isNotEmpty() && duty.tfList.isNotEmpty() || (duty.elList.isNotEmpty() && !duty.tfList.any { person -> person.requirement.guid == Requirement.HAEND.value })
+    val requirementsMetError = duty.allRequirementsMet()
+    val requirementsMetWarn = duty.staffRequirementsMet()
 
     val selfId = DutyScheduleService.self?.guid
-    val isAssignedInDuty = duty.elList.any { it.employeeGuid == selfId } ||
-            duty.tfList.any { it.employeeGuid == selfId } ||
-            duty.rsList.any { it.employeeGuid == selfId }
+    val isAssignedInDuty = duty.slotsList.any { it.employeeGuid == selfId }
 
     val timeFormatter = "HH:mm"
 
@@ -113,145 +113,31 @@ fun AppDutyCard(
                     .padding(16.dp)
                     .weight(2f), verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                if (duty.sewList.isEmpty()) {
+                duty.slotsList.forEachIndexed { index, slot ->
                     AppPersonnelInfo(
-                        icon = Ambulance,
-                        employeeGuid = emptyCar.guid,
-                        fallbackEmployee = emptyCar,
-                        state = PersonnelInfoState.DISABLED
-                    )
-                } else {
-                    duty.sewList.forEachIndexed { index, assigned ->
-                        AppPersonnelInfo(
-                            modifier = Modifier.clickable(onClick = { onEmployeeClick(assigned) }),
-                            icon = if (index == 0) assigned.requirement.getIcon() else null,
-                            employeeGuid = assigned.employeeGuid,
-                            fallbackEmployee = assigned.inlineEmployee,
-                            state = PersonnelInfoState.DEFAULT,
-                            showInfoBadge = assigned.info.isNotEmpty(),
-                            info = assigned.info,
-                            customBegin = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(
-                                    duty.end
-                                )
-                            ) assigned.begin else null,
-                            customEnd = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(
-                                    duty.end
-                                )
-                            ) assigned.end else null
-                        )
-                    }
-                }
-
-                if (duty.elList.isEmpty()) {
-                    AppPersonnelInfo(
-                        icon = SteeringWheel,
-                        employeeGuid = emptySeat.guid,
-                        fallbackEmployee = emptySeat,
-                        state = PersonnelInfoState.DISABLED,
-                        modifier = if (duty.hasElSlotId() && canSelfAssign) Modifier.clickable(
-                            onClick = {
-                                onDutyClick(
-                                    duty.elSlotId,
-                                    Requirement.EL.toProto()
-                                )
-                            }) else Modifier,
-                    )
-                } else {
-                    duty.elList.forEachIndexed { index, assigned ->
-                        AppPersonnelInfo(
-                            modifier = Modifier.clickable(onClick = { onEmployeeClick(assigned) }),
-                            icon = if (index == 0) assigned.requirement.getIcon() else null,
-                            employeeGuid = assigned.employeeGuid,
-                            fallbackEmployee = assigned.inlineEmployee,
-                            state = if (assigned.employeeGuid == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
-                            showInfoBadge = assigned.info.isNotEmpty(),
-                            info = assigned.info,
-                            customBegin = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(
-                                    duty.end
-                                )
-                            ) assigned.begin else null,
-                            customEnd = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(
-                                    duty.end
-                                )
-                            ) assigned.end else null
-                        )
-                    }
-                }
-
-                if (duty.tfList.isEmpty()) {
-                    AppPersonnelInfo(
-                        icon = Icons.Rounded.MedicalInformation,
-                        employeeGuid = emptySeat.guid,
-                        fallbackEmployee = emptySeat,
-                        state = PersonnelInfoState.DISABLED,
-                        modifier = if (duty.hasTfSlotId() && canSelfAssign) Modifier.clickable(
-                            onClick = {
-                                onDutyClick(
-                                    duty.tfSlotId,
-                                    Requirement.TF.toProto()
-                                )
-                            }) else Modifier,
-                    )
-                } else {
-                    duty.tfList.forEachIndexed { index, assigned ->
-                        AppPersonnelInfo(
-                            modifier = Modifier.clickable(onClick = { onEmployeeClick(assigned) }),
-                            icon = if (index == 0) assigned.requirement.getIcon() else null,
-                            employeeGuid = assigned.employeeGuid,
-                            fallbackEmployee = assigned.inlineEmployee,
-                            state = if (assigned.employeeGuid == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
-                            showInfoBadge = assigned.info.isNotEmpty() && assigned.requirement.guid != Requirement.HAEND_DR.value,
-                            info = assigned.info,
-                            customBegin = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(
-                                    duty.end
-                                )
-                            ) assigned.begin else null,
-                            customEnd = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(
-                                    duty.end
-                                )
-                            ) assigned.end else null
-                        )
-                    }
-                }
-
-                if ((duty.hasRsSlotId() && canSelfAssign) || duty.rsList.isNotEmpty()) {
-                    if (duty.rsList.isEmpty()) {
-                        AppPersonnelInfo(
-                            icon = Icons.Rounded.Badge,
-                            employeeGuid = emptySeat.guid,
-                            fallbackEmployee = emptySeat,
-                            state = PersonnelInfoState.DISABLED,
-                            modifier = if (duty.hasRsSlotId() && canSelfAssign) Modifier.clickable(
-                                onClick = {
-                                    onDutyClick(
-                                        duty.rsSlotId,
-                                        Requirement.RS.toProto()
-                                    )
-                                }) else Modifier
-                        )
-                    } else {
-                        duty.rsList.forEachIndexed { index, assigned ->
-                            AppPersonnelInfo(
-                                modifier = Modifier.clickable(onClick = { onEmployeeClick(assigned) }),
-                                icon = if (index == 0) assigned.requirement.getIcon() else null,
-                                employeeGuid = assigned.employeeGuid,
-                                fallbackEmployee = assigned.inlineEmployee,
-                                state = if (assigned.employeeGuid == selfId) PersonnelInfoState.HIGHLIGHTED else PersonnelInfoState.DEFAULT,
-                                showInfoBadge = assigned.info.isNotEmpty(),
-                                info = assigned.info,
-                                customBegin = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(
-                                        duty.end
-                                    )
-                                ) assigned.begin else null,
-                                customEnd = if (assigned.begin.isNotEqual(duty.begin) || assigned.end.isNotEqual(
-                                        duty.end
-                                    )
-                                ) assigned.end else null
+                        modifier = Modifier.clickable(onClick = {
+                            if (slot.guid.isNotBlank() && slot.employeeGuid.isBlank() && canSelfAssign) {
+                                onDutyClick(slot.guid, slot.requirement)
+                            } else {
+                                onEmployeeClick(slot)
+                            }
+                        }),
+                        icon = if (index == 0 || duty.slotsList[index - 1].requirement.guid != slot.requirement.guid) slot.requirement.getIcon() else null,
+                        employeeGuid = if (slot.hasEmployeeGuid()) slot.employeeGuid else if (Requirement.VEHICLES.contains(slot.requirement.guid)) emptyCar.guid else emptySeat.guid,
+                        fallbackEmployee = if (slot.hasEmployeeGuid()) slot.inlineEmployee else if (Requirement.VEHICLES.contains(slot.requirement.guid)) emptyCar.toBuilder().setIdentifier(stringResource(slot.requirement.resourceString())).build() else emptySeat.toBuilder().setIdentifier(stringResource(slot.requirement.resourceString())).build(),
+                        state = if (slot.employeeGuid == selfId) PersonnelInfoState.HIGHLIGHTED else if (slot.hasEmployeeGuid()) PersonnelInfoState.DEFAULT else PersonnelInfoState.DISABLED,
+                        showInfoBadge = slot.info.isNotEmpty(),
+                        info = slot.info,
+                        customBegin = if (slot.begin.isNotEqual(duty.begin) || slot.end.isNotEqual(
+                                duty.end
                             )
-                        }
-                    }
+                        ) slot.begin else null,
+                        customEnd = if (slot.begin.isNotEqual(duty.begin) || slot.end.isNotEqual(
+                                duty.end
+                            )
+                        ) slot.end else null
+                    )
                 }
-
             }
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,

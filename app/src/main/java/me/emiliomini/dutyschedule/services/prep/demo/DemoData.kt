@@ -5,10 +5,10 @@ import me.emiliomini.dutyschedule.datastore.prep.duty.DutyDefinitionProto
 import me.emiliomini.dutyschedule.datastore.prep.duty.DutyTypeProto
 import me.emiliomini.dutyschedule.datastore.prep.duty.MinimalDutyDefinitionProto
 import me.emiliomini.dutyschedule.datastore.prep.duty.UpcomingDutyItemsProto
-import me.emiliomini.dutyschedule.datastore.prep.employee.AssignedEmployeeProto
 import me.emiliomini.dutyschedule.datastore.prep.employee.EmployeeItemsProto
 import me.emiliomini.dutyschedule.datastore.prep.employee.EmployeeProto
 import me.emiliomini.dutyschedule.datastore.prep.employee.RequirementProto
+import me.emiliomini.dutyschedule.datastore.prep.employee.SlotProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgDayProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgItemsProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgProto
@@ -243,8 +243,8 @@ object DemoData {
                 .setGuid("a1f2c9e4-6b3d-48e1-9a2f-5d7c9b1e8f33")
                 .setBegin("2025-09-01T05:00:00Z".toTimestamp())
                 .setEnd("2025-09-01T17:00:00Z".toTimestamp())
-                .addSew(
-                    AssignedEmployeeProto.newBuilder()
+                .addSlots(
+                    SlotProto.newBuilder()
                         .setBegin("2025-09-01T05:00:00Z".toTimestamp())
                         .setEnd("2025-09-01T17:00:00Z".toTimestamp())
                         .setRequirement(
@@ -258,8 +258,8 @@ object DemoData {
                         )
                         .build()
                 )
-                .addEl(
-                    AssignedEmployeeProto.newBuilder()
+                .addSlots(
+                    SlotProto.newBuilder()
                         .setBegin("2025-09-01T05:00:00Z".toTimestamp())
                         .setEnd("2025-09-01T17:00:00Z".toTimestamp())
                         .setEmployeeGuid("a9b8c7d6-5e4f-43a2-9b1c-8d7e6f5a4b33")
@@ -268,8 +268,8 @@ object DemoData {
                         )
                         .build()
                 )
-                .addTf(
-                    AssignedEmployeeProto.newBuilder()
+                .addSlots(
+                    SlotProto.newBuilder()
                         .setBegin("2025-09-01T05:00:00Z".toTimestamp())
                         .setEnd("2025-09-01T17:00:00Z".toTimestamp())
                         .setEmployeeGuid("d4b7c9e2-3f6a-41b8-9e57-2a6f8c1d5b9e")
@@ -285,8 +285,8 @@ object DemoData {
                 .setGuid("a2f2c9e4-6b3d-45e1-9a2f-5d7c9b1e8f33")
                 .setBegin("2025-09-01T05:00:00Z".toTimestamp())
                 .setEnd("2025-09-01T17:00:00Z".toTimestamp())
-                .addSew(
-                    AssignedEmployeeProto.newBuilder()
+                .addSlots(
+                    SlotProto.newBuilder()
                         .setBegin("2025-09-01T05:00:00Z".toTimestamp())
                         .setEnd("2025-09-01T17:00:00Z".toTimestamp())
                         .setRequirement(
@@ -300,8 +300,8 @@ object DemoData {
                         )
                         .build()
                 )
-                .addEl(
-                    AssignedEmployeeProto.newBuilder()
+                .addSlots(
+                    SlotProto.newBuilder()
                         .setBegin("2025-09-01T05:00:00Z".toTimestamp())
                         .setEnd("2025-09-01T12:00:00Z".toTimestamp())
                         .setEmployeeGuid("d3e4f5a6-7b8c-49d0-9e1f-2a3b4c5d6e88")
@@ -310,8 +310,8 @@ object DemoData {
                         )
                         .build()
                 )
-                .addEl(
-                    AssignedEmployeeProto.newBuilder()
+                .addSlots(
+                    SlotProto.newBuilder()
                         .setBegin("2025-09-01T12:00:00Z".toTimestamp())
                         .setEnd("2025-09-01T17:00:00Z".toTimestamp())
                         .setEmployeeGuid("b3e7c1d2-8f4a-4b9c-9d5e-6a2f1c3b7e88")
@@ -320,8 +320,8 @@ object DemoData {
                         )
                         .build()
                 )
-                .addTf(
-                    AssignedEmployeeProto.newBuilder()
+                .addSlots(
+                    SlotProto.newBuilder()
                         .setBegin("2025-09-01T05:00:00Z".toTimestamp())
                         .setEnd("2025-09-01T17:00:00Z".toTimestamp())
                         .setEmployeeGuid("b2c3d4e5-6f7a-48b9-9c0d-3e4f5a6b7c99")

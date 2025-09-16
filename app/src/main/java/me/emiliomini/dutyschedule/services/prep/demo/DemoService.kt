@@ -2,6 +2,7 @@ package me.emiliomini.dutyschedule.services.prep.demo
 
 import me.emiliomini.dutyschedule.datastore.prep.IncodeProto
 import me.emiliomini.dutyschedule.datastore.prep.duty.DutyDefinitionProto
+import me.emiliomini.dutyschedule.datastore.prep.duty.DutyGroupProto
 import me.emiliomini.dutyschedule.datastore.prep.duty.MinimalDutyDefinitionProto
 import me.emiliomini.dutyschedule.datastore.prep.employee.EmployeeProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgDayProto
@@ -89,9 +90,9 @@ object DemoService : ScheduleService {
         orgUnitDataGuid: String,
         from: OffsetDateTime,
         to: OffsetDateTime
-    ): Result<List<DutyDefinitionProto>> {
+    ): Result<Pair<List<DutyDefinitionProto>, Map<String, DutyGroupProto>>> {
         getStaff(orgUnitDataGuid, emptyList(), from, to)
-        return Result.success(emptyList())
+        return Result.success(Pair(emptyList(), emptyMap()))
     }
 
     override suspend fun getStaff(

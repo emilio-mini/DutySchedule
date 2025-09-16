@@ -4,6 +4,7 @@ import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.datastore.prep.duty.DutyTypeProto
 import me.emiliomini.dutyschedule.datastore.prep.employee.RequirementProto
 import me.emiliomini.dutyschedule.datastore.prep.employee.SkillProto
+import me.emiliomini.dutyschedule.models.app.Role
 import me.emiliomini.dutyschedule.models.prep.Requirement
 import me.emiliomini.dutyschedule.models.prep.Skill
 import me.emiliomini.dutyschedule.models.prep.Skill.AZUBI
@@ -23,9 +24,33 @@ fun DutyTypeProto.resourceString(): Int {
     }
 }
 
+fun Requirement.resourceString(): Int {
+    return getRequirementResourceString(this.value)
+}
+
+fun Role.resourceString(): Int {
+    return when (this) {
+        Role.DEVELOPER -> R.string.data_role_developer
+        else -> 0
+    }
+}
+
+fun Role.infoResourceString(): Int {
+    return when (this) {
+        Role.DEVELOPER -> R.string.data_role_info_developer
+        else -> 0
+    }
+}
+
 fun RequirementProto.resourceString(): Int {
-    return when (this.guid) {
+    return getRequirementResourceString(this.guid)
+}
+
+private fun getRequirementResourceString(guid: String): Int {
+    return when (guid) {
         Requirement.TRAINING.value -> R.string.data_requirement_training
+        Requirement.KFZ_2.value,
+        Requirement.KFZ.value -> R.string.data_requirement_kfz
         Requirement.VEHICLE.value -> R.string.data_requirement_vehicle
         Requirement.SEW.value -> R.string.data_requirement_sew
         Requirement.RTW.value -> R.string.data_requirement_rtw

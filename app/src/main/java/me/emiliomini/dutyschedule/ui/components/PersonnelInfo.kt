@@ -1,12 +1,11 @@
 package me.emiliomini.dutyschedule.ui.components
 
+import android.R.attr.direction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Badge
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -21,17 +20,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.protobuf.Timestamp
 import me.emiliomini.dutyschedule.datastore.prep.employee.EmployeeItemsProto
 import me.emiliomini.dutyschedule.datastore.prep.employee.EmployeeProto
-import me.emiliomini.dutyschedule.datastore.prep.employee.RequirementProto
-import me.emiliomini.dutyschedule.models.prep.Employee
+import me.emiliomini.dutyschedule.models.app.Role
 import me.emiliomini.dutyschedule.services.storage.DataStores
 import me.emiliomini.dutyschedule.services.storage.ProtoMapViewModel
 import me.emiliomini.dutyschedule.services.storage.ProtoMapViewModelFactory
@@ -75,8 +76,10 @@ fun AppPersonnelInfo(
     LaunchedEffect(employeeGuid, fallbackEmployee, employees) {
         employee = employees[employeeGuid] ?: fallbackEmployee
 
-        var infoContents = mutableListOf<String>()
-        infoContents.add(employee?.identifier ?: "")
+        val infoContents = mutableListOf<String>()
+        if (employeeGuid.isNotBlank() || info.isNullOrBlank()) {
+            infoContents.add(employee?.identifier ?: "")
+        }
         if (customBegin != null || customEnd != null) {
             infoContents.add(customBegin?.format("HH:mm") + " - " + customEnd?.format("HH:mm"))
         }
@@ -106,15 +109,25 @@ fun AppPersonnelInfo(
         }
         Column {
             Text(
-                text = infoText,
+                text = infoText.ifBlank { "?????" },
                 color = MaterialTheme.colorScheme.outline,
                 fontSize = MaterialTheme.typography.labelSmall.fontSize,
                 fontWeight = FontWeight.Light
             )
-            Text(
-                text = employee?.name ?: "", color = contentColor,
-                fontWeight = if (state == PersonnelInfoState.HIGHLIGHTED) FontWeight.Bold else FontWeight.Normal
-            )
+            val role = Role.of(employeeGuid)
+            if (role != Role.NONE) {
+                AnimatedGradientText(
+                    text = employee?.name ?: "",
+                    fontWeight = FontWeight.SemiBold,
+                    colors = role.colors()
+                )
+            } else {
+                Text(
+                    text = employee?.name ?: "",
+                    color = contentColor,
+                    fontWeight = if (state == PersonnelInfoState.HIGHLIGHTED) FontWeight.Bold else FontWeight.Normal
+                )
+            }
         }
     }
 }

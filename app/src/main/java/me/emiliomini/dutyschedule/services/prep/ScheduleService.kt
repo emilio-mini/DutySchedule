@@ -2,6 +2,7 @@ package me.emiliomini.dutyschedule.services.prep
 
 import me.emiliomini.dutyschedule.datastore.prep.IncodeProto
 import me.emiliomini.dutyschedule.datastore.prep.duty.DutyDefinitionProto
+import me.emiliomini.dutyschedule.datastore.prep.duty.DutyGroupProto
 import me.emiliomini.dutyschedule.datastore.prep.duty.MinimalDutyDefinitionProto
 import me.emiliomini.dutyschedule.datastore.prep.employee.EmployeeProto
 import me.emiliomini.dutyschedule.datastore.prep.org.OrgDayProto
@@ -28,7 +29,7 @@ interface ScheduleService {
     suspend fun loadSelf(guid: String?, org: String?): EmployeeProto?
     suspend fun loadOrgs(): OrgItemsProto?
     suspend fun loadAllowedOrgs(): List<String>?
-    suspend fun loadPlan(orgUnitDataGuid: String, from: OffsetDateTime, to: OffsetDateTime): Result<List<DutyDefinitionProto>>
+    suspend fun loadPlan(orgUnitDataGuid: String, from: OffsetDateTime, to: OffsetDateTime): Result<Pair<List<DutyDefinitionProto>, Map<String, DutyGroupProto>>>
     suspend fun getStaff(orgUnitDataGuid: String, staffDataGuid: List<String>, from: OffsetDateTime, to: OffsetDateTime): Result<List<EmployeeProto>>
     suspend fun loadTimeline(orgUnitDataGuid: String, from: OffsetDateTime, to: OffsetDateTime): Result<List<OrgDayProto>>
     suspend fun loadPast(year: String): Result<List<MinimalDutyDefinitionProto>>
