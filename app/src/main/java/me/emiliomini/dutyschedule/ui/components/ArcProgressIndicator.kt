@@ -6,16 +6,22 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.absoluteOffset
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -40,15 +46,10 @@ fun ArcProgressIndicator(
     pending: Boolean = false,
     content: @Composable BoxScope.() -> Unit = {}
 ) {
-    var safeProgress = progress - floor(progress)
-    if (progress > 0 && safeProgress == 0f) {
-        safeProgress = 1f
-    }
-
     val animatedProgress by animateFloatAsState(
-        targetValue = safeProgress,
+        targetValue = progress,
         animationSpec = tween(
-            durationMillis = 500,
+            durationMillis = 1600,
             easing = FastOutSlowInEasing
         ),
         label = "ArcProgressAnimation"
@@ -61,7 +62,7 @@ fun ArcProgressIndicator(
 
             // Track
             drawArc(
-                color = if (progress > 1) overflowColor else backgroundColor,
+                color = if (animatedProgress > 1) overflowColor else backgroundColor,
                 startAngle = startAngle,
                 sweepAngle = totalSweep,
                 useCenter = false,
@@ -70,7 +71,7 @@ fun ArcProgressIndicator(
                 style = Stroke(width = strokeWidth.toPx(), cap = StrokeCap.Round)
             )
 
-            val progressSweep = animatedProgress * totalSweep
+            val progressSweep = (animatedProgress - floor(animatedProgress)) * totalSweep
 
             // Progress border
             if (progress > 0) {
@@ -101,8 +102,14 @@ fun ArcProgressIndicator(
             LinearProgressIndicator(
                 modifier = Modifier
                     .width(sizeDp / 4)
-                    .offset(y = sizeDp / 3)
+                    .offset(y = sizeDp / 6)
             )
+        }
+        if (animatedProgress >= 1f) {
+            Column(modifier = Modifier.offset(y = sizeDp / 3), horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(Icons.Rounded.Check, contentDescription = null)
+                Text("${floor(animatedProgress).toInt()}x")
+            }
         }
     }
 }
