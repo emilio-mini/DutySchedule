@@ -37,4 +37,5 @@ enum DutyTypeProto {
   UNKNOWN = 0;
   EMS = 1;
   TRAINING = 2;
+  MEET = 3;
 }

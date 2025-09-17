@@ -84,6 +84,7 @@
     <string name="base_avatar_dialog_action_logout">Logout</string>
     <string name="data_dutytype_ems">EMS Duty</string>
     <string name="data_dutytype_training">Training</string>
+    <string name="data_dutytype_meet">Meet</string>
     <string name="data_dutytype_unknown">Unknown</string>
     <string name="data_requirement_haend_el">HÄND Driver</string>
     <string name="data_requirement_haend_dr">Doctor</string>

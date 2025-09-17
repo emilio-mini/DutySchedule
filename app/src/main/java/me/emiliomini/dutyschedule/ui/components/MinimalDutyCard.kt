@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.EmojiPeople
 import androidx.compose.material.icons.rounded.QuestionMark
 import androidx.compose.material.icons.rounded.School
 import androidx.compose.material3.Icon
@@ -78,6 +79,7 @@ fun MinimalDutyCard(
                         when (duty.type) {
                             DutyTypeProto.EMS -> Ambulance
                             DutyTypeProto.TRAINING -> Icons.Rounded.School
+                            DutyTypeProto.MEET -> Icons.Rounded.EmojiPeople
                             else -> Icons.Rounded.QuestionMark
                         },
                         contentDescription = null,

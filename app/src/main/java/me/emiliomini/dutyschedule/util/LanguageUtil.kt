@@ -6,7 +6,6 @@ import me.emiliomini.dutyschedule.datastore.prep.employee.RequirementProto
 import me.emiliomini.dutyschedule.datastore.prep.employee.SkillProto
 import me.emiliomini.dutyschedule.models.app.Role
 import me.emiliomini.dutyschedule.models.prep.Requirement
-import me.emiliomini.dutyschedule.models.prep.Skill
 import me.emiliomini.dutyschedule.models.prep.Skill.AZUBI
 import me.emiliomini.dutyschedule.models.prep.Skill.FK
 import me.emiliomini.dutyschedule.models.prep.Skill.HAEND
@@ -20,6 +19,7 @@ fun DutyTypeProto.resourceString(): Int {
     return when (this) {
         DutyTypeProto.EMS -> R.string.data_dutytype_ems
         DutyTypeProto.TRAINING -> R.string.data_dutytype_training
+        DutyTypeProto.MEET -> R.string.data_dutytype_meet
         else -> R.string.data_dutytype_unknown
     }
 }
@@ -71,14 +71,14 @@ private fun getRequirementResourceString(guid: String): Int {
 
 fun SkillProto.resourceString(): Int {
     return when (this.guid) {
-        Skill.RS.value -> R.string.data_skill_rs
-        Skill.AZUBI.value -> R.string.data_skill_azubi
-        Skill.HAEND.value -> R.string.data_skill_haend
-        Skill.FK.value -> R.string.data_skill_fk
-        Skill.PA.value -> R.string.data_skill_pa
-        Skill.SEF.value -> R.string.data_skill_sef
-        Skill.NOTKOMPETENZ.value -> R.string.data_skill_nkv
-        Skill.NFS.value -> R.string.data_skill_nfs
+        RS.value -> R.string.data_skill_rs
+        AZUBI.value -> R.string.data_skill_azubi
+        HAEND.value -> R.string.data_skill_haend
+        FK.value -> R.string.data_skill_fk
+        PA.value -> R.string.data_skill_pa
+        SEF.value -> R.string.data_skill_sef
+        NOTKOMPETENZ.value -> R.string.data_skill_nkv
+        NFS.value -> R.string.data_skill_nfs
         else -> R.string.data_requirement_none
     }
 }

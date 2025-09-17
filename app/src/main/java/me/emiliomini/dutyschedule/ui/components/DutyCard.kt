@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Warning
-import androidx.compose.material.icons.rounded.Badge
-import androidx.compose.material.icons.rounded.MedicalInformation
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -35,13 +33,10 @@ import me.emiliomini.dutyschedule.datastore.prep.employee.RequirementProto
 import me.emiliomini.dutyschedule.datastore.prep.employee.SlotProto
 import me.emiliomini.dutyschedule.models.prep.Requirement
 import me.emiliomini.dutyschedule.services.prep.DutyScheduleService
-import me.emiliomini.dutyschedule.ui.components.icons.Ambulance
-import me.emiliomini.dutyschedule.ui.components.icons.SteeringWheel
 import me.emiliomini.dutyschedule.ui.theme.Yellow
 import me.emiliomini.dutyschedule.util.allRequirementsMet
 import me.emiliomini.dutyschedule.util.format
 import me.emiliomini.dutyschedule.util.getIcon
-import me.emiliomini.dutyschedule.util.getPriority
 import me.emiliomini.dutyschedule.util.isNotEqual
 import me.emiliomini.dutyschedule.util.resourceString
 import me.emiliomini.dutyschedule.util.staffRequirementsMet

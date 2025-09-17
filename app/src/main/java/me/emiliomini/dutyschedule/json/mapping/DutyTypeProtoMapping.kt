@@ -7,6 +7,7 @@ object DutyTypeProtoMapping {
         return when (value) {
             "[ SEW ]" -> DutyTypeProto.EMS
             "[ Schulung ]" -> DutyTypeProto.TRAINING
+            "[ Besprechung ]" -> DutyTypeProto.MEET
             else -> DutyTypeProto.UNKNOWN
         }
     }
