@@ -15,7 +15,7 @@ android {
         applicationId = "me.emiliomini.dutyschedule"
         minSdk = 26
         targetSdk = 36
-        versionCode = 11
+        versionCode = 12
         versionName = "v1.0-beta.11"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
