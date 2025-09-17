@@ -38,8 +38,8 @@ fun AssignConfirmSheet(
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
                     text = stringResource(
-                        R.string.create_duty_subtitle,
-                        if (req != null) stringResource(req.resourceString()) else ""
+                        if (req != null && req.resourceString() != R.string.data_requirement_none) R.string.create_duty_subtitle else R.string.create_duty_subtitle_no_skill,
+                        if (req != null && req.resourceString() != R.string.data_requirement_none) stringResource(req.resourceString()) else ""
                     ), // “Willst du dich für diesen Slot eintragen?”
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant

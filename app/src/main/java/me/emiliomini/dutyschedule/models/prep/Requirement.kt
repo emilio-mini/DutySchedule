@@ -43,6 +43,8 @@ enum class Requirement(val value: String, val priority: Int) {
         val DRIVERS = listOf(EL, HAEND_EL, ITF_LKW).map { it.value }
         val PASSENGERS = listOf(HAEND_DR, TF, ITF_NFS, RTW_NFS).map { it.value }
 
+        val NFS_SLOTS = listOf(ITF_NFS, ITF_LKW, RTW_NFS).map { it.value }
+
         const val POSITION = "requirementGroupChildDataGuid"
 
         fun parse(value: String): Requirement {

@@ -32,6 +32,7 @@ import me.emiliomini.dutyschedule.datastore.prep.employee.EmployeeProto
 import me.emiliomini.dutyschedule.datastore.prep.employee.RequirementProto
 import me.emiliomini.dutyschedule.datastore.prep.employee.SlotProto
 import me.emiliomini.dutyschedule.models.prep.Requirement
+import me.emiliomini.dutyschedule.models.prep.Skill
 import me.emiliomini.dutyschedule.services.prep.DutyScheduleService
 import me.emiliomini.dutyschedule.ui.theme.Yellow
 import me.emiliomini.dutyschedule.util.allRequirementsMet
@@ -65,6 +66,7 @@ fun AppDutyCard(
     val requirementsMetWarn = duty.staffRequirementsMet()
 
     val selfId = DutyScheduleService.self?.guid
+    val selfSkills = DutyScheduleService.self?.skillsList
     val isAssignedInDuty = duty.slotsList.any { it.employeeGuid == selfId }
 
     val timeFormatter = "HH:mm"
@@ -111,8 +113,18 @@ fun AppDutyCard(
                 duty.slotsList.forEachIndexed { index, slot ->
                     AppPersonnelInfo(
                         modifier = Modifier.clickable(onClick = {
-                            if (slot.guid.isNotBlank() && slot.employeeGuid.isBlank() && canSelfAssign) {
-                                onDutyClick(slot.guid, slot.requirement)
+                            if (slot.guid.isNotBlank() && slot.employeeGuid.isBlank() &&
+                                        !slot.info.uppercase().contains("SD") &&
+                                !Requirement.VEHICLES.contains(slot.requirement.guid) &&
+                                canSelfAssign) {
+
+                                if (Requirement.NFS_SLOTS.contains(slot.requirement.guid)) {
+                                    if (selfSkills?.contains(Skill.NFS.asProto()) == true) {
+                                        onDutyClick(slot.guid, slot.requirement)
+                                    }
+                                } else {
+                                    onDutyClick(slot.guid, slot.requirement)
+                                }
                             } else {
                                 onEmployeeClick(slot)
                             }

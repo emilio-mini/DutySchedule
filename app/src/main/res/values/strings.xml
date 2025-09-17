@@ -112,6 +112,7 @@
     <string name="data_org_andorf">Andorf</string>
     <string name="create_duty_title">Add duty?</string>
     <string name="create_duty_subtitle">Do you want to allocate this slot as %1$s?</string>
+    <string name="create_duty_subtitle_no_skill">Do you want to allocate this slot?</string>
     <string name="create_duty_cancel">Abort</string>
     <string name="create_duty_confirm">Continue</string>
     <string name="onboarding_intro_title">Schedule</string>
