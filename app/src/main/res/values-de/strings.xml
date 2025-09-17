@@ -131,4 +131,9 @@
     <string name="nav_archive">Archiv</string>
     <string name="main_archive_title">Archiv</string>
     <string name="main_archive_section_duties_title">%1$s Dienste (%2$s Stunden)</string>
+    <string name="data_dutytype_drill">Übung</string>
+    <string name="data_dutytype_vehicle_training">Schulung KFZ</string>
+    <string name="data_dutytype_recertification">Rezertifizierung</string>
+    <string name="data_dutytype_haend">HÄND Dienst</string>
+    <string name="data_dutytype_administrative">Innendienst</string>
 </resources>

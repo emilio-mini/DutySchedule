@@ -8,6 +8,11 @@ object DutyTypeProtoMapping {
             "[ SEW ]" -> DutyTypeProto.EMS
             "[ Schulung ]" -> DutyTypeProto.TRAINING
             "[ Besprechung ]" -> DutyTypeProto.MEET
+            "[ Übung ]" -> DutyTypeProto.DRILL
+            "[ Schulung-KFZ ]" -> DutyTypeProto.VEHICLE_TRAINING
+            "[ Pflichtfortbildung Rezertifizierung ]" -> DutyTypeProto.RECERTIFICATION
+            "[ HÄND mobil ]" -> DutyTypeProto.HAEND
+            "[ Innendienst ]" -> DutyTypeProto.ADMINISTRATIVE
             else -> DutyTypeProto.UNKNOWN
         }
     }

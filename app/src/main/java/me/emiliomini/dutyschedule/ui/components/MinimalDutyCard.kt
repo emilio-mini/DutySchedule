@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Coffee
 import androidx.compose.material.icons.rounded.EmojiPeople
+import androidx.compose.material.icons.rounded.MedicalServices
 import androidx.compose.material.icons.rounded.QuestionMark
 import androidx.compose.material.icons.rounded.School
 import androidx.compose.material3.Icon
@@ -23,7 +25,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import me.emiliomini.dutyschedule.datastore.prep.duty.DutyTypeProto
 import me.emiliomini.dutyschedule.datastore.prep.duty.MinimalDutyDefinitionProto
+import me.emiliomini.dutyschedule.debug.DebugFlags
 import me.emiliomini.dutyschedule.ui.components.icons.Ambulance
+import me.emiliomini.dutyschedule.ui.components.icons.EcgHeart
+import me.emiliomini.dutyschedule.ui.components.icons.Exercise
+import me.emiliomini.dutyschedule.ui.components.icons.SteeringWheel
 import me.emiliomini.dutyschedule.util.resourceString
 import me.emiliomini.dutyschedule.util.toOffsetDateTime
 import java.time.ZoneId
@@ -46,6 +52,9 @@ fun MinimalDutyCard(
             },
             supportingContent = {
                 Column {
+                    if (DebugFlags.SHOW_DEBUG_INFO.active()) {
+                        Text(duty.typeString, fontWeight = FontWeight.ExtraBold)
+                    }
                     if (duty.vehicle != null && duty.vehicle.isNotBlank()) {
                         Text(duty.vehicle, fontWeight = FontWeight.SemiBold)
                     }
@@ -80,6 +89,11 @@ fun MinimalDutyCard(
                             DutyTypeProto.EMS -> Ambulance
                             DutyTypeProto.TRAINING -> Icons.Rounded.School
                             DutyTypeProto.MEET -> Icons.Rounded.EmojiPeople
+                            DutyTypeProto.DRILL -> Exercise
+                            DutyTypeProto.VEHICLE_TRAINING -> SteeringWheel
+                            DutyTypeProto.RECERTIFICATION -> EcgHeart
+                            DutyTypeProto.HAEND -> Icons.Rounded.MedicalServices
+                            DutyTypeProto.ADMINISTRATIVE -> Icons.Rounded.Coffee
                             else -> Icons.Rounded.QuestionMark
                         },
                         contentDescription = null,

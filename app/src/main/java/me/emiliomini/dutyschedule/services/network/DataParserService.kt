@@ -195,16 +195,16 @@ object DataParserService {
             val typeString = allocations?.optString(0)
             val type = DutyTypeProtoMapping.get(typeString)
 
-            val staffList = mutableListOf<String>()
+            var staffList = mutableListOf<String>()
             if (allocations != null) {
                 for (j in 1 until allocations.length()) {
                     staffList.add(allocations.getString(j) ?: "")
                 }
             }
-            staffList.filter { it.isNotBlank() }
+            staffList = staffList.filter { it.isNotBlank() }.toMutableList()
             val vehicle =
-                staffList.find { MappingConstants.VEHICLE_DESIGNATIONS.contains(it) }
-            staffList.filter { it != vehicle }
+                staffList.find { staff -> MappingConstants.VEHICLE_DESIGNATIONS.any { staff.contains(it) } }
+            staffList = staffList.filter { it != vehicle }.toMutableList()
 
             MinimalDutyDefinitionProto.newBuilder()
                 .s(it.o.value(MinimalDutyDefinitionProtoMapping.GUID)) { setGuid(it) }
@@ -212,6 +212,7 @@ object DataParserService {
                 .s(it.o.value(MinimalDutyDefinitionProtoMapping.END)) { setEnd(it) }
                 .s(it.o.value(MinimalDutyDefinitionProtoMapping.DURATION)) { setDuration(it) }
                 .s(type) { setType(it) }
+                .s(typeString) { setTypeString(it) }
                 .s(vehicle) { setVehicle(it) }
                 .addAllStaff(staffList)
                 .build()

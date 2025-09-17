@@ -20,6 +20,11 @@ fun DutyTypeProto.resourceString(): Int {
         DutyTypeProto.EMS -> R.string.data_dutytype_ems
         DutyTypeProto.TRAINING -> R.string.data_dutytype_training
         DutyTypeProto.MEET -> R.string.data_dutytype_meet
+        DutyTypeProto.DRILL -> R.string.data_dutytype_drill
+        DutyTypeProto.VEHICLE_TRAINING -> R.string.data_dutytype_vehicle_training
+        DutyTypeProto.RECERTIFICATION -> R.string.data_dutytype_recertification
+        DutyTypeProto.HAEND -> R.string.data_dutytype_haend
+        DutyTypeProto.ADMINISTRATIVE -> R.string.data_dutytype_administrative
         else -> R.string.data_dutytype_unknown
     }
 }

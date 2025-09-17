@@ -133,4 +133,9 @@
     <string name="nav_archive">Archive</string>
     <string name="main_archive_title">Archive</string>
     <string name="main_archive_section_duties_title">%1$s Duties (%2$s hours)</string>
+    <string name="data_dutytype_drill">Drill</string>
+    <string name="data_dutytype_vehicle_training">Vehicle Training</string>
+    <string name="data_dutytype_recertification">Recertification</string>
+    <string name="data_dutytype_haend">HÄND Duty</string>
+    <string name="data_dutytype_administrative">Administrative</string>
 </resources>
