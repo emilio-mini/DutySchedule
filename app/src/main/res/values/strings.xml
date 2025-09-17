@@ -47,7 +47,7 @@
     <string name="main_schedule_infobox_info">Info</string>
     <string name="notification_update_title">Update available!</string>
     <string name="notification_update_content">%1$s -> %2$s</string>
-    <string name="main_settings_section_alarms">Alarms</string>
+    <string name="main_settings_section_alarms">Settings</string>
     <string name="main_settings_alarms_pre_event_begin_title">Duty Alarm</string>
     <string name="main_settings_alarms_pre_event_begin_content">%1$s before a duty starts</string>
     <string name="main_settings_alarms_pre_event_begin_dialog_title">Select a time</string>
@@ -130,4 +130,7 @@
     <string name="data_requirement_kfz">Vehicle</string>
     <string name="data_role_developer">App Developer</string>
     <string name="data_role_info_developer">Hi. I\'m one of the developers of this app. Thanks for your support!</string>
+    <string name="nav_archive">Archive</string>
+    <string name="main_archive_title">Archive</string>
+    <string name="main_archive_section_duties_title">%1$s Duties (%2$s hours)</string>
 </resources>

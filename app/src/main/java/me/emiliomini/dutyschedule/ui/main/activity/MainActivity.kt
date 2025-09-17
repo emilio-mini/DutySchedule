@@ -10,6 +10,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Alarm
+import androidx.compose.material.icons.rounded.Archive
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Settings
@@ -35,6 +36,7 @@ import me.emiliomini.dutyschedule.services.notifications.NotificationService
 import me.emiliomini.dutyschedule.services.prep.DutyScheduleService
 import me.emiliomini.dutyschedule.services.storage.DataStores
 import me.emiliomini.dutyschedule.ui.main.screens.AlarmsScreen
+import me.emiliomini.dutyschedule.ui.main.screens.ArchiveScreen
 import me.emiliomini.dutyschedule.ui.main.screens.DashboardScreen
 import me.emiliomini.dutyschedule.ui.main.screens.HomeScreen
 import me.emiliomini.dutyschedule.ui.main.screens.LoadingScreen
@@ -90,13 +92,13 @@ class MainActivity : ComponentActivity() {
                                 icon = Icons.Rounded.Schedule
                             ),
                             NavItem(
+                                label = stringResource(R.string.nav_archive),
+                                icon = Icons.Rounded.Archive
+                            ),
+                            NavItem(
                                 label = stringResource(R.string.nav_alarms),
                                 icon = Icons.Rounded.Alarm
                             ),
-                            NavItem(
-                                label = stringResource(R.string.nav_settings),
-                                icon = Icons.Rounded.Settings
-                            )
                         )
 
                         when (selectedItemIndex) {
@@ -144,7 +146,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                 })
 
-                            2 -> AlarmsScreen(
+                            2 -> ArchiveScreen(
                                 bottomBar = {
                                     NavigationBar {
                                         navItems.forEachIndexed { index, item ->
@@ -161,31 +163,22 @@ class MainActivity : ComponentActivity() {
                                     }
                                 })
 
-                            3 -> SettingsScreen(bottomBar = {
-                                NavigationBar {
-                                    navItems.forEachIndexed { index, item ->
-                                        NavigationBarItem(
-                                            selected = selectedItemIndex == index,
-                                            onClick = { selectedItemIndex = index },
-                                            icon = {
-                                                Icon(
-                                                    item.icon, contentDescription = item.label
-                                                )
-                                            },
-                                            label = { Text(item.label) })
+                            3 -> AlarmsScreen(
+                                bottomBar = {
+                                    NavigationBar {
+                                        navItems.forEachIndexed { index, item ->
+                                            NavigationBarItem(
+                                                selected = selectedItemIndex == index,
+                                                onClick = { selectedItemIndex = index },
+                                                icon = {
+                                                    Icon(
+                                                        item.icon, contentDescription = item.label
+                                                    )
+                                                },
+                                                label = { Text(item.label) })
+                                        }
                                     }
-                                }
-                            }, onLogout = {
-                                lifecycleScope.launch {
-                                    DutyScheduleService.logout()
-                                    startActivity(
-                                        Intent(
-                                            this@MainActivity, OnboardingActivity::class.java
-                                        )
-                                    )
-                                    finish()
-                                }
-                            })
+                                })
                         }
                     }
                 }

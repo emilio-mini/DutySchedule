@@ -60,6 +60,8 @@ import me.emiliomini.dutyschedule.services.alarm.AlarmService
 import me.emiliomini.dutyschedule.services.storage.DataStores
 import me.emiliomini.dutyschedule.services.storage.ProtoListViewModel
 import me.emiliomini.dutyschedule.services.storage.ProtoListViewModelFactory
+import me.emiliomini.dutyschedule.ui.components.CardColumn
+import me.emiliomini.dutyschedule.ui.main.components.DutyAlarmListItem
 import me.emiliomini.dutyschedule.util.TimeUtil
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -94,60 +96,86 @@ fun AlarmsScreen(
             },
         )
     }, bottomBar = bottomBar, content = { innerPadding ->
-        if (alarms.isEmpty()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Icon(Icons.Rounded.AlarmOff, contentDescription = null)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    stringResource(R.string.main_alarms_none),
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold
-                )
+        Column (modifier = Modifier.fillMaxSize().padding(innerPadding).padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                stringResource(R.string.main_settings_section_alarms),
+                color = MaterialTheme.colorScheme.primary
+            )
+            CardColumn {
+                DutyAlarmListItem()
             }
-        } else {
-            Column(
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    stringResource(R.string.main_alarms_upcoming),
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+            Spacer(modifier = Modifier.height(8.dp))
+            if (alarms.isEmpty()) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    Icon(Icons.Rounded.AlarmOff, contentDescription = null)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        stringResource(R.string.main_alarms_none),
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            } else {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        stringResource(R.string.main_alarms_upcoming),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
                     ) {
-                        itemsIndexed(
-                            items = alarms, key = { _, alarm -> alarm.code }) { index, alarm ->
-                            var active by remember {
-                                mutableStateOf(
-                                    AlarmService.isAlarmSet(
-                                        context.applicationContext, alarm.code
+                        LazyColumn(
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            itemsIndexed(
+                                items = alarms, key = { _, alarm -> alarm.code }) { index, alarm ->
+                                var active by remember {
+                                    mutableStateOf(
+                                        AlarmService.isAlarmSet(
+                                            context.applicationContext, alarm.code
+                                        )
                                     )
-                                )
-                            }
-                            var blocked by remember { mutableStateOf(false) }
-                            val swipeToDismissBoxState = rememberSwipeToDismissBoxState()
-                            val date = Date(alarm.timestamp)
+                                }
+                                var blocked by remember { mutableStateOf(false) }
+                                val swipeToDismissBoxState = rememberSwipeToDismissBoxState()
+                                val date = Date(alarm.timestamp)
 
-                            SwipeToDismissBox(
-                                state = swipeToDismissBoxState,
-                                backgroundContent = {
-                                    Box(
+                                SwipeToDismissBox(
+                                    state = swipeToDismissBoxState,
+                                    backgroundContent = {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .background(
+                                                    color = MaterialTheme.colorScheme.errorContainer,
+                                                    shape = RoundedCornerShape(
+                                                        topStart = if (index == 0) 12.dp else 4.dp,
+                                                        topEnd = if (index == 0) 12.dp else 4.dp,
+                                                        bottomStart = if (index == alarms.lastIndex) 12.dp else 4.dp,
+                                                        bottomEnd = if (index == alarms.lastIndex) 12.dp else 4.dp
+                                                    )
+                                                )
+                                        )
+                                    },
+                                    onDismiss = {
+                                        scope.launch {
+                                            blocked = true
+                                            AlarmService.deleteAlarm(
+                                                context.applicationContext, alarm.code
+                                            )
+                                            blocked = false
+                                        }
+                                    }) {
+                                    ListItem(
                                         modifier = Modifier
-                                            .fillMaxSize()
                                             .background(
-                                                color = MaterialTheme.colorScheme.errorContainer,
+                                                color = MaterialTheme.colorScheme.surfaceContainerHighest,
                                                 shape = RoundedCornerShape(
                                                     topStart = if (index == 0) 12.dp else 4.dp,
                                                     topEnd = if (index == 0) 12.dp else 4.dp,
@@ -155,81 +183,60 @@ fun AlarmsScreen(
                                                     bottomEnd = if (index == alarms.lastIndex) 12.dp else 4.dp
                                                 )
                                             )
-                                    )
-                                },
-                                onDismiss = {
-                                    scope.launch {
-                                        blocked = true
-                                        AlarmService.deleteAlarm(
-                                            context.applicationContext, alarm.code
-                                        )
-                                        blocked = false
-                                    }
-                                }) {
-                                ListItem(
-                                    modifier = Modifier
-                                        .background(
-                                            color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                            shape = RoundedCornerShape(
-                                                topStart = if (index == 0) 12.dp else 4.dp,
-                                                topEnd = if (index == 0) 12.dp else 4.dp,
-                                                bottomStart = if (index == alarms.lastIndex) 12.dp else 4.dp,
-                                                bottomEnd = if (index == alarms.lastIndex) 12.dp else 4.dp
-                                            )
-                                        )
-                                        .clickable(onClick = {
-                                            if (blocked) {
-                                                return@clickable
-                                            }
+                                            .clickable(onClick = {
+                                                if (blocked) {
+                                                    return@clickable
+                                                }
 
-                                            blocked = true
-                                            active = !active
+                                                blocked = true
+                                                active = !active
 
-                                            scope.launch {
-                                                setAlarm(context, alarm, active)
-                                                blocked = false
-                                            }
-                                        }), colors = ListItemDefaults.colors(
-                                        containerColor = Color.Transparent
-                                    ), headlineContent = {
-                                        Text(timeFormat.format(date))
-                                    }, supportingContent = {
-                                        Text(dateFormat.format(date))
-                                    }, leadingContent = {
-                                        Icon(
-                                            imageVector = if (TimeUtil.isAfterOrEqualTime(
-                                                    date.toInstant(),
-                                                    15
-                                                )
-                                            ) {
-                                                Icons.Rounded.NightsStay
-                                            } else {
-                                                Icons.Rounded.WbSunny
-                                            },
-                                            contentDescription = null
-                                        )
-
-                                    }, trailingContent = {
-                                        Switch(checked = active, thumbContent = {
+                                                scope.launch {
+                                                    setAlarm(context, alarm, active)
+                                                    blocked = false
+                                                }
+                                            }), colors = ListItemDefaults.colors(
+                                            containerColor = Color.Transparent
+                                        ), headlineContent = {
+                                            Text(timeFormat.format(date))
+                                        }, supportingContent = {
+                                            Text(dateFormat.format(date))
+                                        }, leadingContent = {
                                             Icon(
-                                                modifier = Modifier.size(SwitchDefaults.IconSize),
-                                                imageVector = if (active) Icons.Rounded.AlarmOn else Icons.Rounded.AlarmOff,
+                                                imageVector = if (TimeUtil.isAfterOrEqualTime(
+                                                        date.toInstant(),
+                                                        15
+                                                    )
+                                                ) {
+                                                    Icons.Rounded.NightsStay
+                                                } else {
+                                                    Icons.Rounded.WbSunny
+                                                },
                                                 contentDescription = null
                                             )
-                                        }, onCheckedChange = {
-                                            if (blocked) {
-                                                return@Switch
-                                            }
 
-                                            blocked = true
-                                            active = !active
+                                        }, trailingContent = {
+                                            Switch(checked = active, thumbContent = {
+                                                Icon(
+                                                    modifier = Modifier.size(SwitchDefaults.IconSize),
+                                                    imageVector = if (active) Icons.Rounded.AlarmOn else Icons.Rounded.AlarmOff,
+                                                    contentDescription = null
+                                                )
+                                            }, onCheckedChange = {
+                                                if (blocked) {
+                                                    return@Switch
+                                                }
 
-                                            scope.launch {
-                                                setAlarm(context, alarm, active)
-                                                blocked = false
-                                            }
+                                                blocked = true
+                                                active = !active
+
+                                                scope.launch {
+                                                    setAlarm(context, alarm, active)
+                                                    blocked = false
+                                                }
+                                            })
                                         })
-                                    })
+                                }
                             }
                         }
                     }

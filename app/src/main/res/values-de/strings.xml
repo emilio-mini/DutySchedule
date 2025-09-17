@@ -47,7 +47,7 @@
     <string name="main_schedule_infobox_info">Info</string>
     <string name="notification_update_title">Update verfügbar!</string>
     <string name="notification_update_content">%1$s -> %2$s</string>
-    <string name="main_settings_section_alarms">Wecker</string>
+    <string name="main_settings_section_alarms">Einstellungen</string>
     <string name="main_settings_alarms_pre_event_begin_title">Dienst Wecker</string>
     <string name="main_settings_alarms_pre_event_begin_content">%1$s vor Dienstbeginn</string>
     <string name="main_settings_alarms_pre_event_begin_dialog_title">Zeit auswählen</string>
@@ -128,4 +128,7 @@
     <string name="data_requirement_kfz">Fahrzeug</string>
     <string name="data_role_developer">App Entwickler</string>
     <string name="data_role_info_developer">Hi. Ich bin einer der Entwickler dieser App. Danke, für deine Unterstützung!</string>
+    <string name="nav_archive">Archiv</string>
+    <string name="main_archive_title">Archiv</string>
+    <string name="main_archive_section_duties_title">%1$s Dienste (%2$s Stunden)</string>
 </resources>

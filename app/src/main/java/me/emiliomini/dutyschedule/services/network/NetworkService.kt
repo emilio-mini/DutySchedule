@@ -203,7 +203,7 @@ object NetworkService {
             ),
             body = form.build()
         )
-        return verifiedSend(request)
+        return verifiedSend(request, identifier = year)
     }
 
     suspend fun getMessages(

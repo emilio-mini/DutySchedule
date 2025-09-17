@@ -58,15 +58,6 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                stringResource(R.string.main_settings_section_alarms),
-                color = MaterialTheme.colorScheme.primary
-            )
-            CardColumn {
-                DutyAlarmListItem()
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
                 stringResource(R.string.main_settings_section_account),
                 color = MaterialTheme.colorScheme.primary
             )
