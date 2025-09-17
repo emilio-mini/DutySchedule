@@ -26,11 +26,11 @@ enum class Requirement(val value: String, val priority: Int) {
     HAEND_DR("HAEND_DR", 60),
     TF("6509a03415cb338da9ffa9b2b849cd617bd756ca_2_1544535149_1171", 60),
     ITF_NFS("946e81e89c32695625a890358c9ccb79fec693b6_2_1668611344_1827", 60),
-    RTW_NFS("30b51644b352bb3df6b7c2ce86db5c0b2762d710_2_1551891794_834", 60),
+    RTW_NFS("30b51644b352bb3df6b7c2ce86db5c0b2762d710_2_1551891794_834", 40),
 
     // Teammember
     RS("e022f1d19a68909adac66c55ce7adafb520a75ae_2_1544535615_1745", 40),
-    RTW_RS("5e5dd6c0ea76308df39e5986aa814b6d3856f24c_2_1707217926_8039", 40);
+    RTW_RS("5e5dd6c0ea76308df39e5986aa814b6d3856f24c_2_1707217926_8039", 60);
 
     fun toProto(): RequirementProto {
         return RequirementProto.newBuilder()
