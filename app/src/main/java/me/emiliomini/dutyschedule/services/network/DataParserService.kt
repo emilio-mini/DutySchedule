@@ -221,6 +221,14 @@ object DataParserService {
     fun parseGetStaff(root: JSONObject): List<EmployeeProto> {
         val data = root.value(PrepResponseMapping.DATA_AS_ARRAY) ?: JSONArray()
         return data.map {
+            val skills = mutableSetOf<String>()
+            it.o.value(EmployeeProtoMapping.STAFF_TO_SKILLS)?.forEach {
+                val skill = it.o.value(SkillProtoMapping.GUID)
+                if (skill != null) {
+                    skills.add(skill)
+                }
+            }
+
             EmployeeProto.newBuilder()
                 .s(it.o.value(EmployeeProtoMapping.GUID)) { setGuid(it) }
                 .s(it.o.value(EmployeeProtoMapping.NAME)) { setName(it) }
@@ -231,9 +239,9 @@ object DataParserService {
                 .s(it.o.value(EmployeeProtoMapping.RESOURCE_TYPE_GUID)) { setResourceTypeGuid(it) }
                 .s(it.o.value(EmployeeProtoMapping.BIRTHDATE)) { setBirthdate(it) }
                 .s(
-                    it.o.value(EmployeeProtoMapping.STAFF_TO_SKILLS)?.map {
+                    skills.toList().map {
                         SkillProto.newBuilder()
-                            .s(it.o.value(SkillProtoMapping.GUID)) { setGuid(it) }
+                            .s(it) { setGuid(it) }
                             .build()
                     }
                 ) { addAllSkills(it) }

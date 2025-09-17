@@ -78,4 +78,13 @@ object DataStores {
         UPCOMING_DUTIES.updateData { UpcomingDutyItemsProto.getDefaultInstance() }
         EMPLOYEES.updateData { EmployeeItemsProto.getDefaultInstance() }
     }
+
+    suspend fun clearPrepData() {
+        ALARM_ITEMS.updateData { AlarmItemsProto.getDefaultInstance() }
+        ORG_ITEMS.updateData { OrgItemsProto.getDefaultInstance() }
+        SELF.updateData { EmployeeProto.getDefaultInstance() }
+        STATISTICS.updateData { StatisticsProto.getDefaultInstance() }
+        UPCOMING_DUTIES.updateData { UpcomingDutyItemsProto.getDefaultInstance() }
+        EMPLOYEES.updateData { EmployeeItemsProto.getDefaultInstance() }
+    }
 }

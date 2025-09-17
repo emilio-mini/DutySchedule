@@ -40,7 +40,6 @@ import me.emiliomini.dutyschedule.ui.main.screens.ArchiveScreen
 import me.emiliomini.dutyschedule.ui.main.screens.DashboardScreen
 import me.emiliomini.dutyschedule.ui.main.screens.HomeScreen
 import me.emiliomini.dutyschedule.ui.main.screens.LoadingScreen
-import me.emiliomini.dutyschedule.ui.main.screens.SettingsScreen
 import me.emiliomini.dutyschedule.ui.onboarding.activity.OnboardingActivity
 import me.emiliomini.dutyschedule.ui.theme.DutyScheduleTheme
 import java.util.concurrent.TimeUnit
@@ -127,8 +126,10 @@ class MainActivity : ComponentActivity() {
                                         )
                                         finish()
                                     }
+                                }, onTriggerRestart = {
+                                    startActivity(Intent(this@MainActivity, MainActivity::class.java))
+                                    finish()
                                 })
-
                             1 -> HomeScreen(
                                 bottomBar = {
                                     NavigationBar {

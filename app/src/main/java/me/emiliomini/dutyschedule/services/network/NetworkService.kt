@@ -54,6 +54,10 @@ object NetworkService {
 
     private val networkCache = mutableMapOf<String, NetworkCacheData<Any>>()
 
+    fun clearCache() {
+        networkCache.clear()
+    }
+
     suspend fun downloadFileWithProgress(
         context: Context,
         urlString: String,
@@ -146,6 +150,9 @@ object NetworkService {
             .add("withSubOrgUnits", "1")
             .add("sortPlan", "false")
 
+        if (incode.token.isBlank() || incode.value.isBlank()) {
+            return Result.failure(IOException("Invalid incode"))
+        }
         val request = Request(
             url = NetworkTarget.LOAD_PLAN.httpUrl(),
             headers = headersOf(
@@ -170,6 +177,9 @@ object NetworkService {
             .add("withSubOrgs", "on")
             .add("form.event.onsubmit", "searchForm")
 
+        if (incode.token.isBlank() || incode.value.isBlank()) {
+            return Result.failure(IOException("Invalid incode"))
+        }
         val request = Request(
             url = NetworkTarget.LOAD_UPCOMING.httpUrl(),
             headers = headersOf(
@@ -194,6 +204,9 @@ object NetworkService {
             .add("withSubOrgs", "on")
             .add("form.event.onsubmit", "searchForm")
 
+        if (incode.token.isBlank() || incode.value.isBlank()) {
+            return Result.failure(IOException("Invalid incode"))
+        }
         val request = Request(
             url = NetworkTarget.LOAD_PAST.httpUrl(),
             headers = headersOf(
@@ -221,6 +234,9 @@ object NetworkService {
             .add("withSubOrgUnits", "1")
             .add("timeShiftDate", "")
 
+        if (incode.token.isBlank() || incode.value.isBlank()) {
+            return Result.failure(IOException("Invalid incode"))
+        }
         val request = Request(
             url = NetworkTarget.GET_MESSAGES.httpUrl(),
             headers = headersOf(
@@ -247,6 +263,9 @@ object NetworkService {
             .add("dateTo", formattedTo)
             .add("withSubOrgUnits", "1")
 
+        if (incode.token.isBlank() || incode.value.isBlank()) {
+            return Result.failure(IOException("Invalid incode"))
+        }
         val request = Request(
             url = NetworkTarget.GET_RESOURCES.httpUrl(),
             headers = headersOf(
@@ -277,6 +296,9 @@ object NetworkService {
             form.addEncoded("staffDataGuid[]", guid)
         }
 
+        if (incode.token.isBlank() || incode.value.isBlank()) {
+            return Result.failure(IOException("Invalid incode"))
+        }
         val request = Request(
             url = NetworkTarget.GET_STAFF.httpUrl(),
             headers = headersOf(

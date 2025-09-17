@@ -13,8 +13,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.DeleteSweep
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -26,15 +30,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
+import me.emiliomini.dutyschedule.BuildConfig
 import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.datastore.prep.duty.MinimalDutyDefinitionProto
+import me.emiliomini.dutyschedule.debug.DebugFlags
+import me.emiliomini.dutyschedule.services.network.NetworkService
 import me.emiliomini.dutyschedule.services.prep.DutyScheduleService
+import me.emiliomini.dutyschedule.services.prep.live.PrepService
+import me.emiliomini.dutyschedule.services.storage.DataStores
 import me.emiliomini.dutyschedule.ui.components.ArcProgressIndicator
 import me.emiliomini.dutyschedule.ui.components.EmployeeAvatar
 import me.emiliomini.dutyschedule.ui.components.LazyCardColumn
@@ -48,7 +59,8 @@ import java.util.Locale
 fun DashboardScreen(
     modifier: Modifier = Modifier,
     bottomBar: @Composable (() -> Unit) = {},
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onTriggerRestart: () -> Unit
 ) {
     val currentYear = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy"))
     var upcomingDuties by remember { mutableStateOf<List<MinimalDutyDefinitionProto>>(emptyList()) }
@@ -59,6 +71,8 @@ fun DashboardScreen(
 
     var hoursLoaded by remember { mutableStateOf(false) }
     var upcomingLoaded by remember { mutableStateOf(false) }
+
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(DutyScheduleService.isLoggedIn) {
         upcomingDuties = DutyScheduleService.loadUpcoming()
@@ -89,6 +103,18 @@ fun DashboardScreen(
                 },
                 actions = {
                     if (DutyScheduleService.self != null) {
+                        if (BuildConfig.DEBUG) {
+                            IconButton(onClick = {
+                                scope.launch {
+                                    NetworkService.clearCache()
+                                    DataStores.clearPrepData()
+                                    PrepService.restoreLogin()
+                                    onTriggerRestart()
+                                }
+                            }) {
+                                Icon(Icons.Rounded.DeleteSweep, contentDescription = null)
+                            }
+                        }
                         EmployeeAvatar(employee = DutyScheduleService.self!!, onLogout = onLogout)
                         Spacer(Modifier.width(16.dp))
                     }
