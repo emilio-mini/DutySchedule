@@ -138,4 +138,5 @@
     <string name="data_dutytype_recertification">Recertification</string>
     <string name="data_dutytype_haend">HÄND Duty</string>
     <string name="data_dutytype_administrative">Administrative</string>
+    <string name="components_piechart_empty">No data available</string>
 </resources>

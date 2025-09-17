@@ -3,7 +3,9 @@ package me.emiliomini.dutyschedule.ui.main.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -30,10 +32,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import me.emiliomini.dutyschedule.R
+import me.emiliomini.dutyschedule.datastore.prep.duty.DutyTypeProto
 import me.emiliomini.dutyschedule.datastore.prep.duty.MinimalDutyDefinitionProto
 import me.emiliomini.dutyschedule.services.prep.DutyScheduleService
 import me.emiliomini.dutyschedule.ui.components.LazyCardColumn
 import me.emiliomini.dutyschedule.ui.components.MinimalDutyCard
+import me.emiliomini.dutyschedule.ui.components.PieChart
+import me.emiliomini.dutyschedule.util.countByProperty
+import me.emiliomini.dutyschedule.util.resourceString
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -91,14 +97,28 @@ fun ArchiveScreen(
             }
         )
     }, bottomBar = bottomBar, content = { innerPadding ->
-        Column(modifier = modifier.padding(innerPadding).padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(
+            modifier = modifier
+                .padding(innerPadding)
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            PieChart<DutyTypeProto>(
+                data = (duties ?: emptyList()).countByProperty { it.type },
+                labelTextResource = { type, _, _ -> type.resourceString() }
+            )
+            Spacer(modifier = Modifier.height(16.dp))
             Row(
                 Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    stringResource(R.string.main_archive_section_duties_title, duties?.size ?: 0, (duties?.sumOf { it.duration } ?: 0) / 60),
+                    stringResource(
+                        R.string.main_archive_section_duties_title,
+                        duties?.size ?: 0,
+                        (duties?.sumOf { it.duration } ?: 0) / 60),
                     color = MaterialTheme.colorScheme.primary
                 )
                 if (!loaded) LoadingIndicator(Modifier.size(24.dp))
