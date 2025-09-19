@@ -8,17 +8,17 @@ import kotlinx.serialization.protobuf.ProtoNumber
 @Serializable
 data class Slot(
     @ProtoNumber(1)
-    val guid: String,
+    val guid: String = "",
     @ProtoNumber(2)
-    val employeeGuid: String?,
+    val employeeGuid: String? = null,
     @ProtoNumber(3)
-    val requirement: Requirement,
+    val requirement: Requirement = Requirement(),
     @ProtoNumber(4)
-    val begin: Timestamp,
+    val begin: Timestamp = Timestamp(),
     @ProtoNumber(5)
-    val end: Timestamp,
+    val end: Timestamp = Timestamp(),
     @ProtoNumber(6)
-    val info: String?,
+    val info: String? = null,
     @ProtoNumber(7)
-    val inlineEmployee: Employee?
-)
+    val inlineEmployee: Employee? = Employee()
+) : MultiplatformDataModel

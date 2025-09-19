@@ -8,21 +8,21 @@ import kotlinx.serialization.protobuf.ProtoNumber
 @Serializable
 data class Employee(
     @ProtoNumber(1)
-    val guid: String,
+    val guid: String = "",
     @ProtoNumber(2)
-    val name: String,
+    val name: String = "",
     @ProtoNumber(3)
-    val identifier: String?,
+    val identifier: String? = null,
     @ProtoNumber(4)
-    val phone: String?,
+    val phone: String? = null,
     @ProtoNumber(5)
-    val email: String?,
+    val email: String? = null,
     @ProtoNumber(6)
-    val defaultOrg: String?,
+    val defaultOrg: String? = null,
     @ProtoNumber(7)
-    val birthdate: Timestamp?,
+    val birthdate: Timestamp? = null,
     @ProtoNumber(8)
-    val resourceTypeGuid: String,
+    val resourceTypeGuid: String = "",
     @ProtoNumber(9)
     val skills: List<Skill> = emptyList()
-)
+) : MultiplatformDataModel

@@ -8,15 +8,15 @@ import kotlinx.serialization.protobuf.ProtoNumber
 @Serializable
 data class DutyDefinition(
     @ProtoNumber(1)
-    val guid: String,
+    val guid: String = "",
     @ProtoNumber(2)
-    val begin: Timestamp,
+    val begin: Timestamp = Timestamp(),
     @ProtoNumber(3)
-    val end: Timestamp,
+    val end: Timestamp = Timestamp(),
     @ProtoNumber(4)
     val slots: List<Slot> = emptyList(),
     @ProtoNumber(5)
-    val info: String?,
+    val info: String? = null,
     @ProtoNumber(6)
-    val groupGuid: String?
-)
+    val groupGuid: String? = null
+) : MultiplatformDataModel

@@ -8,7 +8,7 @@ import kotlinx.serialization.protobuf.ProtoNumber
 @Serializable
 data class OrgTimeline(
     @ProtoNumber(1)
-    val guid: String,
+    val guid: String = "",
     @ProtoNumber(2)
     val timeline: Map<String, OrgDay> = emptyMap()
-)
+) : MultiplatformDataModel

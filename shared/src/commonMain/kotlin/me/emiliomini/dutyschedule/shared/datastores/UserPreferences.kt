@@ -8,11 +8,11 @@ import kotlinx.serialization.protobuf.ProtoNumber
 @Serializable
 data class UserPreferences(
     @ProtoNumber(1)
-    val username: String,
+    val username: String = "",
     @ProtoNumber(2)
-    val password: String,
+    val password: String = "",
     @ProtoNumber(3)
-    val alarmOffsetMin: Int,
+    val alarmOffsetMin: Int = 0,
     @ProtoNumber(4)
     val allowedOrgs: List<String> = emptyList()
-)
+) : MultiplatformDataModel

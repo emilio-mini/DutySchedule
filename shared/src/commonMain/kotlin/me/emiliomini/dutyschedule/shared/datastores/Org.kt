@@ -8,11 +8,11 @@ import kotlinx.serialization.protobuf.ProtoNumber
 @Serializable
 data class Org(
     @ProtoNumber(1)
-    val guid: String,
+    val guid: String = "",
     @ProtoNumber(2)
-    val title: String,
+    val title: String = "",
     @ProtoNumber(3)
-    val abbreviation: String,
+    val abbreviation: String = "",
     @ProtoNumber(4)
-    val identifier: String
-)
+    val identifier: String = ""
+) : MultiplatformDataModel

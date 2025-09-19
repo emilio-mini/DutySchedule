@@ -8,7 +8,7 @@ import kotlinx.serialization.protobuf.ProtoNumber
 @Serializable
 data class DutyGroup(
     @ProtoNumber(1)
-    val guid: String,
+    val guid: String = "",
     @ProtoNumber(2)
-    val title: String?
-)
+    val title: String? = null
+) : MultiplatformDataModel

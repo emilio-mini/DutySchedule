@@ -8,15 +8,15 @@ import kotlinx.serialization.protobuf.ProtoNumber
 @Serializable
 data class OrgDay(
     @ProtoNumber(1)
-    val orgGuid: String,
+    val orgGuid: String = "",
     @ProtoNumber(2)
-    val date: Timestamp,
+    val date: Timestamp = Timestamp(),
     @ProtoNumber(3)
-    val lastUpdated: Timestamp,
+    val lastUpdated: Timestamp = Timestamp(),
     @ProtoNumber(4)
     val dayShifts: List<DutyDefinition> = emptyList(),
     @ProtoNumber(5)
     val nightShift: List<DutyDefinition> = emptyList(),
     @ProtoNumber(6)
     val groups: List<DutyGroup> = emptyList()
-)
+) : MultiplatformDataModel

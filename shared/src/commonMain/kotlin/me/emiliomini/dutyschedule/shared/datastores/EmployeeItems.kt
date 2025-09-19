@@ -9,4 +9,4 @@ import kotlinx.serialization.protobuf.ProtoNumber
 data class EmployeeItems(
     @ProtoNumber(1)
     val employees: Map<String, Employee> = emptyMap()
-)
+) : MultiplatformDataModel

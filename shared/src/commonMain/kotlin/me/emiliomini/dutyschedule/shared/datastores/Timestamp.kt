@@ -8,7 +8,7 @@ import kotlinx.serialization.protobuf.ProtoNumber
 @Serializable
 data class Timestamp(
     @ProtoNumber(1)
-    val seconds: Long,
+    val seconds: Long = 0,
     @ProtoNumber(2)
-    val nanos: Int
-)
+    val nanos: Int = 0
+) : MultiplatformDataModel

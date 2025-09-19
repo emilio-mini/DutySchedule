@@ -9,4 +9,4 @@ import kotlinx.serialization.protobuf.ProtoNumber
 data class OrgTimelineItems(
     @ProtoNumber(1)
     val orgTimelines: Map<String, OrgTimeline> = emptyMap()
-)
+) : MultiplatformDataModel

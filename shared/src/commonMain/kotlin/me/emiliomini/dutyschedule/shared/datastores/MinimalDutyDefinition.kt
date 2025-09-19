@@ -8,19 +8,19 @@ import kotlinx.serialization.protobuf.ProtoNumber
 @Serializable
 data class MinimalDutyDefinition(
     @ProtoNumber(1)
-    val guid: String,
+    val guid: String = "",
     @ProtoNumber(2)
-    val begin: Timestamp,
+    val begin: Timestamp = Timestamp(),
     @ProtoNumber(3)
-    val end: Timestamp,
+    val end: Timestamp = Timestamp(),
     @ProtoNumber(4)
-    val type: DutyType,
+    val type: DutyType = DutyType.UNKNOWN,
     @ProtoNumber(5)
-    val vehicle: String?,
+    val vehicle: String? = null,
     @ProtoNumber(6)
     val staff: List<String> = emptyList(),
     @ProtoNumber(7)
-    val duration: Int,
+    val duration: Int = 0,
     @ProtoNumber(8)
-    val typeString: String
-)
+    val typeString: String = ""
+) : MultiplatformDataModel

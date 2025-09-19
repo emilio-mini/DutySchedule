@@ -8,5 +8,5 @@ import kotlinx.serialization.protobuf.ProtoNumber
 @Serializable
 data class Statistics(
     @ProtoNumber(1)
-    val minutesServed: Int
-)
+    val minutesServed: Int = 0
+) : MultiplatformDataModel

@@ -9,4 +9,4 @@ import kotlinx.serialization.protobuf.ProtoNumber
 data class UpcomingDutyItems(
     @ProtoNumber(1)
     val minimalDutyDefinitions: List<MinimalDutyDefinition> = emptyList()
-)
+) : MultiplatformDataModel

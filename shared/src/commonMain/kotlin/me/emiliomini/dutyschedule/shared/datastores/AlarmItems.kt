@@ -9,4 +9,4 @@ import kotlinx.serialization.protobuf.ProtoNumber
 data class AlarmItems(
     @ProtoNumber(1)
     val alarms: List<Alarm> = emptyList()
-)
+) : MultiplatformDataModel

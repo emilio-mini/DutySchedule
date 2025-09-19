@@ -8,9 +8,9 @@ import kotlinx.serialization.protobuf.ProtoNumber
 @Serializable
 data class Incode(
     @ProtoNumber(1)
-    val token: String,
+    val token: String = "",
     @ProtoNumber(2)
-    val value: String,
+    val value: String = "",
     @ProtoNumber(3)
-    val lastUsed: Timestamp
-)
+    val lastUsed: Timestamp = Timestamp()
+) : MultiplatformDataModel

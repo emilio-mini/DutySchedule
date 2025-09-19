@@ -8,5 +8,5 @@ import kotlinx.serialization.protobuf.ProtoNumber
 @Serializable
 data class Skill(
     @ProtoNumber(1)
-    val guid: String
-)
+    val guid: String = ""
+) : MultiplatformDataModel

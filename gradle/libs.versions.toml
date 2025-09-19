@@ -2,6 +2,7 @@
 accompanistPermissions = "0.37.3"
 agp = "8.12.3"
 composeMarkdown = "0.5.7"
+datastoreCore = "1.1.7"
 jsoup = "1.21.2"
 kotlin = "2.2.20"
 kotlinxSerializationProtobuf = "1.9.0"
@@ -29,6 +30,7 @@ core = "1.5.0"
 [libraries]
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-datastore-core = { module = "androidx.datastore:datastore-core", version.ref = "datastoreCore" }
 compose-markdown = { module = "com.github.jeziellago:compose-markdown", version.ref = "composeMarkdown" }
 jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
