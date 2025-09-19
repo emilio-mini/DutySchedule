@@ -13,7 +13,7 @@ kotlin {
     androidLibrary {
         namespace = "me.emiliomini.dutyschedule.shared"
         compileSdk = 36
-        minSdk = 24
+        minSdk = 26
 
         withHostTestBuilder {
         }
@@ -59,10 +59,23 @@ kotlin {
     // See: https://kotlinlang.org/docs/multiplatform-hierarchy.html
     sourceSets {
         commonMain {
+            // Common dependencies
             dependencies {
-                // Common dependencies
                 implementation(libs.kotlin.stdlib)
+
+                // Serialization
                 implementation(libs.kotlinx.serialization.protobuf)
+
+                // Http
+                implementation(libs.ktor.client.core)
+                implementation(libs.ktor.client.logging)
+                implementation(libs.ktor.client.cookies)
+                implementation(libs.ktor.client.encoding)
+                implementation(libs.ktor.client.cio)
+                implementation(libs.ktor.client.darwin)
+
+                // Time
+                implementation(libs.kotlinx.datetime)
             }
         }
 
@@ -73,8 +86,8 @@ kotlin {
         }
 
         androidMain {
+            // Android dependencies
             dependencies {
-                // Android dependencies
                 implementation(libs.androidx.datastore.core)
                 implementation(libs.androidx.datastore)
             }
@@ -89,8 +102,8 @@ kotlin {
         }
 
         iosMain {
+            // iOS dependencies
             dependencies {
-                // iOS dependencies
             }
         }
     }

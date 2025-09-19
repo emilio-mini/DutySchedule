@@ -5,7 +5,9 @@ composeMarkdown = "0.5.7"
 datastoreCore = "1.1.7"
 jsoup = "1.21.2"
 kotlin = "2.2.20"
+kotlinxDatetime = "0.7.1"
 kotlinxSerializationProtobuf = "1.9.0"
+ktorClient = "3.3.0"
 protobuf = "0.9.5"
 protobufJL = "4.32.1"
 coreKtx = "1.17.0"
@@ -52,7 +54,14 @@ androidx-compose-material-icons-extended = { group = "androidx.compose.material"
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 coil-svg = { group = "io.coil-kt", name = "coil-svg", version.ref = "coil" }
 androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "androidxLifecycleViewmodelCompose" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
 kotlinx-serialization-protobuf = { module = "org.jetbrains.kotlinx:kotlinx-serialization-protobuf", version.ref = "kotlinxSerializationProtobuf" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktorClient" }
+ktor-client-cookies = { module = "io.ktor:ktor-client-cookies", version.ref = "ktorClient" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktorClient" }
+ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktorClient" }
+ktor-client-encoding = { module = "io.ktor:ktor-client-encoding", version.ref = "ktorClient" }
+ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktorClient" }
 okhttp-bom = { module = "com.squareup.okhttp3:okhttp-bom", version.ref = "okhttpBom" }
 okhttp = { module = "com.squareup.okhttp3:okhttp" }
 okhttp-java-net-cookiejar = { module = "com.squareup.okhttp3:okhttp-java-net-cookiejar" }
