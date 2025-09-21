@@ -94,4 +94,16 @@ object StorageService {
         )
     }
 
+    suspend fun clear() {
+        USER_PREFERENCES.clear()
+        STATISTICS.clear()
+        ALARM_ITEMS.clear()
+        ORG_ITEMS.clear()
+        INCODE.clear()
+        SELF.clear()
+        UPCOMING_DUTIES.clear()
+        EMPLOYEES.clear()
+        COOKIES.clear()
+    }
+
 }

@@ -10,3 +10,7 @@ data class ClientCookies(
     @ProtoNumber(1)
     val clientCookies: Map<String, StoredCookieItems> = emptyMap()
 ) : MultiplatformDataModel
+
+fun ClientCookies.isDefault(): Boolean {
+    return this == ClientCookies()
+}

@@ -22,3 +22,7 @@ data class Slot(
     @ProtoNumber(7)
     val inlineEmployee: Employee? = Employee()
 ) : MultiplatformDataModel
+
+fun Slot.isDefault(): Boolean {
+    return this == Slot()
+}

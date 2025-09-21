@@ -10,3 +10,7 @@ data class UpcomingDutyItems(
     @ProtoNumber(1)
     val minimalDutyDefinitions: List<MinimalDutyDefinition> = emptyList()
 ) : MultiplatformDataModel
+
+fun UpcomingDutyItems.isDefault(): Boolean {
+    return this == UpcomingDutyItems()
+}

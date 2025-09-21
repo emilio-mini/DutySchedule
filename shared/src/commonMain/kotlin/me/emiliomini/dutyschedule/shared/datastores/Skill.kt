@@ -10,3 +10,7 @@ data class Skill(
     @ProtoNumber(1)
     val guid: String = ""
 ) : MultiplatformDataModel
+
+fun Skill.isDefault(): Boolean {
+    return this == Skill()
+}

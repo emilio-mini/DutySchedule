@@ -15,12 +15,12 @@ class PersistentCookieStorage() : CookiesStorage {
 
     private suspend fun loadIfNeeded() = mutex.withLock {
         if (cache != null) return@withLock
-        val cached = StorageService.COOKIES.get()?.clientCookies ?: emptyMap()
+        val cached = StorageService.COOKIES.getOrDefault()?.clientCookies ?: emptyMap()
         if (cached.isEmpty()) {
             cache = mutableMapOf()
         } else {
             cache = cached.mapValues { (_, cookies) ->
-                cookies.cookies.map { StoredCookie.toKtor(it) }.toMutableList()
+                cookies.cookies.map { StoredCookie.toCookie(it) }.toMutableList()
             }.toMutableMap()
         }
     }
@@ -29,7 +29,7 @@ class PersistentCookieStorage() : CookiesStorage {
         StorageService.COOKIES.update {
             ClientCookies(
                 cache?.mapValues { (_, cookies) ->
-                    StoredCookieItems(cookies.map { StoredCookie.fromKtor(it) })
+                    StoredCookieItems(cookies.map { StoredCookie.fromCookie(it) })
                 } ?: emptyMap()
             )
         }

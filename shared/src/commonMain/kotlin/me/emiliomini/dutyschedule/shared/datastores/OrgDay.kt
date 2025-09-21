@@ -20,3 +20,7 @@ data class OrgDay(
     @ProtoNumber(6)
     val groups: List<DutyGroup> = emptyList()
 ) : MultiplatformDataModel
+
+fun OrgDay.isDefault(): Boolean {
+    return this == OrgDay()
+}

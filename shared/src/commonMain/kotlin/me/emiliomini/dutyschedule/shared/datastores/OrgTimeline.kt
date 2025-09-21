@@ -12,3 +12,7 @@ data class OrgTimeline(
     @ProtoNumber(2)
     val timeline: Map<String, OrgDay> = emptyMap()
 ) : MultiplatformDataModel
+
+fun OrgTimeline.isDefault(): Boolean {
+    return this == OrgTimeline()
+}

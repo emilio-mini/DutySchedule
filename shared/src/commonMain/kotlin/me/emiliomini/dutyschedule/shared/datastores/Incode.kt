@@ -14,3 +14,7 @@ data class Incode(
     @ProtoNumber(3)
     val lastUsed: Timestamp = Timestamp()
 ) : MultiplatformDataModel
+
+fun Incode.isDefault(): Boolean {
+    return this == Incode()
+}

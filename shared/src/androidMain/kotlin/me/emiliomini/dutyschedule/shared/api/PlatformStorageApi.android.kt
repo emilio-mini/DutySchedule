@@ -41,7 +41,7 @@ class AndroidStorageApi() : PlatformStorageApi {
             @Suppress("UNCHECKED_CAST")
             return dataStores[store.id]?.data?.first() as T?
         } catch (e: NoSuchElementException) {
-            logger.log("No data stored for datastore with id ${store.id}", throwable = e)
+            logger.debug("No data stored for datastore with id ${store.id}", throwable = e)
             return null
         } catch (e: ClassCastException) {
             logger.warn("Type mismatch for given datastore id ${store.id}", throwable = e)

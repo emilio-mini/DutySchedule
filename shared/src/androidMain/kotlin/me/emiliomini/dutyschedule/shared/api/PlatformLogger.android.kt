@@ -3,7 +3,7 @@ package me.emiliomini.dutyschedule.shared.api
 import android.util.Log
 
 class AndroidLogging(override val tag: String) : PlatformLogger(tag) {
-    override fun log(message: String, throwable: Throwable?) {
+    override fun debug(message: String, throwable: Throwable?) {
         Log.d(tag, message, throwable)
     }
 

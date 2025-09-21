@@ -1,8 +1,12 @@
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
+
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.android.lint)
     kotlin("plugin.serialization") version "2.2.0"
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.jetbrains.compose)
 }
 
 kotlin {
@@ -32,23 +36,13 @@ kotlin {
     // A step-by-step guide on how to include this library in an XCode
     // project can be found here:
     // https://developer.android.com/kotlin/multiplatform/migrate
-    val xcfName = "sharedKit"
+    val xcf = XCFramework()
+    val iosTargets = listOf(iosX64(), iosArm64(), iosSimulatorArm64())
 
-    iosX64 {
-        binaries.framework {
-            baseName = xcfName
-        }
-    }
-
-    iosArm64 {
-        binaries.framework {
-            baseName = xcfName
-        }
-    }
-
-    iosSimulatorArm64 {
-        binaries.framework {
-            baseName = xcfName
+    iosTargets.forEach {
+        it.binaries.framework {
+            baseName = "sharedKit"
+            xcf.add(this)
         }
     }
 
@@ -63,8 +57,19 @@ kotlin {
             dependencies {
                 implementation(libs.kotlin.stdlib)
 
+                // Compose
+                implementation(compose.runtime)
+                implementation(compose.foundation)
+                implementation(compose.material3)
+                implementation(compose.ui)
+                implementation(compose.components.resources)
+                implementation(compose.components.uiToolingPreview)
+                implementation(libs.androidx.lifecycle.viewmodelCompose)
+                implementation(libs.androidx.lifecycle.runtimeCompose)
+
                 // Serialization
                 implementation(libs.kotlinx.serialization.protobuf)
+                implementation(libs.kotlinx.serialization.json)
 
                 // Http
                 implementation(libs.ktor.client.core)

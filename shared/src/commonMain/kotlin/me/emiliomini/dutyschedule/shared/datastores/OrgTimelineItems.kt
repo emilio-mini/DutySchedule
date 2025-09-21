@@ -10,3 +10,7 @@ data class OrgTimelineItems(
     @ProtoNumber(1)
     val orgTimelines: Map<String, OrgTimeline> = emptyMap()
 ) : MultiplatformDataModel
+
+fun OrgTimelineItems.isDefault(): Boolean {
+    return this == OrgTimelineItems()
+}

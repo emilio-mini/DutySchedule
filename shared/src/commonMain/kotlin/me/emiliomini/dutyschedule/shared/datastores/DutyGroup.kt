@@ -12,3 +12,7 @@ data class DutyGroup(
     @ProtoNumber(2)
     val title: String? = null
 ) : MultiplatformDataModel
+
+fun DutyGroup.isDefault(): Boolean {
+    return this == DutyGroup()
+}

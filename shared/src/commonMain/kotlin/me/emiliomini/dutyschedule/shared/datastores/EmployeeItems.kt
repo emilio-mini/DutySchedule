@@ -10,3 +10,7 @@ data class EmployeeItems(
     @ProtoNumber(1)
     val employees: Map<String, Employee> = emptyMap()
 ) : MultiplatformDataModel
+
+fun EmployeeItems.isDefault(): Boolean {
+    return this == EmployeeItems()
+}

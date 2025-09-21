@@ -20,3 +20,7 @@ data class DutyDefinition(
     @ProtoNumber(6)
     val groupGuid: String? = null
 ) : MultiplatformDataModel
+
+fun DutyDefinition.isDefault(): Boolean {
+    return this == DutyDefinition()
+}

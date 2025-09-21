@@ -38,4 +38,10 @@ enum class Endpoints(val url: String) {
 
     // Used to allocate a duty slot
     CREATE_AND_ALLOCATE_DUTY(SCHEDULE_BASE.url + "/StaffPortal/duties/data/createAndAllocateDuty.json");
+
+    companion object {
+        fun withScheduleBase(url: String): String {
+            return SCHEDULE_BASE.url + url
+        }
+    }
 }

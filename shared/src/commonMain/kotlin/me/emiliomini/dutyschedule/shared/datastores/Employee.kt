@@ -25,4 +25,18 @@ data class Employee(
     val resourceTypeGuid: String = "",
     @ProtoNumber(9)
     val skills: List<Skill> = emptyList()
-) : MultiplatformDataModel
+) : MultiplatformDataModel {
+    companion object {
+        val KFZ_NAME = "KFZ"
+        val VEHICLE_NAME = "DFZ"
+        val SEW_NAME = "SEW"
+        val ITF_NAME = "ITF"
+        val RTW_NAME = "RTW"
+        val HAEND_NAME = "HÄND"
+    }
+}
+
+fun Employee.isDefault(): Boolean {
+    return this == Employee()
+}
+

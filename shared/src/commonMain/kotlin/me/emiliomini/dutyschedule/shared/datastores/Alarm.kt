@@ -14,3 +14,8 @@ data class Alarm(
     @ProtoNumber(3)
     val code: Int = 0
 ) : MultiplatformDataModel
+
+fun Alarm.isDefault(): Boolean {
+    return this == Alarm()
+}
+

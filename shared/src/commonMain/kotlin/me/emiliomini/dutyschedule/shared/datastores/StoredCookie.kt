@@ -10,26 +10,26 @@ import kotlinx.serialization.protobuf.ProtoNumber
 @Serializable
 data class StoredCookie(
     @ProtoNumber(1)
-    val name: String,
+    val name: String = "",
     @ProtoNumber(2)
-    val value: String,
+    val value: String = "",
     @ProtoNumber(3)
-    val expires: Long?,
+    val expires: Long? = null,
     @ProtoNumber(4)
-    val maxAge: Int?,
+    val maxAge: Int? = null,
     @ProtoNumber(5)
-    val domain: String?,
+    val domain: String? = null,
     @ProtoNumber(6)
-    val path: String?,
+    val path: String? = null,
     @ProtoNumber(7)
-    val secure: Boolean,
+    val secure: Boolean = false,
     @ProtoNumber(8)
-    val httpOnly: Boolean,
+    val httpOnly: Boolean = false,
     @ProtoNumber(9)
     val extensions: Map<String, String?>? = null
 ) : MultiplatformDataModel {
     companion object Companion {
-        fun fromKtor(cookie: Cookie): StoredCookie = StoredCookie(
+        fun fromCookie(cookie: Cookie): StoredCookie = StoredCookie(
             name = cookie.name,
             value = cookie.value,
             expires = cookie.expires?.timestamp,
@@ -41,7 +41,7 @@ data class StoredCookie(
             extensions = cookie.extensions.takeIf { it.isNotEmpty() }
         )
 
-        fun toKtor(sc: StoredCookie): Cookie = Cookie(
+        fun toCookie(sc: StoredCookie): Cookie = Cookie(
             name = sc.name,
             value = sc.value,
             expires = sc.expires?.let { if (it != 0L) GMTDate(it) else null },
@@ -53,4 +53,8 @@ data class StoredCookie(
             extensions = sc.extensions.orEmpty()
         )
     }
+}
+
+fun StoredCookie.isDefault(): Boolean {
+    return this == StoredCookie()
 }

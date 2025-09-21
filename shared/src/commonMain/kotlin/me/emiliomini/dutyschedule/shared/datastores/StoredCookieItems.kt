@@ -10,3 +10,7 @@ data class StoredCookieItems(
     @ProtoNumber(1)
     val cookies: List<StoredCookie> = emptyList()
 ) : MultiplatformDataModel
+
+fun StoredCookieItems.isDefault(): Boolean {
+    return this == StoredCookieItems()
+}

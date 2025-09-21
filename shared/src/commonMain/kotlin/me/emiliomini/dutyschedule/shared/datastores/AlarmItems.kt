@@ -10,3 +10,7 @@ data class AlarmItems(
     @ProtoNumber(1)
     val alarms: List<Alarm> = emptyList()
 ) : MultiplatformDataModel
+
+fun AlarmItems.isDefault(): Boolean {
+    return this == AlarmItems()
+}

@@ -10,3 +10,7 @@ data class Requirement(
     @ProtoNumber(1)
     val guid: String = ""
 ) : MultiplatformDataModel
+
+fun Requirement.isDefault(): Boolean {
+    return this == Requirement()
+}

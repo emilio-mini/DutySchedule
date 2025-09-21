@@ -10,3 +10,7 @@ data class Statistics(
     @ProtoNumber(1)
     val minutesServed: Int = 0
 ) : MultiplatformDataModel
+
+fun Statistics.isDefault(): Boolean {
+    return this == Statistics()
+}

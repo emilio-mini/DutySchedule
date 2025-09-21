@@ -5,8 +5,9 @@ composeMarkdown = "0.5.7"
 datastoreCore = "1.1.7"
 jsoup = "1.21.2"
 kotlin = "2.2.20"
+compose-plugin = "1.9.0"
 kotlinxDatetime = "0.7.1"
-kotlinxSerializationProtobuf = "1.9.0"
+kotlinxSerialization = "1.9.0"
 ktorClient = "3.3.0"
 protobuf = "0.9.5"
 protobufJL = "4.32.1"
@@ -28,6 +29,7 @@ kotlinStdlib = "2.2.20"
 kotlinTest = "2.2.20"
 runner = "1.5.2"
 core = "1.5.0"
+androidx-lifecycle = "2.9.4"
 
 [libraries]
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }
@@ -53,9 +55,9 @@ androidx-datastore = { group = "androidx.datastore", name = "datastore", version
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "materialIconsExtended" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 coil-svg = { group = "io.coil-kt", name = "coil-svg", version.ref = "coil" }
-androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "androidxLifecycleViewmodelCompose" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
-kotlinx-serialization-protobuf = { module = "org.jetbrains.kotlinx:kotlinx-serialization-protobuf", version.ref = "kotlinxSerializationProtobuf" }
+kotlinx-serialization-protobuf = { module = "org.jetbrains.kotlinx:kotlinx-serialization-protobuf", version.ref = "kotlinxSerialization" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktorClient" }
 ktor-client-cookies = { module = "io.ktor:ktor-client-cookies", version.ref = "ktorClient" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktorClient" }
@@ -72,12 +74,15 @@ kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", versio
 kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlinTest" }
 androidx-runner = { group = "androidx.test", name = "runner", version.ref = "runner" }
 androidx-core = { group = "androidx.test", name = "core", version.ref = "core" }
+androidx-lifecycle-viewmodelCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "androidx-lifecycle" }
+androidx-lifecycle-runtimeCompose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+jetbrains-compose = { id = "org.jetbrains.compose", version.ref = "compose-plugin" }
 google-protobuf = { id = "com.google.protobuf", version.ref = "protobuf" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 android-kotlin-multiplatform-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }

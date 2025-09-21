@@ -24,3 +24,7 @@ data class MinimalDutyDefinition(
     @ProtoNumber(8)
     val typeString: String = ""
 ) : MultiplatformDataModel
+
+fun MinimalDutyDefinition.isDefault(): Boolean {
+    return this == MinimalDutyDefinition()
+}

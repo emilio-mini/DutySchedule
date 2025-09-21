@@ -16,3 +16,7 @@ data class Org(
     @ProtoNumber(4)
     val identifier: String = ""
 ) : MultiplatformDataModel
+
+fun Org.isDefault(): Boolean {
+    return this == Org()
+}

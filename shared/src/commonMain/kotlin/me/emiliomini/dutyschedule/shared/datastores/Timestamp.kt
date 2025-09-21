@@ -12,3 +12,7 @@ data class Timestamp(
     @ProtoNumber(2)
     val nanos: Int = 0
 ) : MultiplatformDataModel
+
+fun Timestamp.isDefault(): Boolean {
+    return this == Timestamp()
+}

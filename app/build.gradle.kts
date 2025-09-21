@@ -74,7 +74,7 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.datastore)
-    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.viewmodelCompose)
     implementation(libs.google.protobuf)
     implementation(libs.coil.compose)
     implementation(libs.coil.svg)

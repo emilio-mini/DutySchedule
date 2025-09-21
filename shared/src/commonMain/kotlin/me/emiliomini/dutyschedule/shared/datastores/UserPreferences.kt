@@ -16,3 +16,7 @@ data class UserPreferences(
     @ProtoNumber(4)
     val allowedOrgs: List<String> = emptyList()
 ) : MultiplatformDataModel
+
+fun UserPreferences.isDefault(): Boolean {
+    return this == UserPreferences()
+}

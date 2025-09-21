@@ -10,3 +10,7 @@ data class OrgItems(
     @ProtoNumber(1)
     val orgs: Map<String, Org> = emptyMap()
 ) : MultiplatformDataModel
+
+fun OrgItems.isDefault(): Boolean {
+    return this == OrgItems()
+}

@@ -13,17 +13,33 @@ class MultiplatformDataStore<T : MultiplatformDataModel>(
 ) {
     private val storageApi = getPlatformStorageApi()
 
+    suspend fun getOrDefault(): T {
+        if (data == null) {
+            data = storageApi.get(this)
+        }
+
+        return data ?: defaultValue
+    }
+
     suspend fun get(): T? {
         if (data == null) {
             data = storageApi.get(this)
         }
 
-        return data
+        return if (data == defaultValue) null else data
     }
 
-    suspend fun update(transform: (data: T?) -> T) {
-        data = transform(data)
+    suspend fun update(transform: (data: T) -> T) {
+        val result = transform(data ?: defaultValue)
+        if (result == data) {
+            return
+        }
+        data = result
         onUpdate(this, data)
+    }
+
+    fun isDefault(value: T): Boolean {
+        return value == defaultValue
     }
 
     suspend fun clear() {
