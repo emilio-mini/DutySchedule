@@ -7,6 +7,7 @@ import kotlinx.coroutines.sync.withLock
 import me.emiliomini.dutyschedule.shared.datastores.ClientCookies
 import me.emiliomini.dutyschedule.shared.datastores.StoredCookie
 import me.emiliomini.dutyschedule.shared.datastores.StoredCookieItems
+import me.emiliomini.dutyschedule.shared.debug.DebugFlags
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 
 class PersistentCookieStorage() : CookiesStorage {
@@ -14,6 +15,14 @@ class PersistentCookieStorage() : CookiesStorage {
     private val mutex = kotlinx.coroutines.sync.Mutex()
 
     private suspend fun loadIfNeeded() = mutex.withLock {
+        if (DebugFlags.DISABLE_COOKIE_PERSISTENCE.active()) {
+            if (cache == null) {
+                cache = mutableMapOf()
+            }
+
+            return@withLock
+        }
+
         if (cache != null) return@withLock
         val cached = StorageService.COOKIES.getOrDefault()?.clientCookies ?: emptyMap()
         if (cached.isEmpty()) {

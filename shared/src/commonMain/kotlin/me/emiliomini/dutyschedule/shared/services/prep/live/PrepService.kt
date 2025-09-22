@@ -438,6 +438,10 @@ object PrepService : DutyScheduleServiceBase {
             return localUpcoming.minimalDutyDefinitions
         }
 
+        if (incode == null) {
+            return emptyList()
+        }
+
         val upcomingResponse = NetworkService.loadUpcoming(incode!!)?.bodyAsText()
         if (upcomingResponse.isNullOrBlank()) {
             return emptyList()

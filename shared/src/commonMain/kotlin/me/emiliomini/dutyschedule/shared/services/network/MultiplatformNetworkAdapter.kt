@@ -7,6 +7,8 @@ import io.ktor.client.plugins.logging.DEFAULT
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
+import io.ktor.util.logging.KtorSimpleLogger
+import me.emiliomini.dutyschedule.shared.api.getPlatformLogger
 
 object MultiplatformNetworkAdapter {
     val HTTP: HttpClient = HttpClient {
@@ -16,8 +18,14 @@ object MultiplatformNetworkAdapter {
         }
 
         install(Logging) {
-            logger = Logger.DEFAULT
-            level = LogLevel.INFO
+            logger = object: Logger {
+                val logger = getPlatformLogger("Ktor")
+
+                override fun log(message: String) {
+                    logger.d(message)
+                }
+            }
+            level = LogLevel.ALL
         }
 
         install(HttpCookies) {
