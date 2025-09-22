@@ -24,8 +24,6 @@ import me.emiliomini.dutyschedule.shared.datastores.MinimalDutyDefinition
 import me.emiliomini.dutyschedule.shared.datastores.Org
 import me.emiliomini.dutyschedule.shared.datastores.OrgDay
 import me.emiliomini.dutyschedule.shared.datastores.OrgItems
-import me.emiliomini.dutyschedule.shared.mappings.OrgMapping
-import me.emiliomini.dutyschedule.shared.mappings.docScedConfigFromString
 import me.emiliomini.dutyschedule.shared.services.network.Endpoints
 import me.emiliomini.dutyschedule.shared.services.network.MultiplatformNetworkAdapter
 import me.emiliomini.dutyschedule.shared.services.network.NetworkService
@@ -37,7 +35,6 @@ import me.emiliomini.dutyschedule.shared.util.format
 import me.emiliomini.dutyschedule.shared.util.isNightShift
 import me.emiliomini.dutyschedule.shared.util.nullIfBlank
 import me.emiliomini.dutyschedule.shared.util.toEpochMilliseconds
-import me.emiliomini.dutyschedule.shared.util.toInstant
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -374,7 +371,7 @@ object PrepService : DutyScheduleServiceBase {
             if (duty.isNightShift()) {
                 days[date] = day.copy(
                     groups = listOf(*day.groups.toTypedArray(), *groups.values.toTypedArray()),
-                    nightShift = listOf(*day.nightShift.toTypedArray(), duty)
+                    nightShifts = listOf(*day.nightShifts.toTypedArray(), duty)
                 )
             } else {
                 days[date] = day.copy(
@@ -387,11 +384,11 @@ object PrepService : DutyScheduleServiceBase {
         var daysList = days.values.toList()
         daysList = daysList.map {
             val dayShifts = it.dayShifts.sortedWith(DutyDefinitionComparator)
-            val nightShifts = it.nightShift.sortedWith(DutyDefinitionComparator)
+            val nightShifts = it.nightShifts.sortedWith(DutyDefinitionComparator)
 
             it.copy(
                 dayShifts = dayShifts,
-                nightShift = nightShifts
+                nightShifts = nightShifts
             )
         }
 

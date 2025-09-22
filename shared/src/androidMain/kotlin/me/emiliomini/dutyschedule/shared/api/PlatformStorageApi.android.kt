@@ -77,6 +77,6 @@ class AndroidStorageApi() : PlatformStorageApi {
     }
 }
 
-actual fun getPlatformStorageApi(): PlatformStorageApi {
+actual fun initializePlatformStorageApi(): PlatformStorageApi {
     return AndroidStorageApi()
 }

@@ -1,5 +1,5 @@
 package me.emiliomini.dutyschedule.shared.api
 
-actual fun getPlatformLanguageApi(): PlatformLanguageApi {
+actual fun initializePlatformLanguageApi(): PlatformLanguageApi {
     TODO("Not yet implemented")
 }

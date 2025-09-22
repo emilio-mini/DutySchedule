@@ -9,4 +9,13 @@ interface PlatformStorageApi {
     suspend fun <T : MultiplatformDataModel> update(store: MultiplatformDataStore<T>, newData: T?)
 }
 
-expect fun getPlatformStorageApi(): PlatformStorageApi
+expect fun initializePlatformStorageApi(): PlatformStorageApi
+
+private var api: PlatformStorageApi? = null
+
+fun getPlatformStorageApi(): PlatformStorageApi = if (api == null) {
+    api = initializePlatformStorageApi()
+    api!!
+} else {
+    api!!
+}

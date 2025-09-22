@@ -36,6 +36,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import me.emiliomini.dutyschedule.R
+import java.util.TreeMap
 import kotlin.math.round
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -78,6 +79,7 @@ fun <T> PieChart(
         }
         return
     }
+
     val chartData = data.toSortedMap { k1, k2 -> if (data[k1]!! < data[k2]!!) 1 else -1 }
 
     val total = chartData.values.sum()

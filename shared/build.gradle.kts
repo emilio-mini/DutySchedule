@@ -74,10 +74,8 @@ kotlin {
                 // Http
                 implementation(libs.ktor.client.core)
                 implementation(libs.ktor.client.logging)
-                implementation(libs.ktor.client.cookies)
                 implementation(libs.ktor.client.encoding)
                 implementation(libs.ktor.client.cio)
-                implementation(libs.ktor.client.darwin)
 
                 // Time
                 implementation(libs.kotlinx.datetime)
@@ -93,8 +91,13 @@ kotlin {
         androidMain {
             // Android dependencies
             dependencies {
+                // Data Stores
                 implementation(libs.androidx.datastore.core)
                 implementation(libs.androidx.datastore)
+
+                // Material
+                implementation(libs.androidx.material3)
+                implementation(libs.androidx.compose.material.icons.extended)
             }
         }
 
@@ -109,6 +112,8 @@ kotlin {
         iosMain {
             // iOS dependencies
             dependencies {
+                // KTor
+                implementation(libs.ktor.client.darwin)
             }
         }
     }

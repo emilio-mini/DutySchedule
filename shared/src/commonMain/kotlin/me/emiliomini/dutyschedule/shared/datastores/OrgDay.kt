@@ -16,7 +16,7 @@ data class OrgDay(
     @ProtoNumber(4)
     val dayShifts: List<DutyDefinition> = emptyList(),
     @ProtoNumber(5)
-    val nightShift: List<DutyDefinition> = emptyList(),
+    val nightShifts: List<DutyDefinition> = emptyList(),
     @ProtoNumber(6)
     val groups: List<DutyGroup> = emptyList()
 ) : MultiplatformDataModel

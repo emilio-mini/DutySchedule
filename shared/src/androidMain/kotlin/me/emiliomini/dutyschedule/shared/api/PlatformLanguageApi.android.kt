@@ -19,6 +19,6 @@ class AndroidLanguageApi : PlatformLanguageApi {
 
 }
 
-actual fun getPlatformLanguageApi(): PlatformLanguageApi {
+actual fun initializePlatformLanguageApi(): PlatformLanguageApi {
     return AndroidLanguageApi()
 }
