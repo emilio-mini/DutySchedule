@@ -1,4 +1,4 @@
-package me.emiliomini.dutyschedule.ui.components.icons
+package me.emiliomini.dutyschedule.shared.ui.icons
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -6,12 +6,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 
-val Moon: ImageVector
+val NightsStay: ImageVector
     get() {
-        if (_Moon != null) return _Moon!!
+        if (_NightsStay != null) return _NightsStay!!
 
-        _Moon = ImageVector.Builder(
-            name = "Partly_cloudy_night",
+        _NightsStay = ImageVector.Builder(
+            name = "Nights_stay",
             defaultWidth = 24.dp,
             defaultHeight = 24.dp,
             viewportWidth = 960f,
@@ -86,8 +86,8 @@ val Moon: ImageVector
             }
         }.build()
 
-        return _Moon!!
+        return _NightsStay!!
     }
 
-private var _Moon: ImageVector? = null
+private var _NightsStay: ImageVector? = null
 

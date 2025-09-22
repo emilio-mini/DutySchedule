@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Alarm
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -24,33 +22,32 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import dutyschedule.shared.generated.resources.Res
+import dutyschedule.shared.generated.resources.main_settings_alarms_pre_event_begin_content
+import dutyschedule.shared.generated.resources.main_settings_alarms_pre_event_begin_dialog_confirm
+import dutyschedule.shared.generated.resources.main_settings_alarms_pre_event_begin_dialog_dismiss
+import dutyschedule.shared.generated.resources.main_settings_alarms_pre_event_begin_dialog_title
+import dutyschedule.shared.generated.resources.main_settings_alarms_pre_event_begin_title
 import kotlinx.coroutines.launch
-import me.emiliomini.dutyschedule.R
-import me.emiliomini.dutyschedule.services.storage.DataKeys
-import me.emiliomini.dutyschedule.services.storage.StorageService
-import me.emiliomini.dutyschedule.ui.components.CardListItem
-import me.emiliomini.dutyschedule.ui.components.WheelSelector
+import me.emiliomini.dutyschedule.shared.services.storage.StorageService
+import me.emiliomini.dutyschedule.shared.ui.components.CardListItem
+import me.emiliomini.dutyschedule.shared.ui.components.WheelSelector
+import me.emiliomini.dutyschedule.shared.ui.icons.Alarm
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DutyAlarmListItem(modifier: Modifier = Modifier) {
-    LocalContext.current
     var showDialog by remember { mutableStateOf(false) }
     var selectedDurationMin by remember { mutableLongStateOf(90L) }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
-        val value = StorageService.load(DataKeys.ALARM_OFFSET)
-        if (value == null) {
-            return@LaunchedEffect
-        }
-
-        selectedDurationMin = value
+        val value = StorageService.USER_PREFERENCES.getOrDefault().alarmOffsetMin
+        selectedDurationMin = value.toLong()
     }
 
     CardListItem(
@@ -60,19 +57,19 @@ fun DutyAlarmListItem(modifier: Modifier = Modifier) {
             }
         ),
         headlineContent = {
-            Text(stringResource(R.string.main_settings_alarms_pre_event_begin_title))
+            Text(stringResource(Res.string.main_settings_alarms_pre_event_begin_title))
         },
         supportingContent = {
             Text(
                 stringResource(
-                    R.string.main_settings_alarms_pre_event_begin_content,
+                    Res.string.main_settings_alarms_pre_event_begin_content,
                     "${abs(selectedDurationMin / 60)}h ${selectedDurationMin % 60}min"
                 )
             )
         },
         leadingContent = {
             Icon(
-                Icons.Rounded.Alarm,
+                Alarm,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary
             )
@@ -87,13 +84,13 @@ fun DutyAlarmListItem(modifier: Modifier = Modifier) {
             onDismissRequest = { showDialog = false },
             icon = {
                 Icon(
-                    Icons.Rounded.Alarm,
+                    Alarm,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary
                 )
             },
             title = {
-                Text(stringResource(R.string.main_settings_alarms_pre_event_begin_dialog_title))
+                Text(stringResource(Res.string.main_settings_alarms_pre_event_begin_dialog_title))
             },
             text = {
                 Row(
@@ -156,14 +153,15 @@ fun DutyAlarmListItem(modifier: Modifier = Modifier) {
                         showDialog = false
 
                         scope.launch {
-                            StorageService.save(
-                                DataKeys.ALARM_OFFSET,
-                                selectedDurationMin
-                            )
+                            StorageService.USER_PREFERENCES.update {
+                                it.copy(
+                                    alarmOffsetMin = selectedDurationMin.toInt()
+                                )
+                            }
                         }
                     }
                 ) {
-                    Text(stringResource(R.string.main_settings_alarms_pre_event_begin_dialog_confirm))
+                    Text(stringResource(Res.string.main_settings_alarms_pre_event_begin_dialog_confirm))
                 }
             },
             dismissButton = {
@@ -172,7 +170,7 @@ fun DutyAlarmListItem(modifier: Modifier = Modifier) {
                         showDialog = false
                     }
                 ) {
-                    Text(stringResource(R.string.main_settings_alarms_pre_event_begin_dialog_dismiss))
+                    Text(stringResource(Res.string.main_settings_alarms_pre_event_begin_dialog_dismiss))
                 }
             }
         )

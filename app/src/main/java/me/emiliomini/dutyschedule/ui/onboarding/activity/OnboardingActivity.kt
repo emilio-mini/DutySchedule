@@ -42,11 +42,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.NavigateNext
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Fingerprint
-import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -90,10 +85,13 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.currentStateAsState
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.R
-import me.emiliomini.dutyschedule.services.prep.DutyScheduleService
-import me.emiliomini.dutyschedule.services.prep.demo.DemoService
+import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
+import me.emiliomini.dutyschedule.shared.ui.icons.Check
+import me.emiliomini.dutyschedule.shared.ui.icons.ChevronRight
+import me.emiliomini.dutyschedule.shared.ui.icons.Fingerprint
+import me.emiliomini.dutyschedule.shared.ui.icons.Person
+import me.emiliomini.dutyschedule.shared.ui.theme.DutyScheduleTheme
 import me.emiliomini.dutyschedule.ui.main.activity.MainActivity
-import me.emiliomini.dutyschedule.ui.theme.DutyScheduleTheme
 
 
 class OnboardingActivity : ComponentActivity() {
@@ -202,7 +200,7 @@ fun OnboardingScreen(successAction: () -> Unit = {}) {
                         thumbContent = {
                             if (alarmPermissionCheck) {
                                 Icon(
-                                    Icons.Rounded.Check, contentDescription = null,
+                                    Check, contentDescription = null,
                                     modifier = Modifier.size(
                                         SwitchDefaults.IconSize
                                     ),
@@ -250,7 +248,7 @@ fun OnboardingScreen(successAction: () -> Unit = {}) {
                         thumbContent = {
                             if (notificationPermissionCheck) {
                                 Icon(
-                                    Icons.Rounded.Check, contentDescription = null,
+                                    Check, contentDescription = null,
                                     modifier = Modifier.size(
                                         SwitchDefaults.IconSize
                                     ),
@@ -289,7 +287,7 @@ fun OnboardingScreen(successAction: () -> Unit = {}) {
                         Text(stringResource(R.string.onboarding_login_email))
                     },
                     leadingIcon = {
-                        Icon(Icons.Rounded.Person, contentDescription = null)
+                        Icon(Person, contentDescription = null)
                     },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email, imeAction = ImeAction.Next
@@ -308,7 +306,7 @@ fun OnboardingScreen(successAction: () -> Unit = {}) {
                     value = password,
                     onValueChange = { password = it },
                     label = { Text(stringResource(R.string.onboarding_login_password)) },
-                    leadingIcon = { Icon(Icons.Rounded.Fingerprint, contentDescription = null) },
+                    leadingIcon = { Icon(Fingerprint, contentDescription = null) },
                     visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password, imeAction = ImeAction.Done
@@ -420,7 +418,7 @@ fun OnboardingScreen(successAction: () -> Unit = {}) {
                                 }
 
                                 blockContinue = true
-                                DutyScheduleService = DemoService
+                                // DutyScheduleService = DemoService FIXME
                                 scope.launch {
                                     val result = DutyScheduleService.login(
                                         email, password
@@ -476,7 +474,7 @@ fun OnboardingScreen(successAction: () -> Unit = {}) {
                         LoadingIndicator()
                     } else {
                         Icon(
-                            if (pageIndex == pages.lastIndex) Icons.Rounded.Check else Icons.AutoMirrored.Rounded.NavigateNext,
+                            if (pageIndex == pages.lastIndex) Check else ChevronRight,
                             modifier = Modifier.size(
                                 IconButtonDefaults.extraLargeIconSize
                             ),
