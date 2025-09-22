@@ -24,7 +24,7 @@ class PersistentCookieStorage() : CookiesStorage {
         }
 
         if (cache != null) return@withLock
-        val cached = StorageService.COOKIES.getOrDefault()?.clientCookies ?: emptyMap()
+        val cached = StorageService.COOKIES.getOrDefault().clientCookies
         if (cached.isEmpty()) {
             cache = mutableMapOf()
         } else {

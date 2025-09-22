@@ -6,6 +6,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.floatOrNull
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonArray
@@ -112,11 +113,9 @@ private fun <T> JsonObject.valueBySingleKey(mapping: JsonMapping<T>, key: String
             is JsonMapping.BOOLEAN -> this[key]!!.jsonPrimitive.booleanOrNull
             is JsonMapping.INT -> this[key]!!.jsonPrimitive.intOrNull
             is JsonMapping.FLOAT -> this[key]!!.jsonPrimitive.floatOrNull
-            is JsonMapping.TIMESTAMP -> this[key]!!.jsonPrimitive.toString().toInstant()
-                .toTimestamp()
-
-            is JsonMapping.INSTANT -> this[key]!!.jsonPrimitive.toString().toInstant()
-            is JsonMapping.STRING -> this[key]!!.jsonPrimitive.toString()
+            is JsonMapping.TIMESTAMP -> this[key]!!.jsonPrimitive.contentOrNull?.toInstant()?.toTimestamp()
+            is JsonMapping.INSTANT -> this[key]!!.jsonPrimitive.contentOrNull?.toInstant()
+            is JsonMapping.STRING -> this[key]!!.jsonPrimitive.contentOrNull
         } as T
     } catch (e: IllegalArgumentException) {
         logger.w("Failed to map value for key $key in mapping ${mapping.path.joinToString(";")}", e)

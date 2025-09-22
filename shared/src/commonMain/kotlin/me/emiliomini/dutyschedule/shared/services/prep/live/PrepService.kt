@@ -67,14 +67,18 @@ object PrepService : DutyScheduleServiceBase {
     }
 
     override suspend fun login(username: String, password: String): Boolean {
+        logger.d("Running login...")
         val loginResult: HttpResponse = NetworkService.login(username, password)
 
+        logger.d("Resulted in status ${loginResult.status}")
         val responseBody = loginResult.bodyAsText()
         if (responseBody.isBlank()) {
+            logger.w("Login response empty. Cancelling...")
             return false
         }
 
         val incode = DataExtractorService.extractIncode(responseBody)
+        logger.d("Extracted incode ${incode?.token}:${incode?.value?.dropLast(4)}**** from response")
 
         if (incode != null) {
             this.incode = incode
@@ -142,6 +146,7 @@ object PrepService : DutyScheduleServiceBase {
     }
 
     override suspend fun restoreLogin(): Boolean {
+        logger.d("Trying to restore login...")
         val localPreferences = StorageService.USER_PREFERENCES.get()
         val username = localPreferences?.username
         val password = localPreferences?.password
@@ -149,6 +154,7 @@ object PrepService : DutyScheduleServiceBase {
         val maxAge = 5L * 60L * 1_000L
 
         if (username.isNullOrBlank() || password.isNullOrBlank()) {
+            logger.d("No username or password found")
             return false
         }
 
@@ -156,6 +162,7 @@ object PrepService : DutyScheduleServiceBase {
         if (incode != null && Clock.System.now()
                 .toEpochMilliseconds() - maxAge >= lastIncodeUseMillis
         ) {
+            logger.d("Recent incode found. Trying to restore using keepAlive")
             val keepAlive = NetworkService.keepAlive().bodyAsText()
             if (keepAlive == "true") {
                 this.incode = incode
@@ -164,6 +171,7 @@ object PrepService : DutyScheduleServiceBase {
             }
         }
 
+        logger.d("Restoring by re-running login process")
         return this.login(username, password)
     }
 

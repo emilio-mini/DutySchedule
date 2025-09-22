@@ -1,6 +1,7 @@
 package me.emiliomini.dutyschedule.shared.services.network
 
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.HttpRedirect
 import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.plugins.logging.DEFAULT
@@ -12,6 +13,8 @@ import me.emiliomini.dutyschedule.shared.api.getPlatformLogger
 
 object MultiplatformNetworkAdapter {
     val HTTP: HttpClient = HttpClient {
+        followRedirects = true
+
         install(ContentEncoding) {
             gzip()
             deflate()

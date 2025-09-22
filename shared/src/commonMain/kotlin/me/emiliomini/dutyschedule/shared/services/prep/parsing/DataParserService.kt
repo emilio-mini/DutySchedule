@@ -5,6 +5,7 @@ package me.emiliomini.dutyschedule.shared.services.prep.parsing
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import me.emiliomini.dutyschedule.shared.api.getPlatformLogger
 import me.emiliomini.dutyschedule.shared.datastores.CreateDutyResponse
@@ -188,14 +189,14 @@ object DataParserService {
         return data.mapElements {
             val allocations = it.o.value(MinimalDutyDefinitionMapping.ALLOCATION_INFO)
             val typeString =
-                if (allocations.isNullOrEmpty()) "" else allocations[0].jsonPrimitive.toString()
+                if (allocations.isNullOrEmpty()) "" else allocations[0].jsonPrimitive.contentOrNull
             val type = DutyTypeMapping.get(typeString)
 
             var staffList = mutableListOf<String>()
             if (allocations != null) {
                 for (j in 1 until allocations.size) {
                     try {
-                        staffList.add(allocations[j].jsonPrimitive.toString())
+                        staffList.add(allocations[j].jsonPrimitive.contentOrNull ?: "")
                     } catch (e: IllegalArgumentException) {
                         logger.w("Staff list contained a non-primitive value", throwable = e)
                     }
@@ -221,7 +222,7 @@ object DataParserService {
                 duration = it.o.value(MinimalDutyDefinitionMapping.DURATION)
                     ?: MinimalDutyDefinition().duration,
                 type = type,
-                typeString = typeString,
+                typeString = typeString ?: "",
                 vehicle = vehicle,
                 staff = staffList
             )

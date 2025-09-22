@@ -9,6 +9,8 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.url
 import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.Parameters
 import io.ktor.http.ParametersBuilder
 import io.ktor.http.parameters
@@ -31,7 +33,7 @@ object NetworkService {
 
     @OptIn(InternalAPI::class)
     suspend fun login(username: String, password: String): HttpResponse {
-        return HTTP.submitForm(
+        val formResponse = HTTP.submitForm(
             url = Endpoints.LOGIN.url,
             formParameters = parameters {
                 append("client", "RKOOE")
@@ -40,6 +42,12 @@ object NetworkService {
                 append("remember", "1")
             }
         )
+
+        return if (formResponse.status == HttpStatusCode.Found && formResponse.bodyAsText().isBlank()) {
+            HTTP.get(Endpoints.SCHEDULE_BASE.url)
+        } else {
+            formResponse
+        }
     }
 
     suspend fun keepAlive(): HttpResponse {

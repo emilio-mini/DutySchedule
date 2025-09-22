@@ -69,7 +69,7 @@ fun MinimalDutyCard(
                         Text(
                             "${
                                 duty.begin.format(timeFormatter)
-                            }-${
+                            } - ${
                                 duty.end.format(timeFormatter)
                             }"
                         )
