@@ -12,7 +12,7 @@ data class UserPreferences(
     @ProtoNumber(2)
     val password: String = "",
     @ProtoNumber(3)
-    val alarmOffsetMin: Int = 0,
+    val alarmOffsetMin: Int = 90,
     @ProtoNumber(4)
     val allowedOrgs: List<String> = emptyList()
 ) : MultiplatformDataModel
