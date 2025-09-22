@@ -73,7 +73,7 @@ fun DutyScheduleTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = rememberObjectivityTypography(),
+        typography = objectivityTypography(),
         content = content
     )
 }
