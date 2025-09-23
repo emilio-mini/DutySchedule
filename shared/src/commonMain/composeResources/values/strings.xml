@@ -105,9 +105,9 @@
     <string name="data_org_st_florian">St. Florian</string>
     <string name="data_org_steyr_land">Steyr-Land</string>
     <string name="data_org_steyr_stadt">Steyr-Stadt</string>
-    <string name="data_org_voecklabruck">Vöcklabruck</string> <!-- VB -->
+    <string name="data_org_voecklabruck">Vöcklabruck</string>
     <string name="data_org_traun">Traun</string>
-    <string name="data_org_gkr">Eferding-Grieskirchen</string> <!-- GKR -->
+    <string name="data_org_gkr">Eferding-Grieskirchen</string>
     <string name="data_org_waizenkirchen">Waizenkirchen</string>
     <string name="data_org_andorf">Andorf</string>
     <string name="create_duty_title">Add duty?</string>
