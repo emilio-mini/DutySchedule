@@ -14,63 +14,54 @@ import me.emiliomini.dutyschedule.shared.datastores.UserPreferences
 object StorageService {
     val USER_PREFERENCES = MultiplatformDataStore(
         "user_preferences",
-        null,
         onUpdate = { store, newData -> storageApi.update(store, newData) },
         UserPreferences.serializer(),
         UserPreferences()
     )
     val STATISTICS = MultiplatformDataStore(
         "statistics",
-        null,
         onUpdate = { store, newData -> storageApi.update(store, newData) },
         Statistics.serializer(),
         Statistics()
     )
     val ALARM_ITEMS = MultiplatformDataStore(
         "alarm_items",
-        null,
         onUpdate = { store, newData -> storageApi.update(store, newData) },
         AlarmItems.serializer(),
         AlarmItems()
     )
     val ORG_ITEMS = MultiplatformDataStore(
         "org_items",
-        null,
         onUpdate = { store, newData -> storageApi.update(store, newData) },
         OrgItems.serializer(),
         OrgItems()
     )
     val INCODE = MultiplatformDataStore(
         "incode",
-        null,
         onUpdate = { store, newData -> storageApi.update(store, newData) },
         Incode.serializer(),
         Incode()
     )
     val SELF = MultiplatformDataStore(
         "self",
-        null,
         onUpdate = { store, newData -> storageApi.update(store, newData) },
         Employee.serializer(),
         Employee()
     )
     val UPCOMING_DUTIES = MultiplatformDataStore(
         "upcoming_duties",
-        null,
         onUpdate = { store, newData -> storageApi.update(store, newData) },
         UpcomingDutyItems.serializer(),
         UpcomingDutyItems()
     )
     val EMPLOYEES = MultiplatformDataStore(
         "employees",
-        null,
         onUpdate = { store, newData -> storageApi.update(store, newData) },
         EmployeeItems.serializer(),
         EmployeeItems()
     )
     val COOKIES = MultiplatformDataStore(
         "cookies",
-        null,
         onUpdate = { store, newData -> storageApi.update(store, newData) },
         ClientCookies.serializer(),
         ClientCookies()

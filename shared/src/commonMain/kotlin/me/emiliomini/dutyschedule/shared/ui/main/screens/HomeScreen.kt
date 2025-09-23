@@ -46,8 +46,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import dutyschedule.shared.generated.resources.Res
 import dutyschedule.shared.generated.resources.main_schedule_accessibility_datepicker
 import dutyschedule.shared.generated.resources.main_schedule_datepicker_confirm
@@ -58,14 +56,11 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
-import me.emiliomini.dutyschedule.shared.datastores.Org
 import me.emiliomini.dutyschedule.shared.datastores.OrgDay
-import me.emiliomini.dutyschedule.shared.datastores.OrgItems
 import me.emiliomini.dutyschedule.shared.datastores.Requirement
 import me.emiliomini.dutyschedule.shared.datastores.Slot
 import me.emiliomini.dutyschedule.shared.mappings.ShiftType
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
-import me.emiliomini.dutyschedule.shared.services.storage.MapViewModel
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.components.AppDateInfo
 import me.emiliomini.dutyschedule.shared.ui.components.AssignConfirmSheet
@@ -83,7 +78,6 @@ import kotlin.time.Instant
 fun HomeScreen(
     modifier: Modifier = Modifier,
     bottomBar: @Composable (() -> Unit) = {},
-    viewModel: MapViewModel<OrgItems, Org> = viewModel { MapViewModel(StorageService.ORG_ITEMS) { it.orgs } }
 ) {
     val defaultDateSpacing = 5 * 24 * 60 * 60 * 1000L
     val timeNow = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
@@ -107,9 +101,7 @@ fun HomeScreen(
 
     var allowedOrgs by remember { mutableStateOf<List<String>?>(null) }
     var selectedOrg by remember { mutableStateOf<String?>(null) }
-    val orgs by viewModel.flow.collectAsStateWithLifecycle(
-        initialValue = emptyMap()
-    )
+    val orgItems by StorageService.ORG_ITEMS.collectAsState()
 
     var showThanks by remember { mutableStateOf(false) }
 
@@ -123,7 +115,7 @@ fun HomeScreen(
         allowedOrgs = StorageService.USER_PREFERENCES.getOrDefault().allowedOrgs
     }
 
-    LaunchedEffect(orgs, allowedOrgs) {
+    LaunchedEffect(orgItems, allowedOrgs) {
         val default = DutyScheduleService.self?.defaultOrg
         val primaryOrg = if (default != null) DutyScheduleService.getOrg(default) else null
 
@@ -175,7 +167,7 @@ fun HomeScreen(
                     modifier = Modifier.weight(2f).horizontalScroll(stationScrollState),
                     horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
                 ) {
-                    orgs.values.filter { allowedOrgs?.contains(it.guid) ?: false }
+                    orgItems.orgs.values.filter { allowedOrgs?.contains(it.guid) ?: false }
                         .forEachIndexed { index, proto ->
                             ToggleButton(
                                 checked = selectedOrg == proto.guid,
@@ -298,7 +290,7 @@ fun HomeScreen(
     if (detailViewEmployee != null) {
         EmployeeDetailSheet(
             slot = detailViewEmployee,
-            orgs = orgs.values.toList(),
+            orgs = orgItems.orgs.values.toList(),
             onDismiss = { detailViewEmployee = null })
     }
 

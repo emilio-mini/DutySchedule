@@ -44,8 +44,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import dutyschedule.shared.generated.resources.Res
 import dutyschedule.shared.generated.resources.main_alarms_none
 import dutyschedule.shared.generated.resources.main_alarms_title
@@ -56,8 +54,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import me.emiliomini.dutyschedule.shared.api.getPlatformAlarmApi
 import me.emiliomini.dutyschedule.shared.datastores.Alarm
-import me.emiliomini.dutyschedule.shared.datastores.AlarmItems
-import me.emiliomini.dutyschedule.shared.services.storage.ListViewModel
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.components.CardColumn
 import me.emiliomini.dutyschedule.shared.ui.icons.AlarmOff
@@ -75,7 +71,6 @@ import kotlin.time.Instant
 fun AlarmsScreen(
     modifier: Modifier = Modifier,
     bottomBar: @Composable (() -> Unit) = {},
-    viewModel: ListViewModel<AlarmItems, Alarm> = viewModel { ListViewModel(StorageService.ALARM_ITEMS) { it.alarms } }
 ) {
     LaunchedEffect(Unit) {
         // AlarmService.clean()
@@ -85,9 +80,7 @@ fun AlarmsScreen(
     val scope = rememberCoroutineScope()
     val timeFormat = "HH:mm"
     val dateFormat = "dd/MM/yyyy"
-    val alarms by viewModel.flow.collectAsStateWithLifecycle(
-        initialValue = emptyList()
-    )
+    val alarmItems by StorageService.ALARM_ITEMS.collectAsState()
 
     Scaffold(modifier = modifier, snackbarHost = { SnackbarHost(snackbarHostState) }, topBar = {
         TopAppBar(
@@ -108,7 +101,7 @@ fun AlarmsScreen(
                 DutyAlarmListItem()
             }
             Spacer(modifier = Modifier.height(8.dp))
-            if (alarms.isEmpty()) {
+            if (alarmItems.alarms.isEmpty()) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.Center,
@@ -137,7 +130,8 @@ fun AlarmsScreen(
                             verticalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
                             itemsIndexed(
-                                items = alarms, key = { _, alarm -> alarm.code }) { index, alarm ->
+                                items = alarmItems.alarms,
+                                key = { _, alarm -> alarm.code }) { index, alarm ->
                                 var active by remember {
                                     mutableStateOf(
                                         getPlatformAlarmApi().isAlarmSet(alarm.code)
@@ -158,8 +152,8 @@ fun AlarmsScreen(
                                                     shape = RoundedCornerShape(
                                                         topStart = if (index == 0) 12.dp else 4.dp,
                                                         topEnd = if (index == 0) 12.dp else 4.dp,
-                                                        bottomStart = if (index == alarms.lastIndex) 12.dp else 4.dp,
-                                                        bottomEnd = if (index == alarms.lastIndex) 12.dp else 4.dp
+                                                        bottomStart = if (index == alarmItems.alarms.lastIndex) 12.dp else 4.dp,
+                                                        bottomEnd = if (index == alarmItems.alarms.lastIndex) 12.dp else 4.dp
                                                     )
                                                 )
                                         )
@@ -178,8 +172,8 @@ fun AlarmsScreen(
                                                 shape = RoundedCornerShape(
                                                     topStart = if (index == 0) 12.dp else 4.dp,
                                                     topEnd = if (index == 0) 12.dp else 4.dp,
-                                                    bottomStart = if (index == alarms.lastIndex) 12.dp else 4.dp,
-                                                    bottomEnd = if (index == alarms.lastIndex) 12.dp else 4.dp
+                                                    bottomStart = if (index == alarmItems.alarms.lastIndex) 12.dp else 4.dp,
+                                                    bottomEnd = if (index == alarmItems.alarms.lastIndex) 12.dp else 4.dp
                                                 )
                                             )
                                             .clickable(onClick = {

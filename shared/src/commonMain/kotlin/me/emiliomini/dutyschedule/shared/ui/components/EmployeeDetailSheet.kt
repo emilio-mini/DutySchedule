@@ -38,10 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import dutyschedule.shared.generated.resources.Res
 import dutyschedule.shared.generated.resources.main_schedule_infobox_actions_call
 import dutyschedule.shared.generated.resources.main_schedule_infobox_actions_mail
@@ -54,9 +51,9 @@ import dutyschedule.shared.generated.resources.main_schedule_infobox_primary
 import dutyschedule.shared.generated.resources.main_schedule_infobox_skill
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.shared.api.getPlatformClipboardApi
+import me.emiliomini.dutyschedule.shared.api.getPlatformLogger
 import me.emiliomini.dutyschedule.shared.api.getPlatformRedirectApi
 import me.emiliomini.dutyschedule.shared.datastores.Employee
-import me.emiliomini.dutyschedule.shared.datastores.EmployeeItems
 import me.emiliomini.dutyschedule.shared.datastores.Org
 import me.emiliomini.dutyschedule.shared.datastores.Slot
 import me.emiliomini.dutyschedule.shared.debug.DebugFlags
@@ -64,7 +61,6 @@ import me.emiliomini.dutyschedule.shared.mappings.MappedSkills
 import me.emiliomini.dutyschedule.shared.mappings.RequirementMapping
 import me.emiliomini.dutyschedule.shared.mappings.Role
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
-import me.emiliomini.dutyschedule.shared.services.storage.MapViewModel
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.icons.AlternateEmail
 import me.emiliomini.dutyschedule.shared.ui.icons.BugReport
@@ -91,18 +87,25 @@ import kotlin.time.ExperimentalTime
 fun EmployeeDetailSheet(
     slot: Slot?,
     orgs: List<Org>,
-    onDismiss: () -> Unit,
-    viewModel: MapViewModel<EmployeeItems, Employee> = viewModel { MapViewModel(StorageService.EMPLOYEES) { it.employees } }
+    onDismiss: () -> Unit
 ) {
-    val employees by viewModel.flow.collectAsStateWithLifecycle(
-        initialValue = emptyMap()
-    )
+    val employeeItems by StorageService.EMPLOYEES.collectAsState()
 
+    val logger = getPlatformLogger("EmployeeDetailSheet")
     var employee by remember { mutableStateOf<Employee?>(null) }
+    var source by remember { mutableStateOf("<none>") }
 
-    LaunchedEffect(slot, employees) {
+    LaunchedEffect(slot, employeeItems) {
         if (slot != null) {
-            employee = employees[slot.employeeGuid] ?: slot.inlineEmployee
+            val local = employeeItems.employees[slot.employeeGuid]
+            employee = if(local != null) {
+                source = "Loaded from server"
+                local
+            } else {
+                logger.d("No stored employee with id ${slot.employeeGuid} found in available ids: ${employeeItems.employees.keys.joinToString(";")}")
+                source = "Inline"
+                slot.inlineEmployee
+            }
         }
     }
 
@@ -110,7 +113,6 @@ fun EmployeeDetailSheet(
     val sheetState = rememberModalBottomSheetState()
     val timeFormatter = "HH:mm"
     val detailActionsScrollState = rememberScrollState()
-    val clipboard = LocalClipboard.current
     val scope = rememberCoroutineScope()
 
     if (employee != null && slot != null) {
@@ -155,10 +157,18 @@ fun EmployeeDetailSheet(
                 if (DebugFlags.SHOW_DEBUG_INFO.active()) {
                     CardColumn {
                         CardListItem(
+                            headlineContent = { Text(source) },
+                            supportingContent = { Text("Data source") },
+                            leadingContent = {
+                                Icon(
+                                    BugReport, contentDescription = null
+                                )
+                            })
+                        CardListItem(
                             modifier = Modifier.clickable(onClick = {
                                 scope.launch {
                                     getPlatformClipboardApi().copyToClipboard(
-                                        "employeeGuid", slot.employeeGuid
+                                        label = "employeeGuid", text = slot.employeeGuid ?: ""
                                     )
                                 }
                             }),
@@ -172,7 +182,7 @@ fun EmployeeDetailSheet(
                         CardListItem(modifier = Modifier.clickable(onClick = {
                             scope.launch {
                                 getPlatformClipboardApi().copyToClipboard(
-                                    "requirementGuid", slot.requirement.guid
+                                    label = "requirementGuid", text = slot.requirement.guid
                                 )
                             }
                         }), headlineContent = {

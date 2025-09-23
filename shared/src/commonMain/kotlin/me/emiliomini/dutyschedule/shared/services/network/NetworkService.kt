@@ -75,7 +75,7 @@ object NetworkService {
         }
 
         return HTTP.submitForm(
-            url = Endpoints.LOAD_PAST.url,
+            url = Endpoints.LOAD_PLAN.url,
             formParameters = parameters {
                 append("orgUnitDataGuid", orgUnitDataGuid)
                 append("dateFrom", from.format(TIMESTAMP_PATTERN))

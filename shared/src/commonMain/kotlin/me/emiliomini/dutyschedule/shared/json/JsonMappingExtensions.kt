@@ -1,8 +1,6 @@
 @file:Suppress("UNCHECKED_CAST")
 
 package me.emiliomini.dutyschedule.shared.json
-
-import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.booleanOrNull
@@ -10,6 +8,7 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.floatOrNull
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import me.emiliomini.dutyschedule.shared.api.getPlatformLogger
@@ -61,6 +60,19 @@ fun JsonElement?.isJsonArray(): Boolean {
     }
 }
 
+fun JsonElement?.isNull(): Boolean {
+    if (this == null) {
+        return true
+    }
+
+    try {
+        this.jsonNull
+        return true
+    } catch (_: IllegalArgumentException) {
+        return false
+    }
+}
+
 fun <T> JsonElement.value(m: JsonMapping<T>): T? {
     if (m.path.isEmpty() || !this.isJsonObject()) {
         return null
@@ -102,19 +114,32 @@ fun <T> JsonElement.value(m: JsonMapping<T>): T? {
 
 @OptIn(ExperimentalTime::class)
 private fun <T> JsonObject.valueBySingleKey(mapping: JsonMapping<T>, key: String): T? {
-    if (!this.containsKey(key)) {
+    if (!this.containsKey(key) || this[key].isNull()) {
         return null
     }
 
     return try {
         when (mapping) {
+            is JsonMapping.ARRAY_OR_OBJECT -> if (this[key]!!.isJsonArray()) this[key]!!.jsonArray else this[key]!!.jsonObject
             is JsonMapping.ARRAY -> this[key]!!.jsonArray
             is JsonMapping.OBJECT -> this[key]!!.jsonObject
             is JsonMapping.BOOLEAN -> this[key]!!.jsonPrimitive.booleanOrNull
             is JsonMapping.INT -> this[key]!!.jsonPrimitive.intOrNull
             is JsonMapping.FLOAT -> this[key]!!.jsonPrimitive.floatOrNull
-            is JsonMapping.TIMESTAMP -> this[key]!!.jsonPrimitive.contentOrNull?.toInstant()?.toTimestamp()
-            is JsonMapping.INSTANT -> this[key]!!.jsonPrimitive.contentOrNull?.toInstant()
+            is JsonMapping.TIMESTAMP -> this[key]!!.jsonPrimitive.contentOrNull.let {
+                if (it.isNullOrBlank()) {
+                    return null
+                } else {
+                    it.toInstant().toTimestamp()
+                }
+            }
+            is JsonMapping.INSTANT -> this[key]!!.jsonPrimitive.contentOrNull.let {
+                if (it.isNullOrBlank()) {
+                    return null
+                } else {
+                    it.toInstant()
+                }
+            }
             is JsonMapping.STRING -> this[key]!!.jsonPrimitive.contentOrNull
         } as T
     } catch (e: IllegalArgumentException) {

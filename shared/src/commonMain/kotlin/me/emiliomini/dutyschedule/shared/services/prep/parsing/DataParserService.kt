@@ -62,7 +62,7 @@ object DataParserService {
     }
 
     fun parseLoadPlan(root: JsonElement): Pair<List<DutyDefinition>, Map<String, DutyGroup>> {
-        val data = root.value(PrepResponseMapping.DATA_AS_OBJECT)
+        val data = root.value(PrepResponseMapping.DATA_AS_ARRAY_OR_OBJECT)
         if (data == null) {
             return Pair(emptyList(), emptyMap())
         }

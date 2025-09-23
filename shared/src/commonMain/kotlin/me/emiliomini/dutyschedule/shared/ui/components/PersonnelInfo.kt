@@ -22,13 +22,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import me.emiliomini.dutyschedule.shared.datastores.Employee
-import me.emiliomini.dutyschedule.shared.datastores.EmployeeItems
 import me.emiliomini.dutyschedule.shared.datastores.Timestamp
 import me.emiliomini.dutyschedule.shared.mappings.Role
-import me.emiliomini.dutyschedule.shared.services.storage.MapViewModel
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.util.format
 
@@ -48,11 +44,8 @@ fun AppPersonnelInfo(
     info: String? = null,
     state: PersonnelInfoState = PersonnelInfoState.DEFAULT,
     showInfoBadge: Boolean = false,
-    viewModel: MapViewModel<EmployeeItems, Employee> = viewModel { MapViewModel(StorageService.EMPLOYEES) { it.employees } }
 ) {
-    val employees by viewModel.flow.collectAsStateWithLifecycle(
-        initialValue = emptyMap()
-    )
+    val employeeItems by StorageService.EMPLOYEES.collectAsState()
 
     val contentColor = when (state) {
         PersonnelInfoState.HIGHLIGHTED -> MaterialTheme.colorScheme.primary
@@ -63,8 +56,8 @@ fun AppPersonnelInfo(
     var employee by remember { mutableStateOf<Employee?>(null) }
     var infoText by remember { mutableStateOf("") }
 
-    LaunchedEffect(employeeGuid, fallbackEmployee, employees) {
-        employee = employees[employeeGuid] ?: fallbackEmployee
+    LaunchedEffect(employeeGuid, fallbackEmployee, employeeItems) {
+        employee = employeeItems.employees[employeeGuid] ?: fallbackEmployee
 
         val infoContents = mutableListOf<String>()
         if (employeeGuid.isNotBlank() || info.isNullOrBlank()) {

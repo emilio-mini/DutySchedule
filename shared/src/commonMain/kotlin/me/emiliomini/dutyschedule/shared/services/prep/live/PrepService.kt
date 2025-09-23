@@ -17,7 +17,6 @@ import me.emiliomini.dutyschedule.shared.datastores.CreateDutyResponse
 import me.emiliomini.dutyschedule.shared.datastores.DutyDefinition
 import me.emiliomini.dutyschedule.shared.datastores.DutyGroup
 import me.emiliomini.dutyschedule.shared.datastores.Employee
-import me.emiliomini.dutyschedule.shared.datastores.EmployeeItems
 import me.emiliomini.dutyschedule.shared.datastores.Incode
 import me.emiliomini.dutyschedule.shared.datastores.Message
 import me.emiliomini.dutyschedule.shared.datastores.MinimalDutyDefinition
@@ -340,14 +339,16 @@ object PrepService : DutyScheduleServiceBase {
                 if (it.employeeGuid.isNullOrBlank()) null else it.employeeGuid
             }
         }.filterNotNull().distinct()
-        val localEmployees =
-            StorageService.EMPLOYEES.get() ?: EmployeeItems()
-        val missingEmployeeGuids =
-            employeeGuids.filter { !localEmployees.employees.contains(it) }
-        logger.d("Skipping ${localEmployees.employees.size} local employees")
+        val localEmployees = StorageService.EMPLOYEES.getOrDefault()
+        val missingEmployeeGuids = employeeGuids.filter {
+            !localEmployees.employees.containsKey(it)
+        }
+        logger.d("Local employee guids: ${localEmployees.employees.keys.joinToString(";")}")
+        logger.d("Missing employee guids: ${missingEmployeeGuids.joinToString(";")}")
         if (missingEmployeeGuids.isNotEmpty()) {
             coroutineScope {
                 launch {
+                    logger.d("Loading ${missingEmployeeGuids.size} missing employees")
                     val staff = getStaff(orgUnitDataGuid, missingEmployeeGuids, from, to)
                     if (staff.isEmpty()) {
                         logger.e("Failed to load missing staff $missingEmployeeGuids")
@@ -522,6 +523,7 @@ object PrepService : DutyScheduleServiceBase {
         from: Instant,
         to: Instant
     ): List<DutyDefinition> {
+        return duties
         /*val config = docScedConfigFromString(selectedOrgGuid)
         if (config == null) {
             logger.d("DocSced: ausgewählte Org ist kein HÄND (Wels/Wels-Land) – skip")
