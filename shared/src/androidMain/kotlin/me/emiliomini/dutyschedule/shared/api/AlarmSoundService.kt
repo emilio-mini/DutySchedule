@@ -7,14 +7,15 @@ import android.content.Intent
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.os.IBinder
-import androidx.core.app.NotificationCompat
-import androidx.core.net.toUri
 import dutyschedule.shared.generated.resources.Res
 import dutyschedule.shared.generated.resources.notifications_alarms_duty_action_dismiss
 import dutyschedule.shared.generated.resources.notifications_alarms_duty_content
 import dutyschedule.shared.generated.resources.notifications_alarms_duty_title
 import me.emiliomini.dutyschedule.shared.mappings.NotificationChannelMapping
 import org.jetbrains.compose.resources.getString
+import androidx.core.net.toUri
+import androidx.core.app.NotificationCompat
+import me.emiliomini.dutyschedule.shared.R
 
 class AlarmSoundService : Service() {
     private lateinit var mediaPlayer: MediaPlayer
@@ -79,7 +80,7 @@ class AlarmSoundService : Service() {
             )
 
         return NotificationCompat.Builder(this, NotificationChannelMapping.ALARMS.id)
-            //.setSmallIcon(Res.drawable.ic_notification) // FIXME: THIS DOESNT WORK FOR SOME REASON
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(getString(Res.string.notifications_alarms_duty_title))
             .setContentText(getString(Res.string.notifications_alarms_duty_content))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
