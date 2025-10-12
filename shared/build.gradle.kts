@@ -118,6 +118,11 @@ kotlin {
         iosMain {
             // iOS dependencies
             dependencies {
+                // Compose
+                implementation(compose.ui)
+                implementation(compose.foundation)
+                implementation(compose.material3)
+
                 // KTor
                 implementation(libs.ktor.client.darwin)
             }
