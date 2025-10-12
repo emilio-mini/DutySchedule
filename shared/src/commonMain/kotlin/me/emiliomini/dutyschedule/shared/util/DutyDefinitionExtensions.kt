@@ -52,8 +52,5 @@ fun DutyDefinition.getAllocatedSlotsCount(): Int {
 }
 
 fun DutyDefinition.isNightShift(zone: TimeZone = TimeZone.currentSystemDefault()): Boolean {
-    val beginTime = this.begin.toInstant().toLocalDateTime(zone)
-    val endTime = this.end.toInstant().toLocalDateTime(zone)
-
-    return beginTime.hour >= 19 || endTime.hour <= 7
+    return begin.isNight(zone) || end.isNight(zone)
 }

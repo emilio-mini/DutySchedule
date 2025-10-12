@@ -1,32 +1,29 @@
-package me.emiliomini.dutyschedule.services.parsers
+@file:OptIn(ExperimentalTime::class)
 
-import kotlinx.datetime.LocalDate
+package me.emiliomini.dutyschedule.shared.services.prep.parsing
 
-/**
- * Parser für DocSced-Dienstplan-HTML.
- * Trennt Fahrdienst in Tag+Nacht und liefert pro Datum die Namen (so wie sie im Plan stehen).
- */
-/*object DocScedParserService {
+import com.fleeksoft.ksoup.Ksoup
+import com.fleeksoft.ksoup.nodes.Document
+import com.fleeksoft.ksoup.nodes.Element
+import kotlinx.io.IOException
+import me.emiliomini.dutyschedule.shared.api.getPlatformLogger
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
-    private const val TAG = "DocScedParserService"
+object DocScedParserService {
+    private val logger = getPlatformLogger("DocScedParserService")
 
-    data class FahrdienstDay(
-        val date: LocalDate,
-        val tag: List<String>,   // Fahrdienst Tag (0..n Namen)
-        val nacht: List<String>  // Fahrdienst Nacht (0..n Namen)
+    data class HaendDay(
+        val date: Instant,
+        val day: List<String>,
+        val night: List<String>
     )
 
-    /**
-     * Parst das übergebene DocSced-HTML (eine Woche/Monat/Gesamt) und extrahiert Fahrdienst (Tag/Nacht).
-     * - Robust gegenüber Farb-/Style-Attributen
-     * - Ignoriert Zellen mit "-" oder leerem Text
-     * - Unterstützt mehrere Namen je Zelle (trennt an Komma, Slash, Semikolon, Zeilenumbruch)
-     */
-    suspend fun parseFahrdienst(html: String): Result<List<FahrdienstDay>> {
+    suspend fun parseHaendData(html: String): Result<List<HaendDay>> {
         return try {
             if (html.isBlank()) return Result.failure(IOException("Empty HTML"))
 
-            val doc = Jsoup.parse(html)
+            val doc = Ksoup.parse(html)
 
             val table = findFahrdienstTable(doc)
                 ?: return Result.failure(IOException("Fahrdienst-Tabelle nicht gefunden"))
@@ -40,25 +37,25 @@ import kotlinx.datetime.LocalDate
 
                 val dateText = tds[idxDate].text().trim()
                 val datePart = dateText.substringBefore(" ") // "25.08.2025 (Mo)" -> "25.08.2025"
-                val date = runCatching { LocalDate.parse(datePart, DATE_FMT) }.getOrElse {
-                    Log.w(TAG, "Überspringe Zeile: ungültiges Datum '$dateText'")
+                val date = runCatching { Instant.parse(datePart) }.getOrElse {
+                    logger.w("Überspringe Zeile: ungültiges Datum '$dateText'")
                     return@mapNotNull null
                 }
 
                 val tagList = splitNames(cleanCell(tds[idxTag]))
                 val nachtList = splitNames(cleanCell(tds[idxNacht]))
 
-                FahrdienstDay(
+                HaendDay(
                     date = date,
-                    tag = tagList,
-                    nacht = nachtList
+                    day = tagList,
+                    night = nachtList
                 )
             }
 
-            Log.d(TAG, "Parsed ${days.size} Fahrdienst-Tage")
+            logger.d("Parsed ${days.size} Fahrdienst-Tage")
             Result.success(days)
         } catch (e: Exception) {
-            Log.e(TAG, "Fehler beim Parsen: ${e.message}")
+            logger.e("Fehler beim Parsen: ${e.message}")
             Result.failure(e)
         }
     }
@@ -68,7 +65,9 @@ import kotlinx.datetime.LocalDate
         // Suche die Tabelle, deren Header die Fahrdienst-Spalten enthält
         val tables = doc.select("table")
         return tables.firstOrNull { table ->
-            val headers = table.select("thead tr").firstOrNull()?.select("td,th")?.map { it.text().trim() } ?: emptyList()
+            val headers =
+                table.select("thead tr").firstOrNull()?.select("td,th")?.map { it.text().trim() }
+                    ?: emptyList()
             headers.any { it.contains("Fahrdienst Tag", ignoreCase = true) } &&
                     headers.any { it.contains("Fahrdienst Nacht", ignoreCase = true) } &&
                     headers.any { it.contains("Datum", ignoreCase = true) }
@@ -83,9 +82,20 @@ import kotlinx.datetime.LocalDate
 
         val labels = headerCells.mapIndexed { idx, el -> el.text().trim() to idx }.toMap()
 
-        val idxDate  = labels.entries.firstOrNull { it.key.contains("Datum", ignoreCase = true) }?.value
-        val idxTag   = labels.entries.firstOrNull { it.key.contains("Fahrdienst Tag", ignoreCase = true) }?.value
-        val idxNacht = labels.entries.firstOrNull { it.key.contains("Fahrdienst Nacht", ignoreCase = true) }?.value
+        val idxDate =
+            labels.entries.firstOrNull { it.key.contains("Datum", ignoreCase = true) }?.value
+        val idxTag = labels.entries.firstOrNull {
+            it.key.contains(
+                "Fahrdienst Tag",
+                ignoreCase = true
+            )
+        }?.value
+        val idxNacht = labels.entries.firstOrNull {
+            it.key.contains(
+                "Fahrdienst Nacht",
+                ignoreCase = true
+            )
+        }?.value
 
         return if (idxDate != null && idxTag != null && idxNacht != null) {
             ColIdx(idxDate, idxTag, idxNacht)
@@ -105,4 +115,4 @@ import kotlinx.datetime.LocalDate
             .filter { it.isNotEmpty() && it != "-" }
             .distinct()
     }
-}*/
+}

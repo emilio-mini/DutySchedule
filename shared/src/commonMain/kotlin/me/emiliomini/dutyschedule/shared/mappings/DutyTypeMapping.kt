@@ -13,6 +13,7 @@ object DutyTypeMapping {
             "[ Pflichtfortbildung Rezertifizierung ]" -> DutyType.RECERTIFICATION
             "[ HÄND mobil ]" -> DutyType.HAEND
             "[ Innendienst ]" -> DutyType.ADMINISTRATIVE
+            "[ Öffentlichkeitsveranstaltung ]" -> DutyType.EVENT
             else -> DutyType.UNKNOWN
         }
     }

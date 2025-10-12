@@ -22,5 +22,7 @@ enum class DutyType {
     @SerialName("7")
     HAEND,
     @SerialName("8")
-    ADMINISTRATIVE
+    ADMINISTRATIVE,
+    @SerialName("9")
+    EVENT
 }

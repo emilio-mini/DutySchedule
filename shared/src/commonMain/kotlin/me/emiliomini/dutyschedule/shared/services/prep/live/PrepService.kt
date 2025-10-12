@@ -10,7 +10,12 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
+import me.emiliomini.dutyschedule.shared.services.prep.parsing.DocScedParserService
 import me.emiliomini.dutyschedule.shared.api.getPlatformLogger
 import me.emiliomini.dutyschedule.shared.comparators.DutyDefinitionComparator
 import me.emiliomini.dutyschedule.shared.datastores.CreateDutyResponse
@@ -23,6 +28,10 @@ import me.emiliomini.dutyschedule.shared.datastores.MinimalDutyDefinition
 import me.emiliomini.dutyschedule.shared.datastores.Org
 import me.emiliomini.dutyschedule.shared.datastores.OrgDay
 import me.emiliomini.dutyschedule.shared.datastores.OrgItems
+import me.emiliomini.dutyschedule.shared.datastores.Requirement
+import me.emiliomini.dutyschedule.shared.datastores.Slot
+import me.emiliomini.dutyschedule.shared.mappings.RequirementMapping
+import me.emiliomini.dutyschedule.shared.mappings.docScedConfigFromString
 import me.emiliomini.dutyschedule.shared.services.network.Endpoints
 import me.emiliomini.dutyschedule.shared.services.network.MultiplatformNetworkAdapter
 import me.emiliomini.dutyschedule.shared.services.network.NetworkService
@@ -31,9 +40,13 @@ import me.emiliomini.dutyschedule.shared.services.prep.parsing.DataExtractorServ
 import me.emiliomini.dutyschedule.shared.services.prep.parsing.DataParserService
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.util.format
+import me.emiliomini.dutyschedule.shared.util.getAllVehicles
+import me.emiliomini.dutyschedule.shared.util.isNight
 import me.emiliomini.dutyschedule.shared.util.isNightShift
+import me.emiliomini.dutyschedule.shared.util.midpointInstant
 import me.emiliomini.dutyschedule.shared.util.nullIfBlank
 import me.emiliomini.dutyschedule.shared.util.toEpochMilliseconds
+import me.emiliomini.dutyschedule.shared.util.toInstant
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -523,37 +536,33 @@ object PrepService : DutyScheduleServiceBase {
         from: Instant,
         to: Instant
     ): List<DutyDefinition> {
-        return duties
-        /*val config = docScedConfigFromString(selectedOrgGuid)
+        val config = docScedConfigFromString(selectedOrgGuid)
         if (config == null) {
-            logger.d("DocSced: ausgewählte Org ist kein HÄND (Wels/Wels-Land) – skip")
+            logger.d("DocSced: org is not a valid HAEND org – skip")
             return duties
         }
 
         val html = NetworkService.loadDocScedCalendar(config, gran = "ges").bodyAsText()
         if (html.isBlank()) {
-            logger.w("DocSced: kein HTML geladen für $config")
+            logger.w("DocSced: failed to load html for org: $config")
             return duties
         }
-        val days = DocScedParserService.parseFahrdienst(html).getOrNull().orEmpty()
-        val byDate = days.associateBy { it.date } // Map<LocalDate, FahrdienstDay>
+        val days = DocScedParserService.parseHaendData(html).getOrNull().orEmpty()
+        val byDate = days.associateBy { it.date }
         logger.d("DocSced: ${days.size} Fahrdienst-Tage geparst für $config")
 
         val mutableDuties = duties.toMutableList()
         for (i in mutableDuties.indices) {
             val duty = mutableDuties[i]
-            val haends = duty.getAllVehicles(listOf(Requirement.HAEND.value))
+            val haends = duty.getAllVehicles(listOf(RequirementMapping.HAEND.value))
             if (haends.isEmpty()) continue
 
             for (haend in haends) {
-                val zone = ZoneId.systemDefault()
-
-                val mid = localMidpoint(
-                    haend.begin.toOffsetDateTime(),
-                    haend.end.toOffsetDateTime(),
-                    zone
+                val mid = midpointInstant(
+                    haend.begin.toInstant(),
+                    haend.end.toInstant()
                 )
-                val night = isNight(mid)
+                val night = mid.isNight()
                 val dsDate = docscedRowDate(mid)
 
                 val dsDay = byDate[dsDate]
@@ -562,42 +571,35 @@ object PrepService : DutyScheduleServiceBase {
                     continue
                 }
 
-                logger.d(
-                    TAG,
-                    "DocSced[$config][$dsDate] TAG=${dsDay.tag.joinToString()} | NACHT=${dsDay.nacht.joinToString()}"
-                )
+                logger.d("DocSced[$config][$dsDate] TAG=${dsDay.day.joinToString()} | NACHT=${dsDay.night.joinToString()}")
 
-                val candidate = if (night) dsDay.nacht.firstOrNull() else dsDay.tag.firstOrNull()
+                val candidate = if (night) dsDay.night.firstOrNull() else dsDay.day.firstOrNull()
                 if (candidate.isNullOrBlank()) {
-                    logger.d(
-                        TAG,
-                        "DocSced: kein ${if (night) "Nacht" else "Tag"}-Arzt am $dsDate ($config)"
-                    )
+                    logger.d("DocSced: kein ${if (night) "Nacht" else "Tag"}-Arzt am $dsDate ($config)")
                     continue
                 }
 
-                val docEmployee = EmployeeProto.newBuilder()
-                    .setGuid("docsced:$config:$dsDate:${if (night) "nacht" else "tag"}")
-                    .setName(candidate)
-                    .setIdentifier("Dr.")
-                    .build()
+                val docEmployee = Employee(
+                    guid = "docsced:$config:$dsDate:${if (night) "night" else "day"}",
+                    name = candidate,
+                    identifier = "Dr."
+                )
 
-                mutableDuties[i] = duty.toBuilder()
-                    .addSlots(
-                        SlotProto.newBuilder()
-                            .setBegin(haend.begin)
-                            .setEnd(haend.end)
-                            .setRequirement(
-                                RequirementProto.newBuilder().setGuid(Requirement.HAEND_DR.value)
-                                    .build()
+                mutableDuties[i] = duty.copy(
+                    slots = duty.slots.toMutableList().let {
+                        it.add(
+                            Slot(
+                                begin = haend.begin,
+                                end = haend.end,
+                                requirement = Requirement(RequirementMapping.HAEND_DR.value),
+                                inlineEmployee = docEmployee
                             )
-                            .setInlineEmployee(docEmployee)
-                            .build()
-                    )
-                    .build()
+                        )
+                        it
+                    }
+                )
 
                 logger.d(
-                    TAG,
                     "DocSced: ${docEmployee.name} → TF gesetzt ($config, $dsDate, ${if (night) "Nacht" else "Tag"}) " +
                             "für HÄND ${
                                 haend.begin.format("yyyy-MM-dd HH:mm")
@@ -607,40 +609,15 @@ object PrepService : DutyScheduleServiceBase {
             }
         }
 
-        return mutableDuties.toList()*/
-        return emptyList()
+        return mutableDuties.toList()
     }
 
-    /*private fun localMidpoint(b: OffsetDateTime, e: OffsetDateTime, zone: ZoneId): ZonedDateTime {
-        val bl = b.atZoneSameInstant(zone)
-        val el = e.atZoneSameInstant(zone)
-        val dur = Duration.between(bl, el)      // korrekt auch über Mitternacht & DST
-        return bl.plus(dur.dividedBy(2))
-    }
-
-    private fun isNight(mid: ZonedDateTime): Boolean {
-        val t = mid.toLocalTime()
-        return t < LocalTime.of(6, 0) || t >= LocalTime.of(18, 0)
-    }
-
-    /** DocSced zeigt die Nachtdienste in der Zeile des ABENDS.
-     *  Liegt der Midpoint < 06:00, ordnen wir ihn dem VORTAG zu.
+    /**
+     * Returns the previous day if the midpoint lies between midnight and 6 AM as nightshifts
+     * are displayed on the day they begin
      */
-    private fun docscedRowDate(mid: ZonedDateTime): LocalDate {
-        val t = mid.toLocalTime()
-        return if (t < LocalTime.of(6, 0)) mid.toLocalDate().minusDays(1) else mid.toLocalDate()
+    private fun docscedRowDate(mid: Instant, zone: TimeZone = TimeZone.currentSystemDefault()): Instant {
+        val t = mid.toLocalDateTime(zone)
+        return if (t.hour < 6) mid.minus(24, DateTimeUnit.HOUR) else mid
     }
-
-    private fun overlaps(
-        aStart: OffsetDateTime,
-        aEnd: OffsetDateTime,
-        bStart: OffsetDateTime,
-        bEnd: OffsetDateTime
-    ): Boolean {
-        val aS = aStart.toInstant()
-        val aE = aEnd.toInstant()
-        val bS = bStart.toInstant()
-        val bE = bEnd.toInstant()
-        return aS < bE && bS < aE
-    }*/
 }

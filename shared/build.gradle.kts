@@ -79,6 +79,10 @@ kotlin {
                 implementation(libs.ktor.client.encoding)
                 implementation(libs.ktor.client.cio)
 
+                // HTML Parsing
+                implementation(libs.ksoup)
+                implementation(libs.ksoup.network)
+
                 // Time
                 implementation(libs.kotlinx.datetime)
             }

@@ -8,6 +8,8 @@ kotlin = "2.2.20"
 compose-plugin = "1.10.0-alpha01"
 kotlinxDatetime = "0.7.1"
 kotlinxSerialization = "1.9.0"
+ksoup = "0.2.5"
+ksoupNetwork = "0.2.5"
 ktorClient = "3.3.0"
 protobuf = "0.9.5"
 protobufJL = "4.32.1"
@@ -59,6 +61,8 @@ coil-svg = { group = "io.coil-kt", name = "coil-svg", version.ref = "coil" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
 kotlinx-serialization-protobuf = { module = "org.jetbrains.kotlinx:kotlinx-serialization-protobuf", version.ref = "kotlinxSerialization" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+ksoup = { module = "com.fleeksoft.ksoup:ksoup", version.ref = "ksoup" }
+ksoup-network = { module = "com.fleeksoft.ksoup:ksoup-network", version.ref = "ksoupNetwork" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktorClient" }
 ktor-client-cookies = { module = "io.ktor:ktor-client-cookies", version.ref = "ktorClient" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktorClient" }

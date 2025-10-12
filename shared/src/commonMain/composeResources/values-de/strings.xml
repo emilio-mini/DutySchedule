@@ -136,5 +136,6 @@
     <string name="data_dutytype_recertification">Rezertifizierung</string>
     <string name="data_dutytype_haend">HÄND Dienst</string>
     <string name="data_dutytype_administrative">Innendienst</string>
+    <string name="data_dutytype_event">Veranstaltung</string>
     <string name="components_piechart_empty">Keine Daten verfügbar</string>
 </resources>

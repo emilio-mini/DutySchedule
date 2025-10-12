@@ -26,6 +26,7 @@ import me.emiliomini.dutyschedule.shared.ui.icons.Coffee
 import me.emiliomini.dutyschedule.shared.ui.icons.EcgHeart
 import me.emiliomini.dutyschedule.shared.ui.icons.EmojiPeople
 import me.emiliomini.dutyschedule.shared.ui.icons.Exercise
+import me.emiliomini.dutyschedule.shared.ui.icons.Festival
 import me.emiliomini.dutyschedule.shared.ui.icons.MedicalServices
 import me.emiliomini.dutyschedule.shared.ui.icons.QuestionMark
 import me.emiliomini.dutyschedule.shared.ui.icons.School
@@ -91,6 +92,7 @@ fun MinimalDutyCard(
                             DutyType.RECERTIFICATION -> EcgHeart
                             DutyType.HAEND -> MedicalServices
                             DutyType.ADMINISTRATIVE -> Coffee
+                            DutyType.EVENT -> Festival
                             else -> QuestionMark
                         },
                         contentDescription = null,
