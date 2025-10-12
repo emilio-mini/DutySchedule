@@ -1,5 +1,5 @@
 package me.emiliomini.dutyschedule.shared.api
 
-actual fun initializePlatformAlarmApi(): PlatformAlarmApi {
+actual fun initializePlatformNotificationApi(): PlatformNotificationApi {
     TODO("Not yet implemented")
 }
