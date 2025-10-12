@@ -1,13 +1,12 @@
 package me.emiliomini.dutyschedule.shared.mappings
 
-enum class NotificationChannelMapping(val id: String, val channelName: String, val description: String, val importance: NotificationImportance) {
-    UPDATES("updates", "App Updates", "Channel for app updates", NotificationImportance.DEFAULT),
-    ALARMS("alarms", "Duty Alarms", "Channel for duty alarms", NotificationImportance.HIGH)
-}
+import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotificationChannel
+import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotificationPriority
 
-enum class NotificationImportance {
-    LOW,
-    DEFAULT,
-    HIGH,
-    MAX
+
+object NotificationChannelMapping {
+    val ALARMS = MultiplatformNotificationChannel(
+        "alarms", "Duty Alarms", "Channel for duty alarms",
+        MultiplatformNotificationPriority.URGENT
+    )
 }

@@ -7,11 +7,12 @@ data class MultiplatformNotification(
     val title: String,
     val content: String,
     val leftAction: MultiplatformNotificationAction? = null,
-    val rightAction: MultiplatformNotificationAction? = null
+    val rightAction: MultiplatformNotificationAction? = null,
+    val onDismiss: (() -> Unit)? = null
 )
 
 data class MultiplatformNotificationAction(
-    val title: String,
+    val title: String = "",
     val action: () -> Unit
 )
 

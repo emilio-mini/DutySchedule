@@ -7,15 +7,10 @@ import android.content.Intent
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.os.IBinder
-import dutyschedule.shared.generated.resources.Res
-import dutyschedule.shared.generated.resources.notifications_alarms_duty_action_dismiss
-import dutyschedule.shared.generated.resources.notifications_alarms_duty_content
-import dutyschedule.shared.generated.resources.notifications_alarms_duty_title
-import me.emiliomini.dutyschedule.shared.mappings.NotificationChannelMapping
-import org.jetbrains.compose.resources.getString
-import androidx.core.net.toUri
 import androidx.core.app.NotificationCompat
+import androidx.core.net.toUri
 import me.emiliomini.dutyschedule.shared.R
+import me.emiliomini.dutyschedule.shared.mappings.NotificationChannelMapping
 
 class AlarmSoundService : Service() {
     private lateinit var mediaPlayer: MediaPlayer
@@ -49,9 +44,12 @@ class AlarmSoundService : Service() {
             return START_NOT_STICKY
         }
 
+        (getPlatformNotificationApi() as AndroidNotificationApi).verifyOrCreateChannel(
+            NotificationChannelMapping.ALARMS
+        )
+        val notification = createNotification()
+        startForeground(1, notification)
 
-        //val notification = createNotification()
-        //startForeground(1, notification)
         mediaPlayer.start()
 
         return START_STICKY
@@ -67,7 +65,7 @@ class AlarmSoundService : Service() {
         }
     }
 
-    private suspend fun createNotification(): Notification {
+    private fun createNotification(): Notification {
         val stopSoundIntent = Intent(this, AlarmSoundService::class.java).apply {
             setAction(ACTION_STOP_SOUND)
         }
@@ -81,13 +79,15 @@ class AlarmSoundService : Service() {
 
         return NotificationCompat.Builder(this, NotificationChannelMapping.ALARMS.id)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(getString(Res.string.notifications_alarms_duty_title))
-            .setContentText(getString(Res.string.notifications_alarms_duty_content))
+            .setContentTitle("Reminder")
+            .setContentText("Swipe to dismiss")
+            //.setContentTitle(getString(Res.string.notifications_alarms_duty_title))
+            //.setContentText(getString(Res.string.notifications_alarms_duty_content))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
             .addAction(
                 0,
-                getString(Res.string.notifications_alarms_duty_action_dismiss),
+                "Dismiss", // getString(Res.string.notifications_alarms_duty_action_dismiss),
                 stopSoundPendingIntent
             )
             .setDeleteIntent(stopSoundPendingIntent)

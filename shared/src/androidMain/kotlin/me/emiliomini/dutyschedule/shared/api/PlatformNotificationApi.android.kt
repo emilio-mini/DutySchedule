@@ -8,16 +8,16 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import me.emiliomini.dutyschedule.shared.R
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotification
+import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotificationAction
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotificationChannel
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotificationPriority
 import me.emiliomini.dutyschedule.shared.api.notifications.NotificationActionReceiver
 import me.emiliomini.dutyschedule.shared.api.notifications.NotificationActionRegistry
 
 class AndroidNotificationApi : PlatformNotificationApi {
-
     private var manager: NotificationManager? = null
 
-    override suspend fun send(notification: MultiplatformNotification) {
+    override fun send(notification: MultiplatformNotification) {
         verifyOrCreateChannel(notification.channel)
 
         val notificationBuilder =
@@ -60,15 +60,33 @@ class AndroidNotificationApi : PlatformNotificationApi {
             notificationBuilder.addAction(0, notification.rightAction.title, pending)
         }
 
+        if (notification.onDismiss != null) {
+            val code =
+                NotificationActionRegistry.register(MultiplatformNotificationAction(action = notification.onDismiss))
+
+            val actionIntent =
+                Intent(APPLICATION_CONTEXT, NotificationActionReceiver::class.java).apply {
+                    action = NotificationActionReceiver.ACTION_PERFORM
+                    putExtra(NotificationActionReceiver.EXTRA_REQUEST_CODE, code)
+                }
+            val pending = PendingIntent.getBroadcast(
+                APPLICATION_CONTEXT,
+                code,
+                actionIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            notificationBuilder.setDeleteIntent(pending)
+        }
+
         NotificationManagerCompat.from(APPLICATION_CONTEXT)
             .notify(notification.id, notificationBuilder.build())
     }
 
-    override suspend fun dismiss(notification: MultiplatformNotification) {
+    override fun dismiss(notification: MultiplatformNotification) {
         NotificationManagerCompat.from(APPLICATION_CONTEXT).cancel(notification.id)
     }
 
-    private fun verifyOrCreateChannel(channel: MultiplatformNotificationChannel) {
+    fun verifyOrCreateChannel(channel: MultiplatformNotificationChannel) {
         val manager = getNotificationManager()
         val exists = manager.getNotificationChannel(channel.id) != null
 
