@@ -52,5 +52,5 @@ fun DutyDefinition.getAllocatedSlotsCount(): Int {
 }
 
 fun DutyDefinition.isNightShift(zone: TimeZone = TimeZone.currentSystemDefault()): Boolean {
-    return begin.isNight(zone) || end.isNight(zone)
+    return midpointInstant(begin.toInstant(), end.toInstant()).isNight(zone)
 }

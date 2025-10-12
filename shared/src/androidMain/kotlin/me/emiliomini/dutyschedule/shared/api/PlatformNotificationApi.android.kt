@@ -96,8 +96,8 @@ class AndroidNotificationApi : PlatformNotificationApi {
         manager?.let { return it }
 
         val manager = APPLICATION_CONTEXT.getSystemService(NotificationManager::class.java)
-        this.manager = manager;
-        return manager;
+        this.manager = manager
+        return manager
     }
 }
 
