@@ -1,15 +1,25 @@
 package me.emiliomini.dutyschedule.shared.mappings
 
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 enum class Role {
     NONE,
     DEVELOPER;
 
+    @Composable
     fun colors(): List<Color> {
-        return when (this) {
-            DEVELOPER -> listOf(Color(0xFFFF9800), Color(0xFF2196F3), Color(0xFFFF9800))
-            NONE -> emptyList()
+        return if (isSystemInDarkTheme()) {
+            when (this) {
+                DEVELOPER -> listOf(Color(0xFFFFFF00), Color(0xFFFF9800), Color(0xFFFFFF00))
+                NONE -> emptyList()
+            }
+        } else {
+            when (this) {
+                DEVELOPER -> listOf(Color(0x66000000), Color(0xFFFF9800), Color(0x66000000))
+                NONE -> emptyList()
+            }
         }
     }
 

@@ -117,7 +117,6 @@ fun EmployeeDetailSheet(
 
     if (employee != null && slot != null) {
         ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
-
             Column(
                 modifier = Modifier.padding(horizontal = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -142,7 +141,7 @@ fun EmployeeDetailSheet(
                         )
                     }
                     Text(
-                        text = employee!!.identifier ?: "?????",
+                        text = employee!!.identifier ?: "*****",
                         style = MaterialTheme.typography.bodyMediumEmphasized
                     )
                 }
