@@ -75,7 +75,7 @@ import kotlin.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun HomeScreen(
+fun ScheduleScreen(
     modifier: Modifier = Modifier,
     bottomBar: @Composable (() -> Unit) = {},
 ) {

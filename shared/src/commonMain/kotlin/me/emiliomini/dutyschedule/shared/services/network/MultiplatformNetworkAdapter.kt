@@ -28,7 +28,7 @@ object MultiplatformNetworkAdapter {
                     logger.d(message)
                 }
             }
-            level = LogLevel.ALL
+            level = LogLevel.INFO
         }
 
         install(HttpCookies) {

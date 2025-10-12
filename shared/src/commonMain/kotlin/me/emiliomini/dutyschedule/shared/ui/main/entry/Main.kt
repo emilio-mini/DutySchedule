@@ -26,7 +26,7 @@ import me.emiliomini.dutyschedule.shared.ui.icons.Schedule
 import me.emiliomini.dutyschedule.shared.ui.main.screens.AlarmsScreen
 import me.emiliomini.dutyschedule.shared.ui.main.screens.ArchiveScreen
 import me.emiliomini.dutyschedule.shared.ui.main.screens.DashboardScreen
-import me.emiliomini.dutyschedule.shared.ui.main.screens.HomeScreen
+import me.emiliomini.dutyschedule.shared.ui.main.screens.ScheduleScreen
 import me.emiliomini.dutyschedule.shared.ui.theme.DutyScheduleTheme
 import org.jetbrains.compose.resources.stringResource
 
@@ -79,7 +79,7 @@ fun Main(modifier: Modifier = Modifier, onLogout: () -> Unit, onRestart: () -> U
                     onRestart()
                 })
 
-            1 -> HomeScreen(
+            1 -> ScheduleScreen(
                 bottomBar = {
                     NavigationBar {
                         navItems.forEachIndexed { index, item ->
