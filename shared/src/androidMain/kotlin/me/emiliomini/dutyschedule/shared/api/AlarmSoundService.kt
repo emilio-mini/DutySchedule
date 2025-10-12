@@ -9,8 +9,14 @@ import android.media.MediaPlayer
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.net.toUri
+import dutyschedule.shared.generated.resources.Res
+import dutyschedule.shared.generated.resources.notifications_alarms_duty_action_dismiss
+import dutyschedule.shared.generated.resources.notifications_alarms_duty_content
+import dutyschedule.shared.generated.resources.notifications_alarms_duty_title
+import kotlinx.coroutines.runBlocking
 import me.emiliomini.dutyschedule.shared.R
 import me.emiliomini.dutyschedule.shared.mappings.NotificationChannelMapping
+import org.jetbrains.compose.resources.getString
 
 class AlarmSoundService : Service() {
     private lateinit var mediaPlayer: MediaPlayer
@@ -77,17 +83,25 @@ class AlarmSoundService : Service() {
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
             )
 
+        val title = runBlocking {
+            getString(Res.string.notifications_alarms_duty_title)
+        }
+        val content = runBlocking {
+            getString(Res.string.notifications_alarms_duty_content)
+        }
+        val dismiss = runBlocking {
+            getString(Res.string.notifications_alarms_duty_action_dismiss)
+        }
+
         return NotificationCompat.Builder(this, NotificationChannelMapping.ALARMS.id)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("Reminder")
-            .setContentText("Swipe to dismiss")
-            //.setContentTitle(getString(Res.string.notifications_alarms_duty_title))
-            //.setContentText(getString(Res.string.notifications_alarms_duty_content))
+            .setContentTitle(title)
+            .setContentText(content)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
             .addAction(
                 0,
-                "Dismiss", // getString(Res.string.notifications_alarms_duty_action_dismiss),
+                dismiss,
                 stopSoundPendingIntent
             )
             .setDeleteIntent(stopSoundPendingIntent)
