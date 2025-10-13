@@ -53,6 +53,7 @@ import me.emiliomini.dutyschedule.shared.ui.components.MinimalDutyCard
 import me.emiliomini.dutyschedule.shared.ui.icons.DeleteSweep
 import me.emiliomini.dutyschedule.shared.util.format
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.floor
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -149,7 +150,7 @@ fun DashboardScreen(
                     ) {
                         Row(verticalAlignment = Alignment.Bottom) {
                             Text(
-                                "${(animatedHours * 100).toInt() / 100}",
+                                "${floor(animatedHours * 100) / 100}",
                                 style = MaterialTheme.typography.titleLarge
                             )
                             Text(

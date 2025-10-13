@@ -107,7 +107,7 @@ fun ArcProgressIndicator(
                 modifier = Modifier.offset(y = sizeDp / 3),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Icon(Check, contentDescription = null) FIXME: Checkmark icon seems to be visually glitched
+                Icon(Check, contentDescription = null) // FIXME: Checkmark icon seems to be visually glitched
                 Text("${floor(animatedProgress).toInt()}x")
             }
         }
