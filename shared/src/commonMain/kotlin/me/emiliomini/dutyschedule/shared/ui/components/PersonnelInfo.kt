@@ -92,7 +92,7 @@ fun AppPersonnelInfo(
         }
         Column {
             Text(
-                text = infoText.ifBlank { "?????" },
+                text = infoText.ifBlank { "*****" },
                 color = MaterialTheme.colorScheme.outline,
                 fontSize = MaterialTheme.typography.labelSmall.fontSize,
                 fontWeight = FontWeight.Light
