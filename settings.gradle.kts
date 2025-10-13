@@ -20,5 +20,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Duty Schedule"
+rootProject.name = "DutySchedule"
 include(":app")
+include(":shared")

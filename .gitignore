@@ -18,3 +18,4 @@ local.properties
 secrets.properties
 /.idea/httpRequests
 /api/http-client.private.env.json
+/.kotlin

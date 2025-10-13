@@ -1,0 +1,16 @@
+package me.emiliomini.dutyschedule.shared.datastores
+
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.protobuf.ProtoNumber
+
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+data class UpcomingDutyItems(
+    @ProtoNumber(1)
+    val minimalDutyDefinitions: List<MinimalDutyDefinition> = emptyList()
+) : MultiplatformDataModel
+
+fun UpcomingDutyItems.isDefault(): Boolean {
+    return this == UpcomingDutyItems()
+}

@@ -1,0 +1,16 @@
+package me.emiliomini.dutyschedule.shared.datastores
+
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.protobuf.ProtoNumber
+
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+data class Requirement(
+    @ProtoNumber(1)
+    val guid: String = ""
+) : MultiplatformDataModel
+
+fun Requirement.isDefault(): Boolean {
+    return this == Requirement()
+}

@@ -1,0 +1,23 @@
+package me.emiliomini.dutyschedule.shared.mappings
+
+fun docScedConfigFromString(s: String) = when (s) {
+    "11d43db06551ef61d472076f222802ca02cd1383_2_1551803241_1914" -> "welsstadt"
+    "60d9b5e93c24feced17c513fb3f95c18cd828abe_2_1551803338_4809" -> "welsland"
+    "e74e7dd439fcd0e3a22ddb19ac786993d81e25a5_2_1551861301_1348" -> "braunau"
+    "a8a19bfefce22848c171c7033a0370e699d14b95_2_1544538123_4081" -> "freistadt"
+    "a915b89c84bdd571730aad62b765a763c6f855f0_2_1551861369_7926" -> "gmundennord"
+    "44028dd486b56dd19e3c6e5c4c53d796f818dad7_2_1551861387_2338" -> "gmsued1"
+    "28de527b1d170cd780d9ffa9577f02368b9758d6_2_1551861438_2957" -> "kirchdorf"
+    "d50965e27324171d7f3408637c36de26f24eb819_2_1551807782_6699" -> "linzn"
+    "0eb2378daae106ce287ebb178ed54b2748a7221c_2_1551802664_799" -> "perg"
+    "68dba753770d0bfdaba3be21392b43838ef64756_2_1551861594_1169" -> "rohrbach"
+    "32e9baebefb8e74418e62a4bbf431bfd0c2197b2_2_1551861639_0161" -> "steyr"
+    "cf123afe6e9b3e4b4e812a6f7659421b5c22cb16_2_1551861656_1816" -> "steyrstadt"
+    "8441f3ffd6efd473491c68bd29af172b07ca9b1c_2_1551803765_2408" -> "lltraun"
+    "7f9db4fff7a991a9e578c7c5c0f31b6554b8cd24_2_1551803724_0561" -> "llflorian"
+    "0ad2ea66501e65d352d093b7ddb77739542cd15b_2_1569822329_5999" -> "voecklabruck"
+    "278c1d32c2a17cd8c75a673dd7f73f533f83986d_2_1551861412_1988" -> "eferdinggrieskirchen"
+    "19a76eeb005badf4c42f239ff6bf7e8fb81096bf_2_1551861762_4779" -> "grieskirchen"
+    "abbebaa7c6c54013f0105e8e1e99d50204ee4409_2_1551861276_504" -> "schaerding"
+    else -> null
+}
