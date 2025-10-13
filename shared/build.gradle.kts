@@ -85,6 +85,9 @@ kotlin {
 
                 // Time
                 implementation(libs.kotlinx.datetime)
+
+                // Permissions
+                implementation(libs.calf.permissions)
             }
         }
 

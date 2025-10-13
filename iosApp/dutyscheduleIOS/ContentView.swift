@@ -10,12 +10,7 @@ import sharedKit
 
 struct ContentView: View {
     var body: some View {
-        MainComposeHost(
-            onLogout: {
-            },
-            onRestart: {
-            }
-        )
+        MainComposeHost()
     }
 }
 
@@ -25,11 +20,8 @@ struct ContentView: View {
 
 struct MainComposeHost: UIViewControllerRepresentable {
 
-    var onLogout: () -> Void
-    var onRestart: () -> Void
-
     func makeUIViewController(context: Context) -> UIViewController {
-        return MainViewControllerKt.MainViewController(onLogout: onLogout, onRestart: onRestart)
+        return MainViewControllerKt.MainViewController()
     }
 
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {

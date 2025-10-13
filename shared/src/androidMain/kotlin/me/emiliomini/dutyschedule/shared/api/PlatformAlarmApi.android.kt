@@ -19,16 +19,39 @@ import kotlin.time.Instant
 class AndroidAlarmApi : PlatformAlarmApi {
     private val logger = getPlatformLogger("AndroidAlarmApi")
 
+    override fun requestPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val intent =
+                Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                    data = Uri.fromParts("package", APPLICATION_CONTEXT.packageName, null)
+                }
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            APPLICATION_CONTEXT.startActivity(intent)
+        }
+    }
+
+    override fun isPermissionGranted(): Boolean {
+        val alarmManager =
+            APPLICATION_CONTEXT.getSystemService(Context.ALARM_SERVICE) as AlarmManager?
+        return if (alarmManager != null) {
+            !(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms())
+        } else {
+            true
+        }
+    }
+
     override suspend fun setAlarm(
         id: Int,
         time: Instant,
         zone: TimeZone
     ) {
-        val alarmManager = APPLICATION_CONTEXT.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val alarmManager =
+            APPLICATION_CONTEXT.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
             val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
                 data = Uri.fromParts("package", APPLICATION_CONTEXT.packageName, null)
             }
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             APPLICATION_CONTEXT.startActivity(intent)
             return
         }
@@ -64,7 +87,8 @@ class AndroidAlarmApi : PlatformAlarmApi {
     }
 
     override suspend fun cancelAlarm(id: Int) {
-        val alarmManager = APPLICATION_CONTEXT.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val alarmManager =
+            APPLICATION_CONTEXT.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val alarmIntent = Intent(APPLICATION_CONTEXT, AlarmReceiver::class.java)
         val pendingAlarmIntent = PendingIntent.getBroadcast(
             APPLICATION_CONTEXT,

@@ -7,6 +7,16 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 class IosAlarmApi : PlatformAlarmApi {
+
+    override fun requestPermission() {
+        // TODO: Implement
+    }
+
+    override fun isPermissionGranted(): Boolean {
+        // TODO: Implement
+        return false
+    }
+
     override suspend fun setAlarm(
         id: Int,
         time: Instant,

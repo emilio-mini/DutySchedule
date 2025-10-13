@@ -1,18 +1,5 @@
-package me.emiliomini.dutyschedule.ui.onboarding.activity
+package me.emiliomini.dutyschedule.shared.ui.main.entry
 
-import android.Manifest
-import android.app.AlarmManager
-import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.net.Uri
-import android.os.Build
-import android.os.Bundle
-import android.provider.Settings
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
@@ -72,82 +59,61 @@ import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.
 import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.currentStateAsState
+import com.mohamedrejeb.calf.permissions.ExperimentalPermissionsApi
+import com.mohamedrejeb.calf.permissions.Permission
+import com.mohamedrejeb.calf.permissions.isGranted
+import com.mohamedrejeb.calf.permissions.rememberPermissionState
+import dutyschedule.shared.generated.resources.Res
+import dutyschedule.shared.generated.resources.mock_notification_1
+import dutyschedule.shared.generated.resources.mock_notification_2
+import dutyschedule.shared.generated.resources.mockup
+import dutyschedule.shared.generated.resources.onboarding_action_demo
+import dutyschedule.shared.generated.resources.onboarding_action_skip
+import dutyschedule.shared.generated.resources.onboarding_alarms_body
+import dutyschedule.shared.generated.resources.onboarding_alarms_title
+import dutyschedule.shared.generated.resources.onboarding_intro_body
+import dutyschedule.shared.generated.resources.onboarding_intro_title
+import dutyschedule.shared.generated.resources.onboarding_login_body
+import dutyschedule.shared.generated.resources.onboarding_login_email
+import dutyschedule.shared.generated.resources.onboarding_login_password
+import dutyschedule.shared.generated.resources.onboarding_login_title
+import dutyschedule.shared.generated.resources.onboarding_notifications_body
+import dutyschedule.shared.generated.resources.onboarding_notifications_title
 import kotlinx.coroutines.launch
-import me.emiliomini.dutyschedule.R
+import me.emiliomini.dutyschedule.shared.api.getPlatformAlarmApi
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
 import me.emiliomini.dutyschedule.shared.ui.icons.Check
 import me.emiliomini.dutyschedule.shared.ui.icons.ChevronRight
 import me.emiliomini.dutyschedule.shared.ui.icons.Fingerprint
 import me.emiliomini.dutyschedule.shared.ui.icons.Person
-import me.emiliomini.dutyschedule.shared.ui.theme.DutyScheduleTheme
-import me.emiliomini.dutyschedule.ui.main.activity.MainActivity
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
-
-class OnboardingActivity : ComponentActivity() {
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        setContent {
-            DutyScheduleTheme {
-                OnboardingScreen(
-                    successAction = {
-                        val intent = Intent(this@OnboardingActivity, MainActivity::class.java)
-                        startActivity(intent)
-                        finish()
-                    })
-            }
-        }
-    }
-}
 
 private data class Page(val content: @Composable () -> Unit)
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalPermissionsApi::class)
 @Composable
-fun OnboardingScreen(successAction: () -> Unit = {}) {
-    val context = LocalContext.current
+fun Onboarding() {
     val scope = rememberCoroutineScope()
     var blockContinue by remember { mutableStateOf(false) }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager?
 
-    var notificationPermissionCheck by remember { mutableStateOf(false) }
+    val notificationPermissionCheck = rememberPermissionState(Permission.Notification)
     var alarmPermissionCheck by remember { mutableStateOf(false) }
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(), onResult = { isGranted: Boolean ->
-            notificationPermissionCheck = isGranted
-        })
 
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(lifecycleOwner.lifecycle.currentStateAsState().value) {
         if (lifecycleOwner.lifecycle.currentState == Lifecycle.State.RESUMED) {
-            alarmPermissionCheck = if (alarmManager != null) {
-                !(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms())
-            } else {
-                true
-            }
-            notificationPermissionCheck =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    ContextCompat.checkSelfPermission(
-                        context, Manifest.permission.POST_NOTIFICATIONS
-                    ) == PackageManager.PERMISSION_GRANTED
-                } else {
-                    true
-                }
+            alarmPermissionCheck = getPlatformAlarmApi().isPermissionGranted()
         }
     }
 
@@ -161,11 +127,11 @@ fun OnboardingScreen(successAction: () -> Unit = {}) {
                 verticalArrangement = Arrangement.Bottom
             ) {
                 Text(
-                    stringResource(R.string.onboarding_intro_title),
+                    stringResource(Res.string.onboarding_intro_title),
                     style = MaterialTheme.typography.headlineLarge,
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
-                Text(stringResource(R.string.onboarding_intro_body))
+                Text(stringResource(Res.string.onboarding_intro_body))
             }
         }), Page({
             Column(
@@ -181,7 +147,7 @@ fun OnboardingScreen(successAction: () -> Unit = {}) {
                     modifier = Modifier.padding(bottom = 12.dp)
                 ) {
                     Text(
-                        stringResource(R.string.onboarding_alarms_title),
+                        stringResource(Res.string.onboarding_alarms_title),
                         style = MaterialTheme.typography.headlineLarge,
                         modifier = Modifier.weight(1f)
                     )
@@ -189,13 +155,7 @@ fun OnboardingScreen(successAction: () -> Unit = {}) {
                         modifier = Modifier.width(64.dp),
                         checked = alarmPermissionCheck,
                         onCheckedChange = {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                                val intent =
-                                    Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
-                                        data = Uri.fromParts("package", context.packageName, null)
-                                    }
-                                context.startActivity(intent)
-                            }
+                            getPlatformAlarmApi().requestPermission()
                         },
                         thumbContent = {
                             if (alarmPermissionCheck) {
@@ -210,7 +170,7 @@ fun OnboardingScreen(successAction: () -> Unit = {}) {
                             }
                         })
                 }
-                Text(stringResource(R.string.onboarding_alarms_body))
+                Text(stringResource(Res.string.onboarding_alarms_body))
             }
         }), Page({
             Column(
@@ -226,27 +186,18 @@ fun OnboardingScreen(successAction: () -> Unit = {}) {
                     modifier = Modifier.padding(bottom = 12.dp)
                 ) {
                     Text(
-                        stringResource(R.string.onboarding_notifications_title),
+                        stringResource(Res.string.onboarding_notifications_title),
                         style = MaterialTheme.typography.headlineLarge,
                         modifier = Modifier.weight(1f)
                     )
                     Switch(
                         modifier = Modifier.width(64.dp),
-                        checked = notificationPermissionCheck,
+                        checked = notificationPermissionCheck.status.isGranted,
                         onCheckedChange = {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                val isPermissionGranted = ContextCompat.checkSelfPermission(
-                                    context, Manifest.permission.POST_NOTIFICATIONS
-                                ) == PackageManager.PERMISSION_GRANTED
-
-                                if (!isPermissionGranted) {
-                                    permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                                }
-                                notificationPermissionCheck = isPermissionGranted
-                            }
+                            notificationPermissionCheck.launchPermissionRequest()
                         },
                         thumbContent = {
-                            if (notificationPermissionCheck) {
+                            if (notificationPermissionCheck.status.isGranted) {
                                 Icon(
                                     Check, contentDescription = null,
                                     modifier = Modifier.size(
@@ -258,7 +209,7 @@ fun OnboardingScreen(successAction: () -> Unit = {}) {
                             }
                         })
                 }
-                Text(stringResource(R.string.onboarding_notifications_body))
+                Text(stringResource(Res.string.onboarding_notifications_body))
             }
         }), Page({
             val (usernameFocusRequester, passwordFocusRequester) = FocusRequester.createRefs()
@@ -271,11 +222,11 @@ fun OnboardingScreen(successAction: () -> Unit = {}) {
                 verticalArrangement = Arrangement.Bottom
             ) {
                 Text(
-                    stringResource(R.string.onboarding_login_title),
+                    stringResource(Res.string.onboarding_login_title),
                     style = MaterialTheme.typography.headlineLarge,
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
-                Text(stringResource(R.string.onboarding_login_body))
+                Text(stringResource(Res.string.onboarding_login_body))
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
                     modifier = Modifier
@@ -284,7 +235,7 @@ fun OnboardingScreen(successAction: () -> Unit = {}) {
                     value = email,
                     onValueChange = { email = it },
                     label = {
-                        Text(stringResource(R.string.onboarding_login_email))
+                        Text(stringResource(Res.string.onboarding_login_email))
                     },
                     leadingIcon = {
                         Icon(Person, contentDescription = null)
@@ -305,7 +256,7 @@ fun OnboardingScreen(successAction: () -> Unit = {}) {
                         .focusRequester(passwordFocusRequester),
                     value = password,
                     onValueChange = { password = it },
-                    label = { Text(stringResource(R.string.onboarding_login_password)) },
+                    label = { Text(stringResource(Res.string.onboarding_login_password)) },
                     leadingIcon = { Icon(Fingerprint, contentDescription = null) },
                     visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(
@@ -321,9 +272,6 @@ fun OnboardingScreen(successAction: () -> Unit = {}) {
                             val result = DutyScheduleService.login(
                                 email, password
                             )
-                            if (result) {
-                                successAction()
-                            }
 
                             blockContinue = false
                         }
@@ -379,7 +327,7 @@ fun OnboardingScreen(successAction: () -> Unit = {}) {
                             shape = MaterialShapes.Sunny.toShape()
                         ))
                 Image(
-                    painter = painterResource(id = R.drawable.mockup),
+                    painter = painterResource(Res.drawable.mockup),
                     contentDescription = null,
                     modifier = Modifier
                         .size(1024.dp)
@@ -387,14 +335,14 @@ fun OnboardingScreen(successAction: () -> Unit = {}) {
                         .rotate(20f)
                 )
                 Image(
-                    painter = painterResource(id = R.drawable.mock_notification_2),
+                    painter = painterResource(Res.drawable.mock_notification_2),
                     contentDescription = null,
                     modifier = Modifier
                         .size(300.dp)
                         .offset(x = notification1PosX, y = 135.dp)
                 )
                 Image(
-                    painter = painterResource(id = R.drawable.mock_notification_1),
+                    painter = painterResource(Res.drawable.mock_notification_1),
                     contentDescription = null,
                     modifier = Modifier
                         .size(300.dp)
@@ -424,7 +372,6 @@ fun OnboardingScreen(successAction: () -> Unit = {}) {
                                         email, password
                                     )
                                     if (result) {
-                                        successAction()
                                     }
 
                                     blockContinue = false
@@ -435,9 +382,9 @@ fun OnboardingScreen(successAction: () -> Unit = {}) {
                         }
                     ) {
                         if (pageIndex == pages.lastIndex) {
-                            Text(stringResource(R.string.onboarding_action_demo))
+                            Text(stringResource(Res.string.onboarding_action_demo))
                         } else {
-                            Text(stringResource(R.string.onboarding_action_skip))
+                            Text(stringResource(Res.string.onboarding_action_skip))
                         }
                     }
                 }
@@ -456,9 +403,6 @@ fun OnboardingScreen(successAction: () -> Unit = {}) {
                                 val result = DutyScheduleService.login(
                                     email, password
                                 )
-                                if (result) {
-                                    successAction()
-                                }
 
                                 blockContinue = false
                             }
