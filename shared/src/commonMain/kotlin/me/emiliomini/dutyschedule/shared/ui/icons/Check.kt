@@ -20,20 +20,12 @@ val Check: ImageVector
             path(
                 fill = SolidColor(Color(0xFF000000))
             ) {
-                moveToRelative(382f, -354f)
-                lineToRelative(339f, -339f)
-                quadToRelative(12f, -12f, 28f, -12f)
-                reflectiveQuadToRelative(28f, 12f)
-                reflectiveQuadToRelative(12f, 28.5f)
-                reflectiveQuadToRelative(-12f, 28.5f)
-                lineTo(410f, 692f)
-                quadToRelative(-12f, 12f, -28f, 12f)
-                reflectiveQuadToRelative(-28f, -12f)
-                lineTo(182f, 520f)
-                quadToRelative(-12f, -12f, -11.5f, -28.5f)
-                reflectiveQuadTo(183f, 463f)
-                reflectiveQuadToRelative(28.5f, -12f)
-                reflectiveQuadToRelative(28.5f, 12f)
+                moveTo(382f, 720f)
+                lineTo(154f, 492f)
+                lineToRelative(57f, -57f)
+                lineToRelative(171f, 171f)
+                lineToRelative(367f, -367f)
+                lineToRelative(57f, 57f)
                 close()
             }
         }.build()
@@ -42,4 +34,6 @@ val Check: ImageVector
     }
 
 private var _Check: ImageVector? = null
+
+
 

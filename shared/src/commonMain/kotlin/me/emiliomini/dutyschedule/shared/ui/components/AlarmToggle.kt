@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.shared.api.getPlatformAlarmApi
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.icons.AlarmAdd
-import me.emiliomini.dutyschedule.shared.ui.icons.AlarmOn
+import me.emiliomini.dutyschedule.shared.ui.icons.Check
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -46,11 +46,15 @@ fun AlarmToggle(modifier: Modifier = Modifier, dutyBegin: Instant, guid: String)
                     }
                 } else {
                     scope.launch {
-                        val alarmOffset = StorageService.USER_PREFERENCES.getOrDefault().alarmOffsetMin
+                        val alarmOffset =
+                            StorageService.USER_PREFERENCES.getOrDefault().alarmOffsetMin
                         val alarmOffsetMillis = alarmOffset * 60_000L
 
                         val timestamp = dutyBeginMillis - alarmOffsetMillis
-                        getPlatformAlarmApi().setAlarm(guid.hashCode(), Instant.fromEpochMilliseconds(timestamp))
+                        getPlatformAlarmApi().setAlarm(
+                            guid.hashCode(),
+                            Instant.fromEpochMilliseconds(timestamp)
+                        )
                         alarmBlocked = false
                         alarmSet = true
                     }
@@ -58,7 +62,7 @@ fun AlarmToggle(modifier: Modifier = Modifier, dutyBegin: Instant, guid: String)
             }, enabled = !alarmBlocked
         ) {
             if (alarmSet) {
-                Icon(AlarmOn, contentDescription = "Reminder set")
+                Icon(Check, contentDescription = "Reminder set")
             } else {
                 Icon(AlarmAdd, contentDescription = "Set Reminder")
             }

@@ -6,6 +6,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 
+/**
+ * FIXME: This icon doesnt render correctly. Cause unknown. Temporarily replaced by Check until fixed.
+ */
 val AlarmOn: ImageVector
     get() {
         if (_AlarmOn != null) return _AlarmOn!!
@@ -90,4 +93,5 @@ val AlarmOn: ImageVector
     }
 
 private var _AlarmOn: ImageVector? = null
+
 

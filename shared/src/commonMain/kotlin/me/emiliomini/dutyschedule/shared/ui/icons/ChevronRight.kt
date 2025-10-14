@@ -21,21 +21,11 @@ val ChevronRight: ImageVector
                 fill = SolidColor(Color(0xFF000000))
             ) {
                 moveTo(504f, 480f)
-                lineTo(348f, 324f)
-                quadToRelative(-11f, -11f, -11f, -28f)
-                reflectiveQuadToRelative(11f, -28f)
-                reflectiveQuadToRelative(28f, -11f)
-                reflectiveQuadToRelative(28f, 11f)
-                lineToRelative(184f, 184f)
-                quadToRelative(6f, 6f, 8.5f, 13f)
-                reflectiveQuadToRelative(2.5f, 15f)
-                reflectiveQuadToRelative(-2.5f, 15f)
-                reflectiveQuadToRelative(-8.5f, 13f)
-                lineTo(404f, 692f)
-                quadToRelative(-11f, 11f, -28f, 11f)
-                reflectiveQuadToRelative(-28f, -11f)
-                reflectiveQuadToRelative(-11f, -28f)
-                reflectiveQuadToRelative(11f, -28f)
+                lineTo(320f, 296f)
+                lineToRelative(56f, -56f)
+                lineToRelative(240f, 240f)
+                lineToRelative(-240f, 240f)
+                lineToRelative(-56f, -56f)
                 close()
             }
         }.build()
@@ -44,4 +34,3 @@ val ChevronRight: ImageVector
     }
 
 private var _ChevronRight: ImageVector? = null
-

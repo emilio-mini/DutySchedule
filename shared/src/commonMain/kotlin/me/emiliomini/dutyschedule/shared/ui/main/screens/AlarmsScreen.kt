@@ -57,7 +57,7 @@ import me.emiliomini.dutyschedule.shared.datastores.Alarm
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.components.CardColumn
 import me.emiliomini.dutyschedule.shared.ui.icons.AlarmOff
-import me.emiliomini.dutyschedule.shared.ui.icons.AlarmOn
+import me.emiliomini.dutyschedule.shared.ui.icons.Check
 import me.emiliomini.dutyschedule.shared.ui.icons.NightsStay
 import me.emiliomini.dutyschedule.shared.ui.icons.Sunny
 import me.emiliomini.dutyschedule.shared.ui.main.components.DutyAlarmListItem
@@ -208,7 +208,7 @@ fun AlarmsScreen(
                                             Switch(checked = active, thumbContent = {
                                                 Icon(
                                                     modifier = Modifier.size(SwitchDefaults.IconSize),
-                                                    imageVector = if (active) AlarmOn else AlarmOff,
+                                                    imageVector = if (active) Check else AlarmOff,
                                                     contentDescription = null
                                                 )
                                             }, onCheckedChange = {
