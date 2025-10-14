@@ -119,7 +119,7 @@ fun ScheduleScreen(
         val default = DutyScheduleService.self?.defaultOrg
         val primaryOrg = if (default != null) DutyScheduleService.getOrg(default) else null
 
-        selectedOrg = primaryOrg?.guid ?: allowedOrgs?.first()
+        selectedOrg = primaryOrg?.guid ?: allowedOrgs?.firstOrNull()
     }
 
     LaunchedEffect(
