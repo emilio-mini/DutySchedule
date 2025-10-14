@@ -17,12 +17,17 @@ fun CardListItem(
     supportingContent: @Composable (() -> Unit)? = null,
     leadingContent: @Composable (() -> Unit)? = null,
     trailingContent: @Composable (() -> Unit)? = null,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest
+    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
+    type: CardListItemType = CardListItemType.DEFAULT
 ) {
     ListItem(
         modifier = modifier.background(
-            color = containerColor,
-            shape = RoundedCornerShape(4.dp)
+            color = containerColor, shape = RoundedCornerShape(
+                topStart = if (type == CardListItemType.TOP || type == CardListItemType.SINGLE) 16.dp else 4.dp,
+                topEnd = if (type == CardListItemType.TOP || type == CardListItemType.SINGLE) 16.dp else 4.dp,
+                bottomStart = if (type == CardListItemType.BOTTOM || type == CardListItemType.SINGLE) 16.dp else 4.dp,
+                bottomEnd = if (type == CardListItemType.BOTTOM || type == CardListItemType.SINGLE) 16.dp else 4.dp
+            )
         ),
         colors = ListItemDefaults.colors(
             containerColor = Color.Transparent
@@ -32,4 +37,8 @@ fun CardListItem(
         leadingContent = leadingContent,
         trailingContent = trailingContent
     )
+}
+
+enum class CardListItemType {
+    TOP, DEFAULT, BOTTOM, SINGLE
 }

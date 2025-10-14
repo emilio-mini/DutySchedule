@@ -29,6 +29,7 @@ import dutyschedule.shared.generated.resources.main_settings_title
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
 import me.emiliomini.dutyschedule.shared.ui.components.CardColumn
 import me.emiliomini.dutyschedule.shared.ui.components.CardListItem
+import me.emiliomini.dutyschedule.shared.ui.components.CardListItemType
 import me.emiliomini.dutyschedule.shared.ui.components.EmployeeAvatar
 import me.emiliomini.dutyschedule.shared.ui.icons.Logout
 import me.emiliomini.dutyschedule.shared.ui.icons.Person
@@ -86,7 +87,7 @@ fun SettingsScreen(
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }
-                    })
+                    }, type = CardListItemType.TOP)
                 CardListItem(
                     modifier = Modifier
                         .clickable(onClick = onLogout),
@@ -103,6 +104,7 @@ fun SettingsScreen(
                             tint = MaterialTheme.colorScheme.primary
                         )
                     },
+                    type = CardListItemType.BOTTOM
                 )
             }
         }

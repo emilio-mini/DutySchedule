@@ -41,7 +41,8 @@ import kotlin.time.ExperimentalTime
 fun MinimalDutyCard(
     modifier: Modifier = Modifier,
     duty: MinimalDutyDefinition,
-    demo: Boolean = false
+    demo: Boolean = false,
+    type: CardListItemType = CardListItemType.DEFAULT
 ) {
     val timeFormatter = "HH:mm"
     val dateFormatter = "dd.MM.yyyy"
@@ -100,6 +101,7 @@ fun MinimalDutyCard(
                     )
                 }
             },
+            type = type
         )
         if (!demo) {
             AlarmToggle(dutyBegin = duty.begin.toInstant(), guid = duty.guid)

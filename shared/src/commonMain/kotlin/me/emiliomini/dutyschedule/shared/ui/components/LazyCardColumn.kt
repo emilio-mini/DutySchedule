@@ -17,10 +17,5 @@ fun LazyCardColumn(
     spacing: Dp = 2.dp,
     content: LazyListScope.() -> Unit
 ) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
-    ) {
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(spacing), content = content)
-    }
+    LazyColumn(modifier = modifier, verticalArrangement = Arrangement.spacedBy(spacing), content = content)
 }

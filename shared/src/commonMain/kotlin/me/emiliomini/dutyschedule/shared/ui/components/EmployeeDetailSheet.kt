@@ -85,9 +85,7 @@ import kotlin.time.ExperimentalTime
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun EmployeeDetailSheet(
-    slot: Slot?,
-    orgs: List<Org>,
-    onDismiss: () -> Unit
+    slot: Slot?, orgs: List<Org>, onDismiss: () -> Unit
 ) {
     val employeeItems by StorageService.EMPLOYEES.collectAsState()
 
@@ -98,11 +96,17 @@ fun EmployeeDetailSheet(
     LaunchedEffect(slot, employeeItems) {
         if (slot != null) {
             val local = employeeItems.employees[slot.employeeGuid]
-            employee = if(local != null) {
+            employee = if (local != null) {
                 source = "Loaded from server"
                 local
             } else {
-                logger.d("No stored employee with id ${slot.employeeGuid} found in available ids: ${employeeItems.employees.keys.joinToString(";")}")
+                logger.d(
+                    "No stored employee with id ${slot.employeeGuid} found in available ids: ${
+                        employeeItems.employees.keys.joinToString(
+                            ";"
+                        )
+                    }"
+                )
                 source = "Inline"
                 slot.inlineEmployee
             }
@@ -162,7 +166,9 @@ fun EmployeeDetailSheet(
                                 Icon(
                                     BugReport, contentDescription = null
                                 )
-                            })
+                            },
+                            type = CardListItemType.TOP
+                        )
                         CardListItem(
                             modifier = Modifier.clickable(onClick = {
                                 scope.launch {
@@ -178,21 +184,23 @@ fun EmployeeDetailSheet(
                                     BugReport, contentDescription = null
                                 )
                             })
-                        CardListItem(modifier = Modifier.clickable(onClick = {
-                            scope.launch {
-                                getPlatformClipboardApi().copyToClipboard(
-                                    label = "requirementGuid", text = slot.requirement.guid
+                        CardListItem(
+                            modifier = Modifier.clickable(onClick = {
+                                scope.launch {
+                                    getPlatformClipboardApi().copyToClipboard(
+                                        label = "requirementGuid", text = slot.requirement.guid
+                                    )
+                                }
+                            }), headlineContent = {
+                                Text(
+                                    slot.requirement.guid.nullIfBlank() ?: "<null>"
                                 )
-                            }
-                        }), headlineContent = {
-                            Text(
-                                slot.requirement.guid.nullIfBlank() ?: "<null>"
-                            )
-                        }, supportingContent = { Text("Requirement GUID") }, leadingContent = {
-                            Icon(
-                                BugReport, contentDescription = null
-                            )
-                        })
+                            }, supportingContent = { Text("Requirement GUID") }, leadingContent = {
+                                Icon(
+                                    BugReport, contentDescription = null
+                                )
+                            }, type = CardListItemType.BOTTOM
+                        )
                     }
                 }
                 Card(colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
@@ -391,9 +399,7 @@ fun EmployeeDetailSheet(
                                 getPlatformRedirectApi().dialPhone(employee?.phone ?: "")
                             }, leadingIcon = {
                                 Icon(
-                                    Call,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(
+                                    Call, contentDescription = null, modifier = Modifier.size(
                                         AssistChipDefaults.IconSize
                                     )
                                 )
@@ -406,9 +412,7 @@ fun EmployeeDetailSheet(
                                 getPlatformRedirectApi().sendSms(employee?.phone ?: "")
                             }, leadingIcon = {
                                 Icon(
-                                    Sms,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(
+                                    Sms, contentDescription = null, modifier = Modifier.size(
                                         AssistChipDefaults.IconSize
                                     )
                                 )
@@ -422,8 +426,7 @@ fun EmployeeDetailSheet(
                             }, leadingIcon = {
                                 Icon(
                                     Sms, // TODO: Add proper WA icon
-                                    contentDescription = null,
-                                    modifier = Modifier.size(
+                                    contentDescription = null, modifier = Modifier.size(
                                         AssistChipDefaults.IconSize
                                     )
                                 )

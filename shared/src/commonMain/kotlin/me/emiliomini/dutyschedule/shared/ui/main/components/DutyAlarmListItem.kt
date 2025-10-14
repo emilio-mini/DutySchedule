@@ -33,6 +33,7 @@ import dutyschedule.shared.generated.resources.main_settings_alarms_pre_event_be
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.components.CardListItem
+import me.emiliomini.dutyschedule.shared.ui.components.CardListItemType
 import me.emiliomini.dutyschedule.shared.ui.components.WheelSelector
 import me.emiliomini.dutyschedule.shared.ui.icons.Alarm
 import org.jetbrains.compose.resources.stringResource
@@ -73,7 +74,8 @@ fun DutyAlarmListItem(modifier: Modifier = Modifier) {
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary
             )
-        }
+        },
+        type = CardListItemType.SINGLE
     )
 
     if (showDialog) {

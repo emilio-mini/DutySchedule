@@ -35,6 +35,7 @@ import dutyschedule.shared.generated.resources.main_archive_title
 import me.emiliomini.dutyschedule.shared.datastores.DutyType
 import me.emiliomini.dutyschedule.shared.datastores.MinimalDutyDefinition
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
+import me.emiliomini.dutyschedule.shared.ui.components.CardListItemType
 import me.emiliomini.dutyschedule.shared.ui.components.LazyCardColumn
 import me.emiliomini.dutyschedule.shared.ui.components.MinimalDutyCard
 import me.emiliomini.dutyschedule.shared.ui.components.PieChart
@@ -104,7 +105,7 @@ fun ArchiveScreen(
         Column(
             modifier = modifier
                 .padding(innerPadding)
-                .padding(20.dp),
+                .padding(top = 20.dp, start = 20.dp, end = 20.dp, bottom = 0.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -131,7 +132,14 @@ fun ArchiveScreen(
                 itemsIndexed(
                     items = duties ?: emptyList(),
                     key = { _, duty -> duty.guid }) { index, duty ->
-                    MinimalDutyCard(duty = duty)
+                    MinimalDutyCard(
+                        duty = duty,
+                        type = if (duties == null || (index == 0 && duties!!.size == 1)) CardListItemType.SINGLE else if (index == 0) CardListItemType.TOP else if (index == duties!!.size - 1) CardListItemType.BOTTOM else CardListItemType.DEFAULT
+                    )
+
+                    if (duties != null && index == duties!!.size - 1) {
+                        Spacer(Modifier.height(20.dp))
+                    }
                 }
             }
         }

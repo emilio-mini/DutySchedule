@@ -17,7 +17,5 @@ fun CardColumn(
     spacing: Dp = 2.dp,
     content: @Composable (ColumnScope.() -> Unit)
 ) {
-    Card(modifier = modifier, colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-        Column(verticalArrangement = Arrangement.spacedBy(spacing), content = content)
-    }
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(spacing), content = content)
 }

@@ -105,7 +105,8 @@ fun EmployeeAvatar(
                                 },
                                 supportingContent = {
                                     Text(employee.identifier ?: "")
-                                }
+                                },
+                                type = CardListItemType.SINGLE
                             )
                         }
                         CardColumn {
@@ -119,7 +120,8 @@ fun EmployeeAvatar(
                                 },
                                 supportingContent = {
                                     Text(stringResource(Res.string.base_avatar_dialog_phone))
-                                }
+                                },
+                                type = CardListItemType.TOP
                             )
                             CardListItem(
                                 containerColor = MaterialTheme.colorScheme.surfaceContainer,
@@ -162,7 +164,8 @@ fun EmployeeAvatar(
                                 },
                                 supportingContent = {
                                     Text(stringResource(Res.string.base_avatar_dialog_primary))
-                                }
+                                },
+                                type = CardListItemType.BOTTOM
                             )
                         }
                         if (isSelf) {
@@ -180,7 +183,8 @@ fun EmployeeAvatar(
                                     },
                                     headlineContent = {
                                         Text(stringResource(Res.string.base_avatar_dialog_action_logout))
-                                    }
+                                    },
+                                    type = CardListItemType.SINGLE
                                 )
                             }
                         }

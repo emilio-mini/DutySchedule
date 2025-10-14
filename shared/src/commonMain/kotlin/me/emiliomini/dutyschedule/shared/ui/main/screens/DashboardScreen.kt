@@ -47,6 +47,7 @@ import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
 import me.emiliomini.dutyschedule.shared.services.prep.live.PrepService
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.components.ArcProgressIndicator
+import me.emiliomini.dutyschedule.shared.ui.components.CardListItemType
 import me.emiliomini.dutyschedule.shared.ui.components.EmployeeAvatar
 import me.emiliomini.dutyschedule.shared.ui.components.LazyCardColumn
 import me.emiliomini.dutyschedule.shared.ui.components.MinimalDutyCard
@@ -89,99 +90,89 @@ fun DashboardScreen(
     }
 
     val animatedHours by animateFloatAsState(
-        targetValue = hoursServed,
-        animationSpec = tween(
-            durationMillis = 500,
-            easing = FastOutSlowInEasing
-        ),
-        label = "QuotaAnimation"
+        targetValue = hoursServed, animationSpec = tween(
+            durationMillis = 500, easing = FastOutSlowInEasing
+        ), label = "QuotaAnimation"
     )
 
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(stringResource(Res.string.main_dashboard_title))
-                },
-                actions = {
-                    if (DutyScheduleService.self != null) {
-                        if (DebugFlags.SHOW_DEBUG_INFO.active()) {
-                            IconButton(onClick = {
-                                scope.launch {
-                                    val userPreferences =
-                                        StorageService.USER_PREFERENCES.getOrDefault()
-                                    StorageService.clear()
-                                    PrepService.logout()
-                                    PrepService.login(
-                                        userPreferences.username,
-                                        userPreferences.password
-                                    )
-                                    onTriggerRestart()
-                                }
-                            }) {
-                                Icon(DeleteSweep, contentDescription = null)
-                            }
+    Scaffold(modifier = modifier, topBar = {
+        TopAppBar(title = {
+            Text(stringResource(Res.string.main_dashboard_title))
+        }, actions = {
+            if (DutyScheduleService.self != null) {
+                if (DebugFlags.SHOW_DEBUG_INFO.active()) {
+                    IconButton(onClick = {
+                        scope.launch {
+                            val userPreferences = StorageService.USER_PREFERENCES.getOrDefault()
+                            StorageService.clear()
+                            PrepService.logout()
+                            PrepService.login(
+                                userPreferences.username, userPreferences.password
+                            )
+                            onTriggerRestart()
                         }
-                        EmployeeAvatar(employee = DutyScheduleService.self!!, onLogout = onLogout)
-                        Spacer(Modifier.width(16.dp))
+                    }) {
+                        Icon(DeleteSweep, contentDescription = null)
                     }
                 }
-            )
-        },
-        bottomBar = bottomBar,
-        content = { innerPadding ->
-            Column(
-                modifier = modifier
-                    .padding(innerPadding)
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                EmployeeAvatar(employee = DutyScheduleService.self!!, onLogout = onLogout)
+                Spacer(Modifier.width(16.dp))
+            }
+        })
+    }, bottomBar = bottomBar, content = { innerPadding ->
+        Column(
+            modifier = modifier.padding(innerPadding).padding(top = 20.dp, start = 20.dp, end = 20.dp, bottom = 0.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ArcProgressIndicator(
+                modifier = Modifier.fillMaxWidth(),
+                sizeDp = 232.dp,
+                progress = progress,
+                strokeWidth = 24.dp,
+                pending = !hoursLoaded
             ) {
-                ArcProgressIndicator(
-                    modifier = Modifier.fillMaxWidth(),
-                    sizeDp = 232.dp,
-                    progress = progress,
-                    strokeWidth = 24.dp,
-                    pending = !hoursLoaded
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.Bottom) {
-                            Text(
-                                "${floor(animatedHours * 100) / 100}",
-                                style = MaterialTheme.typography.titleLarge
-                            )
-                            Text(
-                                " / $requiredHours",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                        Text(stringResource(Res.string.main_dashboard_hours))
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Text(
+                            "${floor(animatedHours * 100) / 100}",
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                        Text(
+                            " / $requiredHours",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
+                    Text(stringResource(Res.string.main_dashboard_hours))
                 }
-                Spacer(Modifier.height(24.dp))
-                Row(
-                    Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        stringResource(Res.string.main_dashboard_section_upcoming_title),
-                        color = MaterialTheme.colorScheme.primary
+            }
+            Spacer(Modifier.height(24.dp))
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    stringResource(Res.string.main_dashboard_section_upcoming_title),
+                    color = MaterialTheme.colorScheme.primary
+                )
+                if (!upcomingLoaded) LoadingIndicator(Modifier.size(24.dp))
+            }
+            LazyCardColumn {
+                itemsIndexed(
+                    items = upcomingDuties, key = { _, duty -> duty.guid }) { index, duty ->
+                    MinimalDutyCard(
+                        duty = duty,
+                        type = if (index == 0 && upcomingDuties.size == 1) CardListItemType.SINGLE else if (index == 0) CardListItemType.TOP else if (index == upcomingDuties.size - 1) CardListItemType.BOTTOM else CardListItemType.DEFAULT
                     )
-                    if (!upcomingLoaded) LoadingIndicator(Modifier.size(24.dp))
-                }
-                LazyCardColumn {
-                    itemsIndexed(
-                        items = upcomingDuties,
-                        key = { _, duty -> duty.guid }) { index, duty ->
-                        MinimalDutyCard(duty = duty)
+                    if (index == upcomingDuties.size - 1) {
+                        Spacer(Modifier.height(20.dp))
                     }
                 }
             }
         }
-    )
+    })
 }
