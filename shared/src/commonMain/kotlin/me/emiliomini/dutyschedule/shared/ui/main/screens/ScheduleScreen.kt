@@ -248,10 +248,16 @@ fun ScheduleScreen(
             showDatePicker = false
         }, confirmButton = {
             TextButton(onClick = {
-                selectedStartDate = dateRangePickerState.selectedStartDateMillis ?: currentMillis
-                selectedEndDate =
-                    dateRangePickerState.selectedEndDateMillis?.plus(24 * 60 * 60 * 1000L)
-                        ?: (currentMillis + defaultDateSpacing)
+                val startMillis = dateRangePickerState.selectedStartDateMillis ?: currentMillis
+                var endMillis =
+                    dateRangePickerState.selectedEndDateMillis ?: (startMillis + defaultDateSpacing)
+
+                if (endMillis < startMillis) {
+                    endMillis = startMillis + defaultDateSpacing
+                }
+
+                selectedStartDate = startMillis
+                selectedEndDate = endMillis
 
                 showDatePicker = false
             }) {
@@ -310,34 +316,7 @@ fun ScheduleScreen(
             createError = null
             scope.launch {
 
-                val resp = DutyScheduleService.createAndAllocateDuty(guid)/*val resp = Result.success(
-                    CreateDutyResponse(
-                        success = true,
-                        errorMessages = emptyList(),
-                        alertMessage = null,
-                        successMessage = "",
-                        changedDataId = "",
-                        duty = CreatedDuty(
-                            guid = "",
-                            dataGuid = "",
-                            orgUnitDataGuid = "",
-                            begin = OffsetDateTime.now(),
-                            end = OffsetDateTime.now(),
-                            requirementGroupChildDataGuid = "",
-                            resourceTypeDataGuid = "",
-                            skillDataGuid = "",
-                            skillCharacterisationDataGuid = "",
-                            shiftDataGuid = "",
-                            planBaseDataGuid = "",
-                            planBaseEntryDataGuid = "",
-                            allocationDataGuid = "",
-                            allocationRessourceDataGuid = "",
-                            released = 0,
-                            bookable = 0,
-                            resourceName = ""
-                        )
-                    )
-                )*/
+                val resp = DutyScheduleService.createAndAllocateDuty(guid)
                 val ok = resp?.success == true
 
                 creating = false
