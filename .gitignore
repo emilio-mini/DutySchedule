@@ -19,3 +19,4 @@ secrets.properties
 /.idea/httpRequests
 /api/http-client.private.env.json
 /.kotlin
+/.idea/artifacts/shared_1_0.xml
