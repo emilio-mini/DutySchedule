@@ -1,7 +1,11 @@
 import java.io.ByteArrayOutputStream
 
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
 val commitNumber = gitCommitCount()
+
+// This represents the version number across all platforms
+// For iOS the version has to be set manually because the whole platform is a huge pile of dogshit
+// that doesnt allow you to programmatically set version tags #FUCKAPPLE
+// Hours wasted on this shit: 3
 val appVersionName: String get() = "1.0"
 val appVersionCode: Int get() = commitNumber
 
@@ -20,6 +24,14 @@ fun gitCommitCount(): Int {
         logger.warn("Unable to determine git commit count – defaulting versionCode to -1")
         1
     }
+}
+
+tasks.register("printVersionName") {
+    doLast { println(appVersionName) }
+}
+
+tasks.register("printVersionCode") {
+    doLast { println(appVersionCode) }
 }
 
 plugins {
