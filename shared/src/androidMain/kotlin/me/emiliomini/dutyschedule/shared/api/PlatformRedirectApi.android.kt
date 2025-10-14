@@ -7,12 +7,14 @@ class AndroidRedirectApi : PlatformRedirectApi {
     override fun dialPhone(phone: String) {
         val uri = "tel:${phone}".toUri()
         val intent = Intent(Intent.ACTION_DIAL, uri)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         APPLICATION_CONTEXT.startActivity(intent)
     }
 
     override fun sendSms(phone: String) {
         val uri = "smsto:${phone}".toUri()
         val intent = Intent(Intent.ACTION_SENDTO, uri)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         if (intent.resolveActivity(APPLICATION_CONTEXT.packageManager) != null) {
             APPLICATION_CONTEXT.startActivity(intent)
         }
@@ -26,6 +28,7 @@ class AndroidRedirectApi : PlatformRedirectApi {
             data = uri
             setPackage("com.whatsapp")
         }
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
         if (intent.resolveActivity(APPLICATION_CONTEXT.packageManager) != null) {
             APPLICATION_CONTEXT.startActivity(intent)
@@ -39,6 +42,7 @@ class AndroidRedirectApi : PlatformRedirectApi {
                 Intent.EXTRA_EMAIL, arrayOf(email)
             )
         }
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         if (intent.resolveActivity(APPLICATION_CONTEXT.packageManager) != null) {
             APPLICATION_CONTEXT.startActivity(intent)
         }

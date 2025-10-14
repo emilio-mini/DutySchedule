@@ -77,6 +77,8 @@
     <string name="base_avatar_dialog_mail">E-Mail</string>
     <string name="base_avatar_dialog_birthdate">Geburtstag</string>
     <string name="base_avatar_dialog_primary">Hauptdienststelle</string>
+    <string name="base_avatar_dialog_version">App Version</string>
+    <string name="base_avatar_dialog_action_bugreport">Problem melden</string>
     <string name="base_avatar_dialog_action_logout">Abmelden</string>
     <string name="data_dutytype_ems">Rettungsdienst</string>
     <string name="data_dutytype_training">Schulung</string>

@@ -81,6 +81,8 @@
     <string name="base_avatar_dialog_mail">Mail</string>
     <string name="base_avatar_dialog_birthdate">Birthday</string>
     <string name="base_avatar_dialog_primary">Primary Station</string>
+    <string name="base_avatar_dialog_version">App version</string>
+    <string name="base_avatar_dialog_action_bugreport">Report an issue</string>
     <string name="base_avatar_dialog_action_logout">Logout</string>
     <string name="data_dutytype_ems">EMS Duty</string>
     <string name="data_dutytype_training">Training</string>
@@ -120,8 +122,8 @@
     <string name="onboarding_alarms_title">Automatic Alarms</string>
     <string name="onboarding_alarms_body">No manually setting alarms the evening before one of your duties again. We set them for you!</string>
     <string name="onboarding_notifications_title">Keep up-to-date</string>
-    <string name="onboarding_notifications_body">Interested where personell is missing and how you can help? We\'ll send you some notifications, according to your preferences, to keep you informed.</string>
-    <string name="onboarding_login_body">We\'ll need your login information to sign you in. Use your PREP credentials.</string>
+    <string name="onboarding_notifications_body">Interested where personell is missing and how you can help? We'll send you some notifications, according to your preferences, to keep you informed.</string>
+    <string name="onboarding_login_body">We'll need your login information to sign you in. Use your PREP credentials.</string>
     <string name="onboarding_login_title">Account</string>
     <string name="onboarding_action_demo">Demo Mode</string>
     <string name="onboarding_action_skip">Skip</string>
@@ -129,7 +131,7 @@
     <string name="data_requirement_vehicle">Vehicle</string>
     <string name="data_requirement_kfz">Vehicle</string>
     <string name="data_role_developer">App Developer</string>
-    <string name="data_role_info_developer">Hi. I\'m one of the developers of this app. Thanks for your support!</string>
+    <string name="data_role_info_developer">Hi. I'm one of the developers of this app. Thanks for your support!</string>
     <string name="nav_archive">Archive</string>
     <string name="main_archive_title">Archive</string>
     <string name="main_archive_section_duties_title">%1$s Duties (%2$s hours)</string>

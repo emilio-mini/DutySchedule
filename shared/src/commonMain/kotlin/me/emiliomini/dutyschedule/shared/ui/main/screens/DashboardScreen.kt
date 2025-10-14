@@ -121,7 +121,8 @@ fun DashboardScreen(
         })
     }, bottomBar = bottomBar, content = { innerPadding ->
         Column(
-            modifier = modifier.padding(innerPadding).padding(top = 20.dp, start = 20.dp, end = 20.dp, bottom = 0.dp),
+            modifier = modifier.padding(innerPadding)
+                .padding(top = 20.dp, start = 20.dp, end = 20.dp, bottom = 0.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             ArcProgressIndicator(
