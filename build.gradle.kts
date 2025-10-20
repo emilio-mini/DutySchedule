@@ -6,7 +6,7 @@ val commitNumber = gitCommitCount()
 // For iOS the version has to be set manually because the whole platform is a huge pile of dogshit
 // that doesnt allow you to programmatically set version tags #FUCKAPPLE
 // Hours wasted on this shit: 3
-val appVersionName: String get() = "1.0"
+val appVersionName: String get() = "1.1"
 val appVersionCode: Int get() = commitNumber
 
 version = appVersionName
