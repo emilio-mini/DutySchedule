@@ -170,6 +170,9 @@ object PrepService : DutyScheduleServiceBase {
             return false
         }
 
+        // Restoring from local data
+        this.loadSelf(null, null)
+
         val lastIncodeUseMillis = incode?.lastUsed?.toEpochMilliseconds() ?: 0L
         if (incode != null && Clock.System.now()
                 .toEpochMilliseconds() - maxAge >= lastIncodeUseMillis
