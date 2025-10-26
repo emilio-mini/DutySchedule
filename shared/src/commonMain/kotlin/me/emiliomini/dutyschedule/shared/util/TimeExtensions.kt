@@ -49,9 +49,9 @@ fun Instant.isNight(zone: TimeZone = TimeZone.currentSystemDefault()): Boolean {
 fun midpointInstant(a: Instant, b: Instant): Instant {
     val difference = millisecondsBetween(a, b)
     return if (a.toEpochMilliseconds() < b.toEpochMilliseconds()) {
-        a.plus(difference, DateTimeUnit.MILLISECOND)
+        a.plus(difference / 2, DateTimeUnit.MILLISECOND)
     } else {
-        b.plus(difference, DateTimeUnit.MILLISECOND)
+        b.plus(difference / 2, DateTimeUnit.MILLISECOND)
     }
 }
 
