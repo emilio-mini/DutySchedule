@@ -3,8 +3,14 @@
 package me.emiliomini.dutyschedule.shared.util
 
 import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.DayOfWeek
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.isoDayNumber
+import kotlinx.datetime.minus
 import kotlinx.datetime.plus
+import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import me.emiliomini.dutyschedule.shared.api.getPlatformLanguageApi
 import me.emiliomini.dutyschedule.shared.datastores.Timestamp
@@ -12,6 +18,14 @@ import kotlin.math.abs
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
+
+fun Long?.toInstant(): Instant {
+    if (this == null) {
+        return Instant.DISTANT_PAST
+    }
+
+    return Instant.fromEpochMilliseconds(this)
+}
 
 fun Timestamp.now(): Timestamp {
     return Clock.System.now().toTimestamp()
@@ -44,6 +58,15 @@ fun Instant.format(pattern: String, zone: TimeZone = TimeZone.currentSystemDefau
 fun Instant.isNight(zone: TimeZone = TimeZone.currentSystemDefault()): Boolean {
     val localDateTime = this.toLocalDateTime(zone)
     return localDateTime.hour < 6 || localDateTime.hour >= 18
+}
+
+fun Instant.startOfWeek(zone: TimeZone = TimeZone.currentSystemDefault()): Instant {
+    val zoned = this.toLocalDateTime(zone)
+    var date = zoned.date
+    val daysBack = ((date.dayOfWeek.isoDayNumber - DayOfWeek.MONDAY.isoDayNumber + 7) % 7)
+    date = date.minus(daysBack, DateTimeUnit.DAY)
+    val mondayMidnight = LocalDateTime(date, LocalTime(0, 0, 0, 0))
+    return mondayMidnight.toInstant(zone)
 }
 
 fun midpointInstant(a: Instant, b: Instant): Instant {

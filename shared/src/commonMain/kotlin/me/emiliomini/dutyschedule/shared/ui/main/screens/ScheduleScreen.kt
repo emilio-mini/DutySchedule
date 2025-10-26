@@ -36,6 +36,7 @@ import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -67,6 +68,10 @@ import me.emiliomini.dutyschedule.shared.ui.components.AssignConfirmSheet
 import me.emiliomini.dutyschedule.shared.ui.components.DutyCardCarousel
 import me.emiliomini.dutyschedule.shared.ui.components.EmployeeDetailSheet
 import me.emiliomini.dutyschedule.shared.ui.icons.CalendarMonth
+import me.emiliomini.dutyschedule.shared.ui.icons.ChevronLeft
+import me.emiliomini.dutyschedule.shared.ui.icons.ChevronRight
+import me.emiliomini.dutyschedule.shared.util.format
+import me.emiliomini.dutyschedule.shared.util.startOfWeek
 import me.emiliomini.dutyschedule.shared.util.toInstant
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Clock
@@ -156,6 +161,32 @@ fun ScheduleScreen(
             title = {
                 Text(stringResource(Res.string.main_schedule_title))
             },
+            actions = {
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = {
+                        val startOfWeek = selectedStartDate.toInstant().startOfWeek()
+                        selectedStartDate = startOfWeek.toEpochMilliseconds() - 604_800_000
+                        selectedEndDate = selectedStartDate!! + 604_800_000
+                    }
+                ) {
+                    Icon(ChevronLeft, contentDescription = null)
+                }
+                Text("KW${selectedStartDate.toInstant().format("ww")}", style = MaterialTheme.typography.titleMedium)
+                IconButton(
+                    onClick = {
+                        val startOfWeek = selectedStartDate.toInstant().startOfWeek()
+                        selectedStartDate = startOfWeek.toEpochMilliseconds() + 604_800_000
+                        selectedEndDate = selectedStartDate!! + 604_800_000
+                    }
+                ) {
+                    Icon(ChevronRight, contentDescription = null)
+                }
+            }
+        }
         )
     }, bottomBar = bottomBar, content = { innerPadding ->
         Column(
