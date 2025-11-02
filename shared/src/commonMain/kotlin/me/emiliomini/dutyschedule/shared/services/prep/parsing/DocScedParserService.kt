@@ -36,9 +36,9 @@ object DocScedParserService {
                 if (tds.size <= idxNacht) return@mapNotNull null
 
                 val dateText = tds[idxDate].text().trim()
-                val datePart = dateText.substringBefore(" ") // "25.08.2025 (Mo)" -> "25.08.2025"
+                val datePart = dateText.substringBefore(" ").split(".").reversed().joinToString("-") + "T00:00:00+00:00" // "25.08.2025 (Mo)" -> "25.08.2025"
                 val date = runCatching { Instant.parse(datePart) }.getOrElse {
-                    logger.w("Überspringe Zeile: ungültiges Datum '$dateText'")
+                    logger.w("Überspringe Zeile: ungültiges Datum '$datePart'")
                     return@mapNotNull null
                 }
 

@@ -273,7 +273,7 @@ object DataParserService {
     }
 
     fun parseGetMessages(root: JsonElement): List<Message>? {
-        val data = root.value(PrepResponseMapping.DATA_AS_OBJECT)
+        val data = root.value(PrepResponseMapping.DATA_AS_ARRAY_OR_OBJECT)
         if (data == null) {
             return emptyList()
         }

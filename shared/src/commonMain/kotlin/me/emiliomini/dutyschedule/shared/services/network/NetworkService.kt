@@ -250,7 +250,7 @@ object NetworkService {
             url {
                 url(Endpoints.DOCSCED.url)
                 parameter("site", "calendar")
-                parameter("config", docScedConfigFromString(orgUnitDataGuid))
+                parameter("config", orgUnitDataGuid)
 
                 if (!gran.isNullOrBlank()) {
                     parameter("gran", gran)

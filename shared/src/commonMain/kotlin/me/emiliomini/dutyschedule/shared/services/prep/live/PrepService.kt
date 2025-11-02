@@ -46,8 +46,10 @@ import me.emiliomini.dutyschedule.shared.util.isNight
 import me.emiliomini.dutyschedule.shared.util.isNightShift
 import me.emiliomini.dutyschedule.shared.util.midpointInstant
 import me.emiliomini.dutyschedule.shared.util.nullIfBlank
+import me.emiliomini.dutyschedule.shared.util.startOfDay
 import me.emiliomini.dutyschedule.shared.util.toEpochMilliseconds
 import me.emiliomini.dutyschedule.shared.util.toInstant
+import kotlin.math.min
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -575,7 +577,7 @@ object PrepService : DutyScheduleServiceBase {
                     haend.end.toInstant()
                 )
                 val night = mid.isNight()
-                val dsDate = docscedRowDate(mid)
+                val dsDate = docscedRowDate(mid).startOfDay()
 
                 val dsDay = byDate[dsDate]
                 if (dsDay == null) {
@@ -600,9 +602,11 @@ object PrepService : DutyScheduleServiceBase {
                 mutableDuties[i] = duty.copy(
                     slots = duty.slots.toMutableList().let {
                         it.add(
+                            min(2, it.size - 1),
                             Slot(
                                 begin = haend.begin,
                                 end = haend.end,
+                                employeeGuid = "doc",
                                 requirement = Requirement(RequirementMapping.HAEND_DR.value),
                                 inlineEmployee = docEmployee
                             )

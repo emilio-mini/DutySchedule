@@ -72,6 +72,10 @@ fun Instant.startOfWeek(zone: TimeZone = TimeZone.currentSystemDefault()): Insta
     return mondayMidnight.toInstant(zone)
 }
 
+fun Instant.startOfDay(): Instant {
+    return (this.format("yyyy-MM-dd") + "T00:00:00+00:00").toInstant()
+}
+
 fun Instant?.withinLast(duration: Duration): Boolean {
     if (this == null) {
         return false
