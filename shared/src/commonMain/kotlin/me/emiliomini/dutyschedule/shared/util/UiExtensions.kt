@@ -25,7 +25,7 @@ fun Requirement.getIcon(): ImageVector {
 
         RequirementMapping.ITF_NFS.value, RequirementMapping.RTW_NFS.value -> Syringe
 
-        RequirementMapping.TRAINING.value -> School
+        RequirementMapping.DRILL.value, RequirementMapping.TRAINING.value -> School
 
         else -> Badge
     }

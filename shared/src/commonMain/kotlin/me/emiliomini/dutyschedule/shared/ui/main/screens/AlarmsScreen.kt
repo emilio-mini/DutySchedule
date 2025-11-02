@@ -23,14 +23,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -82,13 +80,12 @@ fun AlarmsScreen(
     val dateFormat = "dd/MM/yyyy"
     val alarmItems by StorageService.ALARM_ITEMS.collectAsState()
 
-    Scaffold(modifier = modifier, snackbarHost = { SnackbarHost(snackbarHostState) }, topBar = {
-        TopAppBar(
-            title = {
-                Text(stringResource(Res.string.main_alarms_title))
-            },
-        )
-    }, bottomBar = bottomBar, content = { innerPadding ->
+    Screen(
+        modifier = modifier,
+        title = stringResource(Res.string.main_alarms_title),
+        bottomBar = bottomBar,
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { innerPadding ->
         Column(
             modifier = Modifier.fillMaxSize().padding(innerPadding).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -232,7 +229,7 @@ fun AlarmsScreen(
                 }
             }
         }
-    })
+    }
 }
 
 private suspend fun setAlarm(alarm: Alarm, enabled: Boolean) {

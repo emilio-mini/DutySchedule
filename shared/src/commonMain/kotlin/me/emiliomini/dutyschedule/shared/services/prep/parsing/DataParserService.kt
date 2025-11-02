@@ -138,6 +138,7 @@ object DataParserService {
                 guid = employeeGuid ?: Employee().guid,
                 name = name ?: Employee().name,
                 identifier = when (requirement) {
+                    RequirementMapping.KFZ_3.value,
                     RequirementMapping.KFZ_2.value,
                     RequirementMapping.KFZ.value -> Employee.KFZ_NAME
 

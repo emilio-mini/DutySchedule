@@ -20,3 +20,12 @@ abstract class PlatformLogger(open val tag: String) {
 }
 
 expect fun getPlatformLogger(tag: String): PlatformLogger
+
+private var logger: PlatformLogger? = null
+
+fun getAppPlatformLogger(): PlatformLogger = if (logger == null) {
+    logger = getPlatformLogger("DutySchedule")
+    logger!!
+} else {
+    logger!!
+}

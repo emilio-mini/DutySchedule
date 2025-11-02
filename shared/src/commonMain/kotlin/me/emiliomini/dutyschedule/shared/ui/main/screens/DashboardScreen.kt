@@ -3,7 +3,7 @@
 package me.emiliomini.dutyschedule.shared.ui.main.screens
 
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,9 +21,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,7 +39,6 @@ import dutyschedule.shared.generated.resources.main_dashboard_hours
 import dutyschedule.shared.generated.resources.main_dashboard_section_upcoming_title
 import dutyschedule.shared.generated.resources.main_dashboard_title
 import kotlinx.coroutines.launch
-import me.emiliomini.dutyschedule.shared.datastores.MinimalDutyDefinition
 import me.emiliomini.dutyschedule.shared.debug.DebugFlags
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
 import me.emiliomini.dutyschedule.shared.services.prep.live.PrepService
@@ -53,12 +50,16 @@ import me.emiliomini.dutyschedule.shared.ui.components.LazyCardColumn
 import me.emiliomini.dutyschedule.shared.ui.components.MinimalDutyCard
 import me.emiliomini.dutyschedule.shared.ui.icons.DeleteSweep
 import me.emiliomini.dutyschedule.shared.util.format
+import me.emiliomini.dutyschedule.shared.util.withinLast
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.floor
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(
+    ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class
+)
 @Composable
 fun DashboardScreen(
     modifier: Modifier = Modifier,
@@ -67,38 +68,49 @@ fun DashboardScreen(
     onTriggerRestart: () -> Unit
 ) {
     val currentYear = Clock.System.now().format("yyyy")
-    var upcomingDuties by remember { mutableStateOf<List<MinimalDutyDefinition>>(emptyList()) }
+    val upcomingDuties by StorageService.UPCOMING_DUTIES.collectAsState()
+    val statistics by StorageService.STATISTICS.collectAsState()
 
-    val requiredHours = 144
-    var hoursServed by remember { mutableFloatStateOf(0f) }
+    val requiredMinutes = 144 * 60f
     var progress by remember { mutableFloatStateOf(0f) }
 
-    var hoursLoaded by remember { mutableStateOf(false) }
-    var upcomingLoaded by remember { mutableStateOf(false) }
+    var hoursLoaded by remember { mutableStateOf(true) }
+    var upcomingLoaded by remember { mutableStateOf(true) }
 
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(DutyScheduleService.isLoggedIn) {
-        upcomingDuties = DutyScheduleService.loadUpcoming()
-        hoursServed = DutyScheduleService.loadHoursOfService(currentYear)
-        progress = hoursServed / requiredHours
+        if (!DutyScheduleService.isLoggedIn) {
+            return@LaunchedEffect
+        }
 
-        if (DutyScheduleService.isLoggedIn) {
-            hoursLoaded = true
+        if (!StorageService.UPCOMING_DUTIES.lastUpdated.withinLast(30.minutes)) {
+            upcomingLoaded = false
+            DutyScheduleService.loadUpcoming()
             upcomingLoaded = true
+        }
+
+        if (!StorageService.STATISTICS.lastUpdated.withinLast(30.minutes)) {
+            hoursLoaded = false
+            DutyScheduleService.loadHoursOfService(currentYear)
+            hoursLoaded = true
         }
     }
 
-    val animatedHours by animateFloatAsState(
-        targetValue = hoursServed, animationSpec = tween(
+    LaunchedEffect(statistics) {
+        progress = statistics.minutesServed / requiredMinutes
+    }
+
+    val animatedMinutes by animateIntAsState(
+        targetValue = statistics.minutesServed, animationSpec = tween(
             durationMillis = 500, easing = FastOutSlowInEasing
         ), label = "QuotaAnimation"
     )
 
-    Scaffold(modifier = modifier, topBar = {
-        TopAppBar(title = {
-            Text(stringResource(Res.string.main_dashboard_title))
-        }, actions = {
+    Screen(
+        modifier = modifier,
+        title = stringResource(Res.string.main_dashboard_title),
+        actions = {
             if (DutyScheduleService.self != null) {
                 if (DebugFlags.SHOW_DEBUG_INFO.active()) {
                     IconButton(onClick = {
@@ -118,8 +130,24 @@ fun DashboardScreen(
                 EmployeeAvatar(employee = DutyScheduleService.self!!, onLogout = onLogout)
                 Spacer(Modifier.width(16.dp))
             }
-        })
-    }, bottomBar = bottomBar, content = { innerPadding ->
+        },
+        bottomBar = bottomBar,
+        pullToRefresh = PullToRefreshOptions(
+            isRefreshing = !hoursLoaded || !upcomingLoaded,
+            onRefresh = {
+                scope.launch {
+                    hoursLoaded = false
+                    upcomingLoaded = false
+
+                    DutyScheduleService.loadUpcoming()
+                    DutyScheduleService.loadHoursOfService(currentYear)
+
+                    hoursLoaded = true
+                    upcomingLoaded = true
+                }
+            }
+        )
+    ) { innerPadding ->
         Column(
             modifier = modifier.padding(innerPadding)
                 .padding(top = 20.dp, start = 20.dp, end = 20.dp, bottom = 0.dp),
@@ -138,11 +166,11 @@ fun DashboardScreen(
                 ) {
                     Row(verticalAlignment = Alignment.Bottom) {
                         Text(
-                            "${floor(animatedHours * 100) / 100}",
+                            "${floor(((animatedMinutes / 60.0) * 100) / 100)}",
                             style = MaterialTheme.typography.titleLarge
                         )
                         Text(
-                            " / $requiredHours",
+                            " / ${floor(requiredMinutes / 60).toInt()}",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Medium
                         )
@@ -164,16 +192,17 @@ fun DashboardScreen(
             }
             LazyCardColumn {
                 itemsIndexed(
-                    items = upcomingDuties, key = { _, duty -> duty.guid }) { index, duty ->
+                    items = upcomingDuties.minimalDutyDefinitions,
+                    key = { _, duty -> duty.guid }) { index, duty ->
                     MinimalDutyCard(
                         duty = duty,
-                        type = if (index == 0 && upcomingDuties.size == 1) CardListItemType.SINGLE else if (index == 0) CardListItemType.TOP else if (index == upcomingDuties.size - 1) CardListItemType.BOTTOM else CardListItemType.DEFAULT
+                        type = if (index == 0 && upcomingDuties.minimalDutyDefinitions.size == 1) CardListItemType.SINGLE else if (index == 0) CardListItemType.TOP else if (index == upcomingDuties.minimalDutyDefinitions.size - 1) CardListItemType.BOTTOM else CardListItemType.DEFAULT
                     )
-                    if (index == upcomingDuties.size - 1) {
+                    if (index == upcomingDuties.minimalDutyDefinitions.size - 1) {
                         Spacer(Modifier.height(20.dp))
                     }
                 }
             }
         }
-    })
+    }
 }

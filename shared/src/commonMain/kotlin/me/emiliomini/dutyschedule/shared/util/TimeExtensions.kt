@@ -16,8 +16,11 @@ import me.emiliomini.dutyschedule.shared.api.getPlatformLanguageApi
 import me.emiliomini.dutyschedule.shared.datastores.Timestamp
 import kotlin.math.abs
 import kotlin.time.Clock
+import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
+
+val WEEK_MILLIS = 604_800_000L
 
 fun Long?.toInstant(): Instant {
     if (this == null) {
@@ -67,6 +70,16 @@ fun Instant.startOfWeek(zone: TimeZone = TimeZone.currentSystemDefault()): Insta
     date = date.minus(daysBack, DateTimeUnit.DAY)
     val mondayMidnight = LocalDateTime(date, LocalTime(0, 0, 0, 0))
     return mondayMidnight.toInstant(zone)
+}
+
+fun Instant?.withinLast(duration: Duration): Boolean {
+    if (this == null) {
+        return false
+    }
+
+    val now = Clock.System.now()
+    val threshold = now - duration
+    return this >= threshold
 }
 
 fun midpointInstant(a: Instant, b: Instant): Instant {

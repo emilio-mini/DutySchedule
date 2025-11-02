@@ -82,7 +82,9 @@ fun Requirement.resourceString(): StringResource {
 
 private fun getRequirementResourceString(guid: String): StringResource {
     return when (guid) {
+        RequirementMapping.DRILL.value,
         RequirementMapping.TRAINING.value -> Res.string.data_requirement_training
+        RequirementMapping.KFZ_3.value,
         RequirementMapping.KFZ_2.value,
         RequirementMapping.KFZ.value -> Res.string.data_requirement_kfz
 

@@ -7,6 +7,7 @@ import me.emiliomini.dutyschedule.shared.datastores.Employee
 import me.emiliomini.dutyschedule.shared.datastores.EmployeeItems
 import me.emiliomini.dutyschedule.shared.datastores.Incode
 import me.emiliomini.dutyschedule.shared.datastores.OrgItems
+import me.emiliomini.dutyschedule.shared.datastores.PastDutyItems
 import me.emiliomini.dutyschedule.shared.datastores.Statistics
 import me.emiliomini.dutyschedule.shared.datastores.UpcomingDutyItems
 import me.emiliomini.dutyschedule.shared.datastores.UserPreferences
@@ -54,6 +55,12 @@ object StorageService {
         UpcomingDutyItems.serializer(),
         UpcomingDutyItems()
     )
+    val PAST_DUTIES = MultiplatformDataStore(
+        "past_duties",
+        onUpdate = { store, newData -> storageApi.update(store, newData) },
+        PastDutyItems.serializer(),
+        PastDutyItems()
+    )
     val EMPLOYEES = MultiplatformDataStore(
         "employees",
         onUpdate = { store, newData -> storageApi.update(store, newData) },
@@ -67,34 +74,32 @@ object StorageService {
         ClientCookies()
     )
 
+    val ALL_STORES = listOf(
+        USER_PREFERENCES,
+        STATISTICS,
+        ALARM_ITEMS,
+        ORG_ITEMS,
+        INCODE,
+        SELF,
+        UPCOMING_DUTIES,
+        PAST_DUTIES,
+        EMPLOYEES,
+        COOKIES
+    )
+
     private val storageApi = getPlatformStorageApi()
 
     suspend fun initialize() {
-        storageApi.initialize(
-            listOf(
-                USER_PREFERENCES,
-                STATISTICS,
-                ALARM_ITEMS,
-                ORG_ITEMS,
-                INCODE,
-                SELF,
-                UPCOMING_DUTIES,
-                EMPLOYEES,
-                COOKIES
-            )
-        )
+        storageApi.initialize(ALL_STORES)
+        ALL_STORES.forEach {
+            it.ensureLoaded()
+        }
     }
 
     suspend fun clear() {
-        USER_PREFERENCES.clear()
-        STATISTICS.clear()
-        ALARM_ITEMS.clear()
-        ORG_ITEMS.clear()
-        INCODE.clear()
-        SELF.clear()
-        UPCOMING_DUTIES.clear()
-        EMPLOYEES.clear()
-        COOKIES.clear()
+        ALL_STORES.forEach {
+            it.clear()
+        }
     }
 
 }

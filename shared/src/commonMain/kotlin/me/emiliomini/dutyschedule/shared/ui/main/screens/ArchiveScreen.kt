@@ -17,14 +17,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,9 +31,11 @@ import androidx.compose.ui.unit.dp
 import dutyschedule.shared.generated.resources.Res
 import dutyschedule.shared.generated.resources.main_archive_section_duties_title
 import dutyschedule.shared.generated.resources.main_archive_title
-import me.emiliomini.dutyschedule.shared.datastores.DutyType
+import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.shared.datastores.MinimalDutyDefinition
+import me.emiliomini.dutyschedule.shared.datastores.YearlyDutyItems
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
+import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.components.CardListItemType
 import me.emiliomini.dutyschedule.shared.ui.components.LazyCardColumn
 import me.emiliomini.dutyschedule.shared.ui.components.MinimalDutyCard
@@ -51,68 +52,84 @@ import kotlin.time.ExperimentalTime
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ArchiveScreen(
-    modifier: Modifier = Modifier,
-    bottomBar: @Composable (() -> Unit) = {}
+    modifier: Modifier = Modifier, bottomBar: @Composable (() -> Unit) = {}
 ) {
+    val past by StorageService.PAST_DUTIES.collectAsState()
+
     val currentYear = Clock.System.now().format("yyyy")
-    var duties by remember { mutableStateOf<List<MinimalDutyDefinition>?>(emptyList()) }
-    var loaded by remember { mutableStateOf(false) }
+    var duties by remember { mutableStateOf<List<MinimalDutyDefinition>>(emptyList()) }
+    var loaded by remember { mutableStateOf(true) }
     var selectedYear by remember { mutableStateOf(currentYear) }
 
+    val scope = rememberCoroutineScope()
+
     LaunchedEffect(DutyScheduleService.isLoggedIn, selectedYear) {
+        if (past.years.containsKey(selectedYear.toInt())) {
+            return@LaunchedEffect
+        }
+
         loaded = false
         if (!DutyScheduleService.isLoggedIn) {
             return@LaunchedEffect
         }
 
-        duties = DutyScheduleService.loadPast(selectedYear)
+        DutyScheduleService.loadPast(selectedYear)
         loaded = true
     }
 
-    Scaffold(modifier = modifier, topBar = {
-        TopAppBar(
-            title = {
-                Text(stringResource(Res.string.main_archive_title))
-            },
-            actions = {
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(
-                        onClick = {
-                            selectedYear = (selectedYear.toInt() - 1).toString()
+    LaunchedEffect(past, selectedYear) {
+        duties = past.years.getOrElse(
+            selectedYear.toInt()
+        ) { YearlyDutyItems() }.minimalDutyDefinitions
+    }
+
+    Screen(
+        title = stringResource(Res.string.main_archive_title),
+        actions = {
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = {
+                        selectedYear = (selectedYear.toInt() - 1).toString()
+                    }) {
+                    Icon(ChevronLeft, contentDescription = null)
+                }
+                Text(selectedYear, style = MaterialTheme.typography.titleMedium)
+                IconButton(
+                    onClick = {
+                        if (selectedYear == currentYear) {
+                            return@IconButton
                         }
-                    ) {
-                        Icon(ChevronLeft, contentDescription = null)
-                    }
-                    Text(selectedYear, style = MaterialTheme.typography.titleMedium)
-                    IconButton(
-                        onClick = {
-                            if (selectedYear == currentYear) {
-                                return@IconButton
-                            }
-                            selectedYear = (selectedYear.toInt() + 1).toString()
-                        },
-                        enabled = selectedYear != currentYear
-                    ) {
-                        Icon(ChevronRight, contentDescription = null)
-                    }
+                        selectedYear = (selectedYear.toInt() + 1).toString()
+                    }, enabled = selectedYear != currentYear
+                ) {
+                    Icon(ChevronRight, contentDescription = null)
+                }
+            }
+        },
+        bottomBar = bottomBar,
+        pullToRefresh = PullToRefreshOptions(
+            isRefreshing = !loaded,
+            onRefresh = {
+                loaded = false
+                scope.launch {
+                    DutyScheduleService.loadPast(selectedYear)
+                    loaded = true
                 }
             }
         )
-    }, bottomBar = bottomBar, content = { innerPadding ->
+    ) { innerPadding ->
         Column(
-            modifier = modifier
-                .padding(innerPadding)
+            modifier = modifier.padding(innerPadding)
                 .padding(top = 20.dp, start = 20.dp, end = 20.dp, bottom = 0.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            PieChart<DutyType>(
-                data = (duties ?: emptyList()).countByProperty { it.type },
-                labelTextResource = { type, _, _ -> type.resourceString() }
-            )
+            PieChart(
+                data = duties.countByProperty { it.type },
+                labelTextResource = { type, _, _ -> type.resourceString() })
             Spacer(modifier = Modifier.height(16.dp))
             Row(
                 Modifier.fillMaxWidth(),
@@ -122,26 +139,24 @@ fun ArchiveScreen(
                 Text(
                     stringResource(
                         Res.string.main_archive_section_duties_title,
-                        duties?.size ?: 0,
-                        (duties?.sumOf { it.duration } ?: 0) / 60),
-                    color = MaterialTheme.colorScheme.primary
-                )
+                        duties.size,
+                        duties.sumOf { it.duration } / 60),
+                    color = MaterialTheme.colorScheme.primary)
                 if (!loaded) LoadingIndicator(Modifier.size(24.dp))
             }
             LazyCardColumn {
                 itemsIndexed(
-                    items = duties ?: emptyList(),
-                    key = { _, duty -> duty.guid }) { index, duty ->
+                    items = duties, key = { _, duty -> duty.guid }) { index, duty ->
                     MinimalDutyCard(
                         duty = duty,
-                        type = if (duties == null || (index == 0 && duties!!.size == 1)) CardListItemType.SINGLE else if (index == 0) CardListItemType.TOP else if (index == duties!!.size - 1) CardListItemType.BOTTOM else CardListItemType.DEFAULT
+                        type = if (index == 0 && duties.size == 1) CardListItemType.SINGLE else if (index == 0) CardListItemType.TOP else if (index == duties.size - 1) CardListItemType.BOTTOM else CardListItemType.DEFAULT
                     )
 
-                    if (duties != null && index == duties!!.size - 1) {
+                    if (index == duties.size - 1) {
                         Spacer(Modifier.height(20.dp))
                     }
                 }
             }
         }
-    })
+    }
 }

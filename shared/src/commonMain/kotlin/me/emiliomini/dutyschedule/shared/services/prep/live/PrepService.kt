@@ -15,7 +15,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
-import me.emiliomini.dutyschedule.shared.services.prep.parsing.DocScedParserService
 import me.emiliomini.dutyschedule.shared.api.getPlatformLogger
 import me.emiliomini.dutyschedule.shared.comparators.DutyDefinitionComparator
 import me.emiliomini.dutyschedule.shared.datastores.CreateDutyResponse
@@ -30,6 +29,7 @@ import me.emiliomini.dutyschedule.shared.datastores.OrgDay
 import me.emiliomini.dutyschedule.shared.datastores.OrgItems
 import me.emiliomini.dutyschedule.shared.datastores.Requirement
 import me.emiliomini.dutyschedule.shared.datastores.Slot
+import me.emiliomini.dutyschedule.shared.datastores.YearlyDutyItems
 import me.emiliomini.dutyschedule.shared.mappings.RequirementMapping
 import me.emiliomini.dutyschedule.shared.mappings.docScedConfigFromString
 import me.emiliomini.dutyschedule.shared.services.network.Endpoints
@@ -38,6 +38,7 @@ import me.emiliomini.dutyschedule.shared.services.network.NetworkService
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleServiceBase
 import me.emiliomini.dutyschedule.shared.services.prep.parsing.DataExtractorService
 import me.emiliomini.dutyschedule.shared.services.prep.parsing.DataParserService
+import me.emiliomini.dutyschedule.shared.services.prep.parsing.DocScedParserService
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.util.format
 import me.emiliomini.dutyschedule.shared.util.getAllVehicles
@@ -422,8 +423,10 @@ object PrepService : DutyScheduleServiceBase {
     }
 
     override suspend fun loadPast(year: String): List<MinimalDutyDefinition> {
-        if (!isLoggedIn) {
-            return emptyList()
+        val intYear = year.toInt()
+        val localPast = StorageService.PAST_DUTIES.get()
+        if (localPast != null && localPast.years.containsKey(intYear) && !isLoggedIn) {
+            return localPast.years[intYear]!!.minimalDutyDefinitions
         }
 
         val pastResponse = NetworkService.loadPast(incode!!, year)?.bodyAsText()
@@ -433,6 +436,12 @@ object PrepService : DutyScheduleServiceBase {
 
         val pastDuties =
             DataParserService.parseLoadMinimalDutyDefinitions(Json.parseToJsonElement(pastResponse))
+
+        StorageService.PAST_DUTIES.update {
+            it.copy(
+                years = it.years + (intYear to YearlyDutyItems(pastDuties, intYear))
+            )
+        }
         return pastDuties
     }
 
@@ -619,7 +628,10 @@ object PrepService : DutyScheduleServiceBase {
      * Returns the previous day if the midpoint lies between midnight and 6 AM as nightshifts
      * are displayed on the day they begin
      */
-    private fun docscedRowDate(mid: Instant, zone: TimeZone = TimeZone.currentSystemDefault()): Instant {
+    private fun docscedRowDate(
+        mid: Instant,
+        zone: TimeZone = TimeZone.currentSystemDefault()
+    ): Instant {
         val t = mid.toLocalDateTime(zone)
         return if (t.hour < 6) mid.minus(24, DateTimeUnit.HOUR) else mid
     }

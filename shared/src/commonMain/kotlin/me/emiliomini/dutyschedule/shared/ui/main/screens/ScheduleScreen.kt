@@ -36,7 +36,6 @@ import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -70,6 +69,7 @@ import me.emiliomini.dutyschedule.shared.ui.components.EmployeeDetailSheet
 import me.emiliomini.dutyschedule.shared.ui.icons.CalendarMonth
 import me.emiliomini.dutyschedule.shared.ui.icons.ChevronLeft
 import me.emiliomini.dutyschedule.shared.ui.icons.ChevronRight
+import me.emiliomini.dutyschedule.shared.util.WEEK_MILLIS
 import me.emiliomini.dutyschedule.shared.util.format
 import me.emiliomini.dutyschedule.shared.util.startOfWeek
 import me.emiliomini.dutyschedule.shared.util.toInstant
@@ -84,7 +84,6 @@ fun ScheduleScreen(
     modifier: Modifier = Modifier,
     bottomBar: @Composable (() -> Unit) = {},
 ) {
-    val defaultDateSpacing = 5 * 24 * 60 * 60 * 1000L
     val timeNow = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
     val currentMillis = LocalDateTime(
         year = timeNow.year,
@@ -100,7 +99,7 @@ fun ScheduleScreen(
 
     var showDatePicker by remember { mutableStateOf(false) }
     var selectedStartDate by remember { mutableStateOf<Long?>(currentMillis) }
-    var selectedEndDate by remember { mutableStateOf<Long?>(currentMillis + defaultDateSpacing) }
+    var selectedEndDate by remember { mutableStateOf<Long?>(currentMillis + WEEK_MILLIS) }
 
     var timeline by remember { mutableStateOf<List<OrgDay>?>(null) }
 
@@ -136,7 +135,7 @@ fun ScheduleScreen(
 
         if (selectedStartDate == null || selectedEndDate == null) {
             selectedStartDate = currentMillis
-            selectedEndDate = currentMillis + defaultDateSpacing
+            selectedEndDate = currentMillis + WEEK_MILLIS
         }
 
         timeline = null
@@ -156,12 +155,10 @@ fun ScheduleScreen(
     val stationScrollState = rememberScrollState()
     var detailViewEmployee by remember { mutableStateOf<Slot?>(null) }
 
-    Scaffold(modifier = modifier, topBar = {
-        TopAppBar(
-            title = {
-                Text(stringResource(Res.string.main_schedule_title))
-            },
-            actions = {
+    Screen(
+        modifier = modifier,
+        title = stringResource(Res.string.main_schedule_title),
+        actions = {
             Row(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
@@ -169,26 +166,29 @@ fun ScheduleScreen(
                 IconButton(
                     onClick = {
                         val startOfWeek = selectedStartDate.toInstant().startOfWeek()
-                        selectedStartDate = startOfWeek.toEpochMilliseconds() - 604_800_000
-                        selectedEndDate = selectedStartDate!! + 604_800_000
+                        selectedStartDate = startOfWeek.toEpochMilliseconds() - WEEK_MILLIS
+                        selectedEndDate = selectedStartDate!! + WEEK_MILLIS
                     }
                 ) {
                     Icon(ChevronLeft, contentDescription = null)
                 }
-                Text("KW${selectedStartDate.toInstant().format("ww")}", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "KW${selectedStartDate.toInstant().format("ww")}",
+                    style = MaterialTheme.typography.titleMedium
+                )
                 IconButton(
                     onClick = {
                         val startOfWeek = selectedStartDate.toInstant().startOfWeek()
-                        selectedStartDate = startOfWeek.toEpochMilliseconds() + 604_800_000
-                        selectedEndDate = selectedStartDate!! + 604_800_000
+                        selectedStartDate = startOfWeek.toEpochMilliseconds() + WEEK_MILLIS
+                        selectedEndDate = selectedStartDate!! + WEEK_MILLIS
                     }
                 ) {
                     Icon(ChevronRight, contentDescription = null)
                 }
             }
-        }
-        )
-    }, bottomBar = bottomBar, content = { innerPadding ->
+        },
+        bottomBar = bottomBar
+    ) { innerPadding ->
         Column(
             modifier = Modifier.padding(innerPadding).padding(horizontal = 20.dp)
                 .padding(top = 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -272,7 +272,7 @@ fun ScheduleScreen(
                 }
             }
         }
-    })
+    }
 
     if (showDatePicker) {
         DatePickerDialog(onDismissRequest = {
@@ -281,10 +281,10 @@ fun ScheduleScreen(
             TextButton(onClick = {
                 val startMillis = dateRangePickerState.selectedStartDateMillis ?: currentMillis
                 var endMillis =
-                    dateRangePickerState.selectedEndDateMillis ?: (startMillis + defaultDateSpacing)
+                    dateRangePickerState.selectedEndDateMillis ?: (startMillis + WEEK_MILLIS)
 
                 if (endMillis < startMillis) {
-                    endMillis = startMillis + defaultDateSpacing
+                    endMillis = startMillis + WEEK_MILLIS
                 }
 
                 selectedStartDate = startMillis

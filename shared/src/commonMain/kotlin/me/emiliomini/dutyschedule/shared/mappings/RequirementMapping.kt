@@ -5,10 +5,12 @@ enum class RequirementMapping(val value: String, val priority: Int) {
     TIMESLOT("fd4abb09f1cbf2687319798b396cc38255ffb817_2_1544535064_9602", 20),
     INVALID("", 20),
     TRAINING("451da18e7b16209a6a04071a274777cb3d362d43_2_1551892405_1111", 20),
+    DRILL("6553831b6ab1f4aa1f3217667450011989ac9078_2_1551893177_5831", 20),
 
     // Vehicle
     KFZ("8401f287277707d77fc1a6bf17df4ca0e470b115_2_1589909211_2348", 100),
     KFZ_2("b689ac89571d82c40ae113e7ebd9fe69ceecf9ea_2_1589909202_6474", 100),
+    KFZ_3("3089f8268e0f83dd72d39f8cf5c98b0c49becd9f_2_1551893134_5298", 100),
     VEHICLE("bfce1996338b66a25fd523acf544acc5d295bb28_2_1551892388_1698", 100),
     SEW("d590f25129127adfdb7e994be630de152f5f1682_2_1544535093_4117", 100),
     RTW("390b263970bc93d4612d9a9544d50b1b6bc1d9a7_2_1551891770_4987", 100),
@@ -31,7 +33,7 @@ enum class RequirementMapping(val value: String, val priority: Int) {
     RS("e022f1d19a68909adac66c55ce7adafb520a75ae_2_1544535615_1745", 40);
 
     companion object {
-        val VEHICLES = listOf(KFZ, KFZ_2, VEHICLE, SEW, RTW, ITF, HAEND).map { it.value }
+        val VEHICLES = listOf(KFZ, KFZ_2, KFZ_3, VEHICLE, SEW, RTW, ITF, HAEND).map { it.value }
         val DRIVERS = listOf(EL, HAEND_EL, ITF_LKW).map { it.value }
         val PASSENGERS = listOf(HAEND_DR, TF, ITF_NFS, RTW_NFS).map { it.value }
 

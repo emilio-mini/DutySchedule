@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package me.emiliomini.dutyschedule.shared.services.storage
 
 import androidx.compose.runtime.Composable
@@ -11,6 +13,9 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.KSerializer
 import me.emiliomini.dutyschedule.shared.api.getPlatformStorageApi
 import me.emiliomini.dutyschedule.shared.datastores.MultiplatformDataModel
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 class MultiplatformDataStore<T : MultiplatformDataModel>(
     val id: String,
@@ -23,6 +28,9 @@ class MultiplatformDataStore<T : MultiplatformDataModel>(
     private val dataFlow = MutableStateFlow(defaultValue)
     private val storageApi = getPlatformStorageApi()
     private var isLoadedFromStorage = false
+
+    var lastUpdated: Instant? = null
+        private set
 
     val flow = dataFlow.asStateFlow()
 
@@ -39,6 +47,7 @@ class MultiplatformDataStore<T : MultiplatformDataModel>(
 
     suspend fun update(transform: (data: T) -> T) {
         mutex.withLock {
+            lastUpdated = Clock.System.now()
             val initial = flow.value
             val result = transform(initial)
             if (result == initial) {
@@ -61,7 +70,7 @@ class MultiplatformDataStore<T : MultiplatformDataModel>(
     @Composable
     fun collectAsState(): State<T> = flow.collectAsState()
 
-    private suspend fun ensureLoaded() {
+    suspend fun ensureLoaded() {
         if (isLoadedFromStorage || flow.value != defaultValue) {
             return
         }
