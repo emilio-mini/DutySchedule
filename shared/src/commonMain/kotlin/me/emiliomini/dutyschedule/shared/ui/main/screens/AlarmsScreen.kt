@@ -159,6 +159,11 @@ fun AlarmsScreen(
                                         scope.launch {
                                             blocked = true
                                             getPlatformAlarmApi().cancelAlarm(alarm.code)
+                                            StorageService.ALARM_ITEMS.update {
+                                                it.copy(
+                                                    alarms = it.alarms.filter { it.code != alarm.code }
+                                                )
+                                            }
                                             blocked = false
                                         }
                                     }) {
