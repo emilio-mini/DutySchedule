@@ -29,7 +29,9 @@ import dutyschedule.shared.generated.resources.data_requirement_tf
 import dutyschedule.shared.generated.resources.data_requirement_training
 import dutyschedule.shared.generated.resources.data_requirement_vehicle
 import dutyschedule.shared.generated.resources.data_role_developer
+import dutyschedule.shared.generated.resources.data_role_first_user
 import dutyschedule.shared.generated.resources.data_role_info_developer
+import dutyschedule.shared.generated.resources.data_role_info_first_user
 import dutyschedule.shared.generated.resources.data_skill_azubi
 import dutyschedule.shared.generated.resources.data_skill_fk
 import dutyschedule.shared.generated.resources.data_skill_haend
@@ -65,6 +67,7 @@ fun DutyType.resourceString(): StringResource {
 fun Role.resourceString(): StringResource? {
     return when (this) {
         Role.DEVELOPER -> Res.string.data_role_developer
+        Role.FIRST_USER -> Res.string.data_role_first_user
         else -> null
     }
 }
@@ -72,6 +75,7 @@ fun Role.resourceString(): StringResource? {
 fun Role.infoResourceString(): StringResource? {
     return when (this) {
         Role.DEVELOPER -> Res.string.data_role_info_developer
+        Role.FIRST_USER -> Res.string.data_role_info_first_user
         else -> null
     }
 }

@@ -132,6 +132,8 @@
     <string name="data_requirement_kfz">Vehicle</string>
     <string name="data_role_developer">App Developer</string>
     <string name="data_role_info_developer">Hi. I'm one of the developers of this app. Thanks for your support!</string>
+    <string name="data_role_first_user">Early Adopter</string>
+    <string name="data_role_info_first_user">This person helped us develop this app by testing it and supporting us right from the start! Thank you :)</string>
     <string name="nav_archive">Archive</string>
     <string name="main_archive_title">Archive</string>
     <string name="main_archive_section_duties_title">%1$s Duties (%2$s hours)</string>
