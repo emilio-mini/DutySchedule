@@ -78,6 +78,7 @@ import me.emiliomini.dutyschedule.shared.util.infoResourceString
 import me.emiliomini.dutyschedule.shared.util.isNotNullOrBlank
 import me.emiliomini.dutyschedule.shared.util.nullIfBlank
 import me.emiliomini.dutyschedule.shared.util.resourceString
+import me.emiliomini.dutyschedule.shared.util.title
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -350,8 +351,7 @@ fun EmployeeDetailSheet(
                                 filteredSkills.remove(MappedSkills.RS.asSkill())
                             }
                             val skillTxt =
-                                filteredSkills.map { stringResource(it.resourceString()) }
-                                    .joinToString(", ")
+                                filteredSkills.joinToString(", ") { it.title() }
 
                             ListItem(
                                 modifier = Modifier.background(

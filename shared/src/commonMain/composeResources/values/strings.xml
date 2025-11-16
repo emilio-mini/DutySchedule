@@ -63,14 +63,6 @@
     <string name="main_alarms_none">No alarms set</string>
     <string name="main_alarms_upcoming">Upcoming alarms</string>
     <string name="main_schedule_infobox_primary">Primary Station</string>
-    <string name="data_skill_rs">Medic</string>
-    <string name="data_skill_nfs" translatable="false">NFS</string>
-    <string name="data_skill_azubi">Intern</string>
-    <string name="data_skill_haend" translatable="false">HÄND</string>
-    <string name="data_skill_fk">Supervisor</string>
-    <string name="data_skill_pa">Instructor</string>
-    <string name="data_skill_sef">Driver</string>
-    <string name="data_skill_nkv" translatable="false">NKV</string>
     <string name="main_schedule_infobox_skill">Qualifications</string>
     <string name="nav_dashboard">Dashboard</string>
     <string name="main_dashboard_title">Dashboard</string>

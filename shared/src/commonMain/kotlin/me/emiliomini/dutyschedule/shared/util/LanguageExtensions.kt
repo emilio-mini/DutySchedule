@@ -32,20 +32,12 @@ import dutyschedule.shared.generated.resources.data_role_developer
 import dutyschedule.shared.generated.resources.data_role_first_user
 import dutyschedule.shared.generated.resources.data_role_info_developer
 import dutyschedule.shared.generated.resources.data_role_info_first_user
-import dutyschedule.shared.generated.resources.data_skill_azubi
-import dutyschedule.shared.generated.resources.data_skill_fk
-import dutyschedule.shared.generated.resources.data_skill_haend
-import dutyschedule.shared.generated.resources.data_skill_nfs
-import dutyschedule.shared.generated.resources.data_skill_nkv
-import dutyschedule.shared.generated.resources.data_skill_pa
-import dutyschedule.shared.generated.resources.data_skill_rs
-import dutyschedule.shared.generated.resources.data_skill_sef
 import me.emiliomini.dutyschedule.shared.datastores.DutyType
 import me.emiliomini.dutyschedule.shared.datastores.Requirement
 import me.emiliomini.dutyschedule.shared.datastores.Skill
+import me.emiliomini.dutyschedule.shared.mappings.MappedSkills
 import me.emiliomini.dutyschedule.shared.mappings.RequirementMapping
 import me.emiliomini.dutyschedule.shared.mappings.Role
-import me.emiliomini.dutyschedule.shared.mappings.MappedSkills
 import org.jetbrains.compose.resources.StringResource
 
 fun DutyType.resourceString(): StringResource {
@@ -88,6 +80,7 @@ private fun getRequirementResourceString(guid: String): StringResource {
     return when (guid) {
         RequirementMapping.DRILL.value,
         RequirementMapping.TRAINING.value -> Res.string.data_requirement_training
+
         RequirementMapping.KFZ_3.value,
         RequirementMapping.KFZ_2.value,
         RequirementMapping.KFZ.value -> Res.string.data_requirement_kfz
@@ -110,16 +103,6 @@ private fun getRequirementResourceString(guid: String): StringResource {
     }
 }
 
-fun Skill.resourceString(): StringResource {
-    return when (this.guid) {
-        MappedSkills.RS.value -> Res.string.data_skill_rs
-        MappedSkills.AZUBI.value -> Res.string.data_skill_azubi
-        MappedSkills.HAEND.value -> Res.string.data_skill_haend
-        MappedSkills.FK.value -> Res.string.data_skill_fk
-        MappedSkills.PA.value -> Res.string.data_skill_pa
-        MappedSkills.SEF.value -> Res.string.data_skill_sef
-        MappedSkills.NOTKOMPETENZ.value -> Res.string.data_skill_nkv
-        MappedSkills.NFS.value -> Res.string.data_skill_nfs
-        else -> Res.string.data_requirement_none
-    }
+fun Skill.title(): String {
+    return MappedSkills.parse(this.guid).originalTitle
 }
