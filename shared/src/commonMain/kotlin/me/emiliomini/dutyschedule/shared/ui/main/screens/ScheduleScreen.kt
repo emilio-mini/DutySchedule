@@ -71,6 +71,7 @@ import me.emiliomini.dutyschedule.shared.ui.icons.ChevronLeft
 import me.emiliomini.dutyschedule.shared.ui.icons.ChevronRight
 import me.emiliomini.dutyschedule.shared.util.WEEK_MILLIS
 import me.emiliomini.dutyschedule.shared.util.format
+import me.emiliomini.dutyschedule.shared.util.isNotNullOrBlank
 import me.emiliomini.dutyschedule.shared.util.startOfWeek
 import me.emiliomini.dutyschedule.shared.util.toInstant
 import org.jetbrains.compose.resources.stringResource
@@ -95,6 +96,8 @@ fun ScheduleScreen(
         nanosecond = 0
     ).toInstant(TimeZone.currentSystemDefault()).toEpochMilliseconds()
 
+    val userPreferences by StorageService.USER_PREFERENCES.collectAsState()
+
     val dateRangePickerState = rememberDateRangePickerState()
 
     var showDatePicker by remember { mutableStateOf(false) }
@@ -115,15 +118,18 @@ fun ScheduleScreen(
     var createError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
-        allowedOrgs = StorageService.USER_PREFERENCES.getOrDefault().allowedOrgs
+    LaunchedEffect(userPreferences) {
+        allowedOrgs = userPreferences.allowedOrgs
+        selectedOrg = userPreferences.lastSelectedOrg
     }
 
     LaunchedEffect(orgItems, allowedOrgs) {
         val default = DutyScheduleService.self?.defaultOrg
         val primaryOrg = if (default != null) DutyScheduleService.getOrg(default) else null
 
-        selectedOrg = primaryOrg?.guid ?: allowedOrgs?.firstOrNull()
+        if (selectedOrg.isNullOrBlank()) {
+            selectedOrg = primaryOrg?.guid ?: allowedOrgs?.firstOrNull()
+        }
     }
 
     LaunchedEffect(
@@ -136,6 +142,12 @@ fun ScheduleScreen(
         if (selectedStartDate == null || selectedEndDate == null) {
             selectedStartDate = currentMillis
             selectedEndDate = currentMillis + WEEK_MILLIS
+        }
+
+        StorageService.USER_PREFERENCES.update {
+            it.copy(
+                lastSelectedOrg = selectedOrg!!
+            )
         }
 
         timeline = null

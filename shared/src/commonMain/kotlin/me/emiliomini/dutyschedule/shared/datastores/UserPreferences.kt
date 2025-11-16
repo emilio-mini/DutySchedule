@@ -14,7 +14,9 @@ data class UserPreferences(
     @ProtoNumber(3)
     val alarmOffsetMin: Int = 90,
     @ProtoNumber(4)
-    val allowedOrgs: List<String> = emptyList()
+    val allowedOrgs: List<String> = emptyList(),
+    @ProtoNumber(5)
+    val lastSelectedOrg: String = ""
 ) : MultiplatformDataModel
 
 fun UserPreferences.isDefault(): Boolean {
