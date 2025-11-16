@@ -14,7 +14,7 @@ enum class Role {
         return if (isSystemInDarkTheme()) {
             when (this) {
                 DEVELOPER -> listOf(Color(0xFFFFFF00), Color(0xFFFF9800), Color(0xFFFFFF00))
-                FIRST_USER -> listOf(Color(0xFF9C27B0), Color(0xFFCE93D8), Color(0xFF9C27B0))
+                FIRST_USER -> listOf(Color(0xFFB62ECE), Color(0xFFCE93D8), Color(0xFFB62ECE))
                 NONE -> emptyList()
             }
         } else {
