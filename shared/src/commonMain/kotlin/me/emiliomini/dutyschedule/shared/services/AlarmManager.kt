@@ -27,7 +27,7 @@ object AlarmManager {
         with(getPlatformAlarmApi()){
 
             val alarmPermission = requestPermission()
-            val notificationPermission = !getPlatformNotificationApi().requestPermission()
+            val notificationPermission = getPlatformNotificationApi().requestPermission()
 
             val errorMessage = when {
                 !alarmPermission && !notificationPermission -> getString(Res.string.error_permissions_missing_alarm_and_notification)

@@ -23,7 +23,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 @Composable
-fun AlarmToggle(modifier: Modifier = Modifier, dutyBegin: Instant, guid: String, snackbarHostState: SnackbarHostState) {
+fun AlarmToggle(modifier: Modifier = Modifier, dutyBegin: Instant, guid: String, snackbarHostState: SnackbarHostState?) {
     val scope = rememberCoroutineScope()
     val currentMillis = Clock.System.now().toEpochMilliseconds()
     val dutyBeginMillis = dutyBegin.toEpochMilliseconds()
@@ -35,7 +35,7 @@ fun AlarmToggle(modifier: Modifier = Modifier, dutyBegin: Instant, guid: String,
         )
     }
 
-    if (dutyBeginMillis >= currentMillis) {
+    if (dutyBeginMillis >= currentMillis && snackbarHostState != null) {
         IconButton(
             modifier = modifier, onClick = {
                 alarmBlocked = true

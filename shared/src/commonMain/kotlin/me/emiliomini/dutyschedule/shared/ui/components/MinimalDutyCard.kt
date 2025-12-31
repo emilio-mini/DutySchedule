@@ -44,7 +44,7 @@ fun MinimalDutyCard(
     duty: MinimalDutyDefinition,
     demo: Boolean = false,
     type: CardListItemType = CardListItemType.DEFAULT,
-    snackbarHostState: SnackbarHostState
+    snackbarHostState: SnackbarHostState?
 ) {
     val timeFormatter = "HH:mm"
     val dateFormatter = "dd.MM.yyyy"

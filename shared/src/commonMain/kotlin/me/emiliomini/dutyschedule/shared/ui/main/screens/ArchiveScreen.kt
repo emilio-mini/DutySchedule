@@ -149,7 +149,8 @@ fun ArchiveScreen(
                     items = duties, key = { _, duty -> duty.guid }) { index, duty ->
                     MinimalDutyCard(
                         duty = duty,
-                        type = if (index == 0 && duties.size == 1) CardListItemType.SINGLE else if (index == 0) CardListItemType.TOP else if (index == duties.size - 1) CardListItemType.BOTTOM else CardListItemType.DEFAULT
+                        type = if (index == 0 && duties.size == 1) CardListItemType.SINGLE else if (index == 0) CardListItemType.TOP else if (index == duties.size - 1) CardListItemType.BOTTOM else CardListItemType.DEFAULT,
+                        snackbarHostState = null
                     )
 
                     if (index == duties.size - 1) {
