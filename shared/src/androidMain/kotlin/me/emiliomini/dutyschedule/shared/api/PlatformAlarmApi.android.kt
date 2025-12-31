@@ -19,7 +19,7 @@ import kotlin.time.Instant
 class AndroidAlarmApi : PlatformAlarmApi {
     private val logger = getPlatformLogger("AndroidAlarmApi")
 
-    override fun requestPermission() {
+    override fun requestPermission(): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !isPermissionGranted()) {
             val intent =
                 Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
@@ -27,7 +27,8 @@ class AndroidAlarmApi : PlatformAlarmApi {
                 }
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             APPLICATION_CONTEXT.startActivity(intent)
-        }
+            return isPermissionGranted()
+        } else return true
     }
 
     override fun isPermissionGranted(): Boolean {

@@ -7,7 +7,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 interface PlatformAlarmApi {
-    fun requestPermission()
+    fun requestPermission(): Boolean
     fun isPermissionGranted(): Boolean
     suspend fun setAlarm(id: Int, time: Instant, zone: TimeZone = TimeZone.currentSystemDefault())
     suspend fun cancelAlarm(id: Int)

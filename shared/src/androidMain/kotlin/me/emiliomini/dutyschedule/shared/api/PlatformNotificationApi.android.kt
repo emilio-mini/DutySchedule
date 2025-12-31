@@ -23,7 +23,7 @@ import me.emiliomini.dutyschedule.shared.api.notifications.NotificationActionReg
 class AndroidNotificationApi : PlatformNotificationApi {
     private var manager: NotificationManager? = null
     private val logger = getPlatformLogger("AndroidAlarmApi")
-    override fun requestPermission() {
+    override fun requestPermission(): Boolean {
         if (!isPermissionGranted()){
             when {
                 ActivityCompat.shouldShowRequestPermissionRationale(
@@ -33,7 +33,8 @@ class AndroidNotificationApi : PlatformNotificationApi {
                     requestPermission()
                 }
             }
-        }
+            return isPermissionGranted()
+        } else return true
     }
 
     override fun isPermissionGranted(): Boolean {

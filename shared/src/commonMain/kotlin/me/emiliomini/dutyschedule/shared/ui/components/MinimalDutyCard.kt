@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -42,7 +43,8 @@ fun MinimalDutyCard(
     modifier: Modifier = Modifier,
     duty: MinimalDutyDefinition,
     demo: Boolean = false,
-    type: CardListItemType = CardListItemType.DEFAULT
+    type: CardListItemType = CardListItemType.DEFAULT,
+    snackbarHostState: SnackbarHostState
 ) {
     val timeFormatter = "HH:mm"
     val dateFormatter = "dd.MM.yyyy"
@@ -104,7 +106,7 @@ fun MinimalDutyCard(
             type = type
         )
         if (!demo) {
-            AlarmToggle(dutyBegin = duty.begin.toInstant(), guid = duty.guid)
+            AlarmToggle(dutyBegin = duty.begin.toInstant(), guid = duty.guid, snackbarHostState = snackbarHostState)
         }
     }
 }

@@ -13,6 +13,9 @@
     <string name="main_settings_account_logout_title">Abmelden</string>
     <string name="main_settings_account_logout_content">Entfernt alle Zugangsdaten vom Gerät</string>
     <string name="base_dutycard_accessibility_requirements_issue">Anforderungen nicht erfüllt</string>
+    <string name="error_permissions_missing_alarm_and_notification">Alarme and Benachrichtigungen können nicht gesendet werden</string>
+    <string name="error_permissions_missing_alarm">Alarme können nicht gesetzt werden</string>
+    <string name="error_permissions_missing_notification">Benachrichtigungen könnte nicht gesendet werden</string>
     <string name="main_schedule_title">Dienstplan</string>
     <string name="main_schedule_accessibility_datepicker">Klicken um einen neuen Zeitraum auszuwählen</string>
     <string name="main_schedule_datepicker_confirm">OK</string>

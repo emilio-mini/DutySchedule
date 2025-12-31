@@ -8,8 +8,9 @@ import kotlin.time.Instant
 
 class IosAlarmApi : PlatformAlarmApi {
 
-    override fun requestPermission() {
+    override fun requestPermission(): Boolean {
         // TODO: Implement
+        return false
     }
 
     override fun isPermissionGranted(): Boolean {
