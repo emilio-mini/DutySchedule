@@ -3,6 +3,9 @@ package me.emiliomini.dutyschedule.shared.api
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotification
 
 interface PlatformNotificationApi {
+
+    fun requestPermission()
+    fun isPermissionGranted(): Boolean
     fun send(notification: MultiplatformNotification)
     fun dismiss(notification: MultiplatformNotification)
 }

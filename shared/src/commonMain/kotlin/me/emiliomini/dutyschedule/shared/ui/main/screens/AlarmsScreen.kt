@@ -51,6 +51,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import me.emiliomini.dutyschedule.shared.api.getPlatformAlarmApi
+import me.emiliomini.dutyschedule.shared.api.getPlatformNotificationApi
 import me.emiliomini.dutyschedule.shared.datastores.Alarm
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.components.CardColumn
@@ -238,9 +239,13 @@ fun AlarmsScreen(
 }
 
 private suspend fun setAlarm(alarm: Alarm, enabled: Boolean) {
-    if (enabled) {
-        getPlatformAlarmApi().setAlarm(alarm.code, Instant.fromEpochMilliseconds(alarm.timestamp))
-    } else {
-        getPlatformAlarmApi().cancelAlarm(alarm.code)
+    with(getPlatformAlarmApi()){
+        if (enabled) {
+            requestPermission()
+            getPlatformNotificationApi().requestPermission()
+            setAlarm(alarm.code, Instant.fromEpochMilliseconds(alarm.timestamp))
+        } else {
+            cancelAlarm(alarm.code)
+        }
     }
 }

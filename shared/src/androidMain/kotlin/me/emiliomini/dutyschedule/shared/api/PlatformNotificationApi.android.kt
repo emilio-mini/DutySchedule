@@ -1,11 +1,17 @@
 package me.emiliomini.dutyschedule.shared.api
 
+import android.Manifest
+import android.app.Activity
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import me.emiliomini.dutyschedule.shared.R
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotification
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotificationAction
@@ -16,8 +22,27 @@ import me.emiliomini.dutyschedule.shared.api.notifications.NotificationActionReg
 
 class AndroidNotificationApi : PlatformNotificationApi {
     private var manager: NotificationManager? = null
+    private val logger = getPlatformLogger("AndroidAlarmApi")
+    override fun requestPermission() {
+        if (!isPermissionGranted()){
+            when {
+                ActivityCompat.shouldShowRequestPermissionRationale(
+                    APPLICATION_CONTEXT as Activity, Manifest.permission.POST_NOTIFICATIONS
+                ) -> {}
+                else -> {
+                    requestPermission()
+                }
+            }
+        }
+    }
+
+    override fun isPermissionGranted(): Boolean {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && ContextCompat.checkSelfPermission(
+            APPLICATION_CONTEXT, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+    }
 
     override fun send(notification: MultiplatformNotification) {
+        logger.d("Sending notification: $notification")
         verifyOrCreateChannel(notification.channel)
 
         val notificationBuilder =

@@ -20,7 +20,7 @@ class AndroidAlarmApi : PlatformAlarmApi {
     private val logger = getPlatformLogger("AndroidAlarmApi")
 
     override fun requestPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !isPermissionGranted()) {
             val intent =
                 Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
                     data = Uri.fromParts("package", APPLICATION_CONTEXT.packageName, null)
