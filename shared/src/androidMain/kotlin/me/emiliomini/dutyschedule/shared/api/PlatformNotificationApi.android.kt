@@ -1,12 +1,15 @@
 package me.emiliomini.dutyschedule.shared.api
 
 import android.Manifest
+import android.app.Activity
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.ContextWrapper
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -23,18 +26,17 @@ class AndroidNotificationApi : PlatformNotificationApi {
     private var manager: NotificationManager? = null
     private val logger = getPlatformLogger("AndroidAlarmApi")
     override fun requestPermission(): Boolean {
-        if (!isPermissionGranted()){
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                ACTIVITY_CONTEXT?.let {
-                    ActivityCompat.requestPermissions(
-                        it,
-                        arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                        0
-                    )
-                }
-            }
-            return isPermissionGranted()
-        } else return true
+//        if (!isPermissionGranted()){
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+//                ActivityCompat.requestPermissions(
+//                    null,
+//                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+//                    0
+//                )
+//            }
+//            return isPermissionGranted()
+//        } else return true
+        return true // TODO: Find a way to request the POST_NOTIFICATIONS permission
     }
 
     override fun isPermissionGranted(): Boolean {
