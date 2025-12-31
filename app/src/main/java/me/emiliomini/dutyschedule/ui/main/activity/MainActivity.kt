@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.ui.platform.LocalClipboard
+import me.emiliomini.dutyschedule.shared.api.ACTIVITY_CONTEXT
 import me.emiliomini.dutyschedule.shared.api.APPLICATION_CONTEXT
 import me.emiliomini.dutyschedule.shared.api.LOCAL_CLIPBOARD
 import me.emiliomini.dutyschedule.shared.ui.main.entry.DutyScheduleApp
@@ -18,6 +19,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         APPLICATION_CONTEXT = applicationContext
+        ACTIVITY_CONTEXT = this
 
         setContent {
             DutyScheduleApp {

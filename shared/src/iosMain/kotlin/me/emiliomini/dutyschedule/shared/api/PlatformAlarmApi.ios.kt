@@ -18,11 +18,7 @@ class IosAlarmApi : PlatformAlarmApi {
         return false
     }
 
-    override suspend fun setAlarm(
-        id: Int,
-        time: Instant,
-        zone: TimeZone
-    ) {
+    override suspend fun setAlarm(guid: String, time: Instant, zone: TimeZone, edited: Boolean) {
         // TODO: Implement
     }
 

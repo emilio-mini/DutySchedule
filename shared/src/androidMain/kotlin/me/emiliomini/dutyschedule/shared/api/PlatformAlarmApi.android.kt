@@ -41,11 +41,8 @@ class AndroidAlarmApi : PlatformAlarmApi {
         }
     }
 
-    override suspend fun setAlarm(
-        id: Int,
-        time: Instant,
-        zone: TimeZone
-    ) {
+    override suspend fun setAlarm(guid: String, time: Instant, zone: TimeZone, edited: Boolean) {
+        val id = guid.hashCode()
         val alarmManager =
             APPLICATION_CONTEXT.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
@@ -70,14 +67,17 @@ class AndroidAlarmApi : PlatformAlarmApi {
 
         StorageService.ALARM_ITEMS.update { alarmItems ->
             val alarms = alarmItems.alarms.toMutableList()
-            val alarmIndex = alarms.indexOfFirst { it.code == id }
+            val alarmIndex = alarms.indexOfFirst { it.guid == guid }
 
             if (alarmIndex != -1) {
                 val alarmToUpdate = alarms[alarmIndex]
-                val updatedAlarm = alarmToUpdate.copy(active = true)
+                val updatedAlarm = alarmToUpdate.copy(
+                    active = true,
+                    edited = edited
+                )
                 alarms[alarmIndex] = updatedAlarm
             } else {
-                val alarm = Alarm(true, time.toEpochMilliseconds(), id)
+                val alarm = Alarm(true, time.toEpochMilliseconds(), id, edited, guid)
                 alarms.add(alarm)
             }
 

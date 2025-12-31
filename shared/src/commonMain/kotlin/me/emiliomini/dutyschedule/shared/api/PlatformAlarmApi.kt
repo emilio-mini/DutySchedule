@@ -9,7 +9,7 @@ import kotlin.time.Instant
 interface PlatformAlarmApi {
     fun requestPermission(): Boolean
     fun isPermissionGranted(): Boolean
-    suspend fun setAlarm(id: Int, time: Instant, zone: TimeZone = TimeZone.currentSystemDefault())
+    suspend fun setAlarm(guid: String, time: Instant, zone: TimeZone = TimeZone.currentSystemDefault(), edited: Boolean)
     suspend fun cancelAlarm(id: Int)
     fun isAlarmSet(id: Int): Boolean
 }

@@ -54,6 +54,8 @@ import me.emiliomini.dutyschedule.shared.api.getPlatformAlarmApi
 import me.emiliomini.dutyschedule.shared.services.AlarmManager
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.components.CardColumn
+import me.emiliomini.dutyschedule.shared.ui.components.CardListItem
+import me.emiliomini.dutyschedule.shared.ui.components.CardListItemType
 import me.emiliomini.dutyschedule.shared.ui.icons.AlarmOff
 import me.emiliomini.dutyschedule.shared.ui.icons.AlarmOn
 import me.emiliomini.dutyschedule.shared.ui.icons.NightsStay
@@ -79,6 +81,7 @@ fun AlarmsScreen(
     val timeFormat = "HH:mm"
     val dateFormat = "dd/MM/yyyy"
     val alarmItems by StorageService.ALARM_ITEMS.collectAsState()
+    var blocked by remember { mutableStateOf(false) }
 
     Screen(
         modifier = modifier,
@@ -95,7 +98,77 @@ fun AlarmsScreen(
                 color = MaterialTheme.colorScheme.primary
             )
             CardColumn {
-                DutyAlarmListItem()
+                var autoSetAll by remember { mutableStateOf(false) }
+
+                CardListItem(
+                    modifier = Modifier.clickable {
+                        if (blocked) return@clickable
+
+                        blocked = true
+                        autoSetAll = !autoSetAll
+                        scope.launch {
+                            if (autoSetAll){
+                                AlarmManager.setAllAlarms(snackbarHostState)
+                            } else {
+                                AlarmManager.cancelAllUneditedAlarms()
+                            }
+                            blocked = false
+                        }
+                    }.background(
+                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        shape = RoundedCornerShape(
+                            topStart =  12.dp,
+                            topEnd =  12.dp,
+                            bottomStart = 4.dp,
+                            bottomEnd = 4.dp
+                        )
+                    ),
+                    headlineContent = {
+                        Text(
+                            "Automatisch Alarme setzen",
+                        )
+                    },
+                    trailingContent = {
+                        Switch(
+                            checked = autoSetAll,
+                            onCheckedChange = {
+                                if (blocked) return@Switch
+
+                                blocked = true
+                                autoSetAll = it
+                                scope.launch {
+                                    if (autoSetAll){
+                                        AlarmManager.setAllAlarms(snackbarHostState)
+                                    } else {
+                                        AlarmManager.cancelAllUneditedAlarms()
+                                    }
+                                    blocked = false
+                                }
+                              },
+                            thumbContent = {
+                                Icon(
+                                    modifier = Modifier.size(SwitchDefaults.IconSize),
+                                    imageVector = if (autoSetAll) AlarmOn else AlarmOff,
+                                    contentDescription = null
+                                )
+                            }
+                        )
+                    },
+                    type = CardListItemType.SINGLE
+                )
+
+                DutyAlarmListItem(
+                    modifier = Modifier.background(
+                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        shape = RoundedCornerShape(
+                            topStart =  4.dp,
+                            topEnd =  4.dp,
+                            bottomStart = 12.dp,
+                            bottomEnd = 12.dp
+                        )
+                    )
+
+                )
             }
             Spacer(modifier = Modifier.height(8.dp))
             if (alarmItems.alarms.isEmpty()) {
@@ -134,7 +207,6 @@ fun AlarmsScreen(
                                         getPlatformAlarmApi().isAlarmSet(alarm.code)
                                     )
                                 }
-                                var blocked by remember { mutableStateOf(false) }
                                 val swipeToDismissBoxState = rememberSwipeToDismissBoxState()
                                 val date = Instant.fromEpochMilliseconds(alarm.timestamp)
 

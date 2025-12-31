@@ -1,7 +1,6 @@
 package me.emiliomini.dutyschedule.shared.api
 
 import android.Manifest
-import android.app.Activity
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -25,12 +24,13 @@ class AndroidNotificationApi : PlatformNotificationApi {
     private val logger = getPlatformLogger("AndroidAlarmApi")
     override fun requestPermission(): Boolean {
         if (!isPermissionGranted()){
-            when {
-                ActivityCompat.shouldShowRequestPermissionRationale(
-                    APPLICATION_CONTEXT as Activity, Manifest.permission.POST_NOTIFICATIONS
-                ) -> {}
-                else -> {
-                    requestPermission()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                ACTIVITY_CONTEXT?.let {
+                    ActivityCompat.requestPermissions(
+                        it,
+                        arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                        0
+                    )
                 }
             }
             return isPermissionGranted()

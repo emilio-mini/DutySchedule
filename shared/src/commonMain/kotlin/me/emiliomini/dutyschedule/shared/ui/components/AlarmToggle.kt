@@ -54,9 +54,10 @@ fun AlarmToggle(modifier: Modifier = Modifier, dutyBegin: Instant, guid: String,
 
                         val timestamp = dutyBeginMillis - alarmOffsetMillis
                         AlarmManager.setAlarm(
-                            guid.hashCode(),
+                            guid,
                             Instant.fromEpochMilliseconds(timestamp),
-                            snackbarHostState = snackbarHostState
+                            snackbarHostState = snackbarHostState,
+                            edited = true
                         )
                         alarmBlocked = false
                         alarmSet = true

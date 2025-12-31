@@ -37,5 +37,5 @@ val USER_ROLES = mapOf(
     Pair("b3c6e3b21be3e9e4f0d3e8c38cc456b32c09a374_580_1656634402_5922", Role.DEVELOPER), // Miniberger Emilio
     Pair("5cb2ad972038fd6d38ac5ee583ebf05972ea8ba3_476_1693526649_893", Role.DEVELOPER), // Scheiböck Klaus
     Pair("5ba809a5b0e0e4cc4406a054838b9e06011b4a29_82565_1574428744_0754", Role.FIRST_USER), // Plachy Tamara
-    Pair("3bfdb8832ca12edb46ac116b67e83df049ae5a03_14_1764605352_8833", Role.DEVELOPER), // Stefan Wiesinger
+    Pair("fdf8c43d5e63715579656e7f6c3b7314878738c0_11_1764605352_882", Role.DEVELOPER), // Stefan Wiesinger
 )
