@@ -51,7 +51,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import me.emiliomini.dutyschedule.shared.api.getPlatformAlarmApi
-import me.emiliomini.dutyschedule.shared.services.AlarmManager
+import me.emiliomini.dutyschedule.shared.services.AlarmService
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.components.CardColumn
 import me.emiliomini.dutyschedule.shared.ui.components.CardListItem
@@ -77,6 +77,9 @@ fun AlarmsScreen(
     }
 
     val snackbarHostState = remember { SnackbarHostState() }
+    val onError: suspend (String) -> Unit = {
+        snackbarHostState.showSnackbar(it)
+    }
     val scope = rememberCoroutineScope()
     val timeFormat = "HH:mm"
     val dateFormat = "dd/MM/yyyy"
@@ -108,9 +111,9 @@ fun AlarmsScreen(
                         autoSetAll = !autoSetAll
                         scope.launch {
                             if (autoSetAll){
-                                AlarmManager.setAllAlarms(snackbarHostState)
+                                AlarmService.setAllAlarms(onError)
                             } else {
-                                AlarmManager.cancelAllUneditedAlarms()
+                                AlarmService.cancelAllUneditedAlarms()
                             }
                             blocked = false
                         }
@@ -138,9 +141,9 @@ fun AlarmsScreen(
                                 autoSetAll = it
                                 scope.launch {
                                     if (autoSetAll){
-                                        AlarmManager.setAllAlarms(snackbarHostState)
+                                        AlarmService.setAllAlarms(onError)
                                     } else {
-                                        AlarmManager.cancelAllUneditedAlarms()
+                                        AlarmService.cancelAllUneditedAlarms()
                                     }
                                     blocked = false
                                 }
@@ -204,7 +207,7 @@ fun AlarmsScreen(
                                 key = { _, alarm -> alarm.code }) { index, alarm ->
                                 var active by remember {
                                     mutableStateOf(
-                                        getPlatformAlarmApi().isAlarmSet(alarm.code)
+                                        getPlatformAlarmApi().isAlarmSet(alarm.guid)
                                     )
                                 }
                                 val swipeToDismissBoxState = rememberSwipeToDismissBoxState()
@@ -230,12 +233,7 @@ fun AlarmsScreen(
                                     onDismiss = {
                                         scope.launch {
                                             blocked = true
-                                            getPlatformAlarmApi().cancelAlarm(alarm.code)
-                                            StorageService.ALARM_ITEMS.update {
-                                                it.copy(
-                                                    alarms = it.alarms.filter { it.code != alarm.code }
-                                                )
-                                            }
+                                            AlarmService.removeAlarm(alarm.guid)
                                             blocked = false
                                         }
                                     }) {
@@ -259,7 +257,7 @@ fun AlarmsScreen(
                                                 active = !active
 
                                                 scope.launch {
-                                                    AlarmManager.updateAlarm(alarm, active, snackbarHostState)
+                                                    AlarmService.updateAlarm(alarm, active, onError)
                                                     blocked = false
                                                 }
                                             }), colors = ListItemDefaults.colors(
@@ -294,7 +292,7 @@ fun AlarmsScreen(
                                                 active = !active
 
                                                 scope.launch {
-                                                    AlarmManager.updateAlarm(alarm, active, snackbarHostState)
+                                                    AlarmService.updateAlarm(alarm, active, onError)
                                                     blocked = false
                                                 }
                                             })

@@ -22,11 +22,11 @@ class IosAlarmApi : PlatformAlarmApi {
         // TODO: Implement
     }
 
-    override suspend fun cancelAlarm(id: Int) {
+    override suspend fun cancelAlarm(guid: String) {
         // TODO: Implement
     }
 
-    override fun isAlarmSet(id: Int): Boolean {
+    override fun isAlarmSet(guid: String): Boolean {
         // TODO: Implement
         return false
     }

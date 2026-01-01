@@ -87,7 +87,8 @@ class AndroidAlarmApi : PlatformAlarmApi {
         logger.d("Alarm $id set")
     }
 
-    override suspend fun cancelAlarm(id: Int) {
+    override suspend fun cancelAlarm(guid: String) {
+        val id = guid.hashCode()
         val alarmManager =
             APPLICATION_CONTEXT.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val alarmIntent = Intent(APPLICATION_CONTEXT, AlarmReceiver::class.java)
@@ -102,7 +103,7 @@ class AndroidAlarmApi : PlatformAlarmApi {
 
         StorageService.ALARM_ITEMS.update { alarmItems ->
             val alarms = alarmItems.alarms.toMutableList()
-            val alarmIndex = alarms.indexOfFirst { it.code == id }
+            val alarmIndex = alarms.indexOfFirst { it.guid == guid }
 
             if (alarmIndex != -1) {
                 val alarmToUpdate = alarms[alarmIndex]
@@ -115,7 +116,8 @@ class AndroidAlarmApi : PlatformAlarmApi {
         logger.d("Alarm $id cancelled")
     }
 
-    override fun isAlarmSet(id: Int): Boolean {
+    override fun isAlarmSet(guid: String): Boolean {
+        val id = guid.hashCode()
         val alarmIntent = Intent(APPLICATION_CONTEXT, AlarmReceiver::class.java)
         val pendingIntent = PendingIntent.getBroadcast(
             APPLICATION_CONTEXT,
