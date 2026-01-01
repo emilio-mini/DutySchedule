@@ -14,7 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.shared.api.getPlatformAlarmApi
-import me.emiliomini.dutyschedule.shared.services.AlarmManager
+import me.emiliomini.dutyschedule.shared.services.AlarmService
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.icons.AlarmAdd
 import me.emiliomini.dutyschedule.shared.ui.icons.AlarmOn
@@ -31,7 +31,7 @@ fun AlarmToggle(modifier: Modifier = Modifier, dutyBegin: Instant, guid: String,
     var alarmBlocked by remember { mutableStateOf(false) }
     var alarmSet by remember {
         mutableStateOf(
-            getPlatformAlarmApi().isAlarmSet(guid.hashCode())
+            getPlatformAlarmApi().isAlarmSet(guid)
         )
     }
 
@@ -41,7 +41,7 @@ fun AlarmToggle(modifier: Modifier = Modifier, dutyBegin: Instant, guid: String,
                 alarmBlocked = true
                 if (alarmSet) {
                     scope.launch {
-                        getPlatformAlarmApi().cancelAlarm(guid.hashCode())
+                        getPlatformAlarmApi().cancelAlarm(guid)
 
                         alarmSet = false
                         alarmBlocked = false
@@ -53,10 +53,12 @@ fun AlarmToggle(modifier: Modifier = Modifier, dutyBegin: Instant, guid: String,
                         val alarmOffsetMillis = alarmOffset * 60_000L
 
                         val timestamp = dutyBeginMillis - alarmOffsetMillis
-                        AlarmManager.setAlarm(
+                        AlarmService.setAlarm(
                             guid,
                             Instant.fromEpochMilliseconds(timestamp),
-                            snackbarHostState = snackbarHostState,
+                            onError = {
+                                snackbarHostState.showSnackbar(it)
+                            },
                             edited = true
                         )
                         alarmBlocked = false

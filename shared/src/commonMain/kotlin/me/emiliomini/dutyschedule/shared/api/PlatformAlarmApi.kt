@@ -10,8 +10,8 @@ interface PlatformAlarmApi {
     fun requestPermission(): Boolean
     fun isPermissionGranted(): Boolean
     suspend fun setAlarm(guid: String, time: Instant, zone: TimeZone = TimeZone.currentSystemDefault(), edited: Boolean)
-    suspend fun cancelAlarm(id: Int)
-    fun isAlarmSet(id: Int): Boolean
+    suspend fun cancelAlarm(guid: String)
+    fun isAlarmSet(guid: String): Boolean
 }
 
 expect fun initializePlatformAlarmApi(): PlatformAlarmApi
