@@ -106,8 +106,17 @@ class AndroidNotificationApi : PlatformNotificationApi {
             notificationBuilder.setDeleteIntent(pending)
         }
 
-        NotificationManagerCompat.from(APPLICATION_CONTEXT)
-            .notify(notification.id, notificationBuilder.build())
+        if (ActivityCompat.checkSelfPermission(
+                APPLICATION_CONTEXT,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            NotificationManagerCompat.from(APPLICATION_CONTEXT)
+                .notify(notification.id, notificationBuilder.build())
+        }
+        else {
+            logger.d("No POST_NOTIFICATIONS permission") // TODO Internationalize
+        }
     }
 
     override fun dismiss(notification: MultiplatformNotification) {

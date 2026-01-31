@@ -4,7 +4,10 @@ import androidx.work.Data
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotification
+import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotificationPriority
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformTask
+import me.emiliomini.dutyschedule.shared.mappings.NotificationChannelMapping
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
@@ -14,16 +17,26 @@ class AndroidTaskSchedulerApi() : PlatformTaskSchedulerApi {
 
     override fun scheduleTask(task: MultiplatformTask) {
 
+
+        val notificationApi = getPlatformNotificationApi() as AndroidNotificationApi
+        notificationApi.verifyOrCreateChannel(
+            NotificationChannelMapping.ALARMS
+        )
+        val notification = MultiplatformNotification(38, NotificationChannelMapping.ALARMS,
+            MultiplatformNotificationPriority.NORMAL, "Test Starter", "Test Starter ${Calendar.getInstance().apply { timeInMillis = WorkManager.getInstance(APPLICATION_CONTEXT).getWorkInfosForUniqueWork(task.name).get()[0].nextScheduleTimeMillis }.toInstant()}")
+        notificationApi.send(notification)
+
+
         val data = Data.Builder()
             .putString("task", task.name)
             .build()
 
         val request = PeriodicWorkRequestBuilder<TaskRunnerService>(1, TimeUnit.DAYS, 3, TimeUnit.HOURS)
             .setInputData(data)
-            .setInitialDelay(delayUntil7pm(), TimeUnit.MILLISECONDS)
+            .setNextScheduleTimeOverride(Calendar.getInstance().timeInMillis+1000) // sevenPmInMillis()) TODO uncomment
             .build()
 
-        WorkManager.getInstance(APPLICATION_CONTEXT).enqueueUniquePeriodicWork(
+            WorkManager.getInstance(APPLICATION_CONTEXT).enqueueUniquePeriodicWork(
             task.name,
             ExistingPeriodicWorkPolicy.UPDATE,
             request
@@ -34,7 +47,7 @@ class AndroidTaskSchedulerApi() : PlatformTaskSchedulerApi {
         WorkManager.getInstance(APPLICATION_CONTEXT).cancelUniqueWork(task.name)
     }
 
-    private fun delayUntil7pm(): Long {
+    private fun sevenPmInMillis(): Long {
         val now = Calendar.getInstance()
 
         val sevenPm = Calendar.getInstance().apply {
@@ -49,7 +62,7 @@ class AndroidTaskSchedulerApi() : PlatformTaskSchedulerApi {
             sevenPm.add(Calendar.DAY_OF_YEAR, 1)
         }
 
-        return sevenPm.timeInMillis - now.timeInMillis
+        return sevenPm.timeInMillis //- now.timeInMillis
     }
 }
 

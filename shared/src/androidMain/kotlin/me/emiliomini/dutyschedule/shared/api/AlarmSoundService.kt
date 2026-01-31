@@ -4,6 +4,7 @@ import android.app.Notification
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
+import android.media.AudioAttributes
 import android.media.Ringtone
 import android.media.RingtoneManager
 import android.os.Build
@@ -49,9 +50,12 @@ class AlarmSoundService : Service() {
         (getPlatformNotificationApi() as AndroidNotificationApi).verifyOrCreateChannel(
             NotificationChannelMapping.ALARMS
         )
+
         val notification = createNotification()
         startForeground(1, notification)
-
+        ringtonePlayer.audioAttributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_ALARM)
+            .build()
         ringtonePlayer.play()
 
         return START_STICKY
@@ -92,13 +96,14 @@ class AlarmSoundService : Service() {
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(content)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
             .setAutoCancel(true)
             .addAction(
                 0,
                 dismiss,
                 stopSoundPendingIntent
             )
+            .setSilent(true)
             .setDeleteIntent(stopSoundPendingIntent)
             .build()
     }
