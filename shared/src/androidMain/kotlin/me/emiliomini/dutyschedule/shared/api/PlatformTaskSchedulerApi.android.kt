@@ -1,7 +1,9 @@
 package me.emiliomini.dutyschedule.shared.api
 
+import androidx.work.Constraints
 import androidx.work.Data
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotification
@@ -19,11 +21,8 @@ class AndroidTaskSchedulerApi() : PlatformTaskSchedulerApi {
 
 
         val notificationApi = getPlatformNotificationApi() as AndroidNotificationApi
-        notificationApi.verifyOrCreateChannel(
-            NotificationChannelMapping.ALARMS
-        )
         val notification = MultiplatformNotification(38, NotificationChannelMapping.ALARMS,
-            MultiplatformNotificationPriority.NORMAL, "Test Starter", "Test Starter ${Calendar.getInstance().apply { timeInMillis = WorkManager.getInstance(APPLICATION_CONTEXT).getWorkInfosForUniqueWork(task.name).get()[0].nextScheduleTimeMillis }.toInstant()}")
+            MultiplatformNotificationPriority.NORMAL, "Test Starter", "Test Starter ${Calendar.getInstance().apply { timeInMillis = WorkManager.getInstance(APPLICATION_CONTEXT).getWorkInfosForUniqueWork(task.name).get().firstOrNull()?.nextScheduleTimeMillis ?: 0 }.toInstant()}")
         notificationApi.send(notification)
 
 
@@ -31,9 +30,14 @@ class AndroidTaskSchedulerApi() : PlatformTaskSchedulerApi {
             .putString("task", task.name)
             .build()
 
-        val request = PeriodicWorkRequestBuilder<TaskRunnerService>(1, TimeUnit.DAYS, 3, TimeUnit.HOURS)
+        val networkConstraint = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        val request = PeriodicWorkRequestBuilder<TaskRunnerService>(1, TimeUnit.HOURS, 3, TimeUnit.HOURS)
             .setInputData(data)
-            .setNextScheduleTimeOverride(Calendar.getInstance().timeInMillis+1000) // sevenPmInMillis()) TODO uncomment
+            .setConstraints(networkConstraint)
+            .setNextScheduleTimeOverride(sevenPmInMillis())
             .build()
 
             WorkManager.getInstance(APPLICATION_CONTEXT).enqueueUniquePeriodicWork(
