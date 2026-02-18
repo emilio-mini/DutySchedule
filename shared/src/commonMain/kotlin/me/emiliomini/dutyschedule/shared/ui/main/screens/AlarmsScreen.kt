@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonShapes
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -29,6 +31,7 @@ import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,6 +54,10 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import me.emiliomini.dutyschedule.shared.api.getPlatformAlarmApi
+import me.emiliomini.dutyschedule.shared.api.getPlatformNotificationApi
+import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotification
+import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotificationPriority
+import me.emiliomini.dutyschedule.shared.mappings.NotificationChannelMapping
 import me.emiliomini.dutyschedule.shared.services.AlarmService
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.components.CardColumn
@@ -63,6 +70,7 @@ import me.emiliomini.dutyschedule.shared.ui.icons.Sunny
 import me.emiliomini.dutyschedule.shared.ui.main.components.DutyAlarmListItem
 import me.emiliomini.dutyschedule.shared.util.format
 import org.jetbrains.compose.resources.stringResource
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -85,7 +93,6 @@ fun AlarmsScreen(
     val dateFormat = "dd/MM/yyyy"
     val alarmItems by StorageService.ALARM_ITEMS.collectAsState()
     var blocked by remember { mutableStateOf(false) }
-
     Screen(
         modifier = modifier,
         title = stringResource(Res.string.main_alarms_title),

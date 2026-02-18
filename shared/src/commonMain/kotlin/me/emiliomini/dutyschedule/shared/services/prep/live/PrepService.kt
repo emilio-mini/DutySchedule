@@ -13,9 +13,14 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
+import kotlinx.datetime.periodUntil
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.until
 import kotlinx.serialization.json.Json
 import me.emiliomini.dutyschedule.shared.api.getPlatformLogger
+import me.emiliomini.dutyschedule.shared.api.getPlatformNotificationApi
+import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotification
+import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotificationPriority
 import me.emiliomini.dutyschedule.shared.comparators.DutyDefinitionComparator
 import me.emiliomini.dutyschedule.shared.datastores.CreateDutyResponse
 import me.emiliomini.dutyschedule.shared.datastores.DutyDefinition
@@ -30,6 +35,7 @@ import me.emiliomini.dutyschedule.shared.datastores.OrgItems
 import me.emiliomini.dutyschedule.shared.datastores.Requirement
 import me.emiliomini.dutyschedule.shared.datastores.Slot
 import me.emiliomini.dutyschedule.shared.datastores.YearlyDutyItems
+import me.emiliomini.dutyschedule.shared.mappings.NotificationChannelMapping
 import me.emiliomini.dutyschedule.shared.mappings.RequirementMapping
 import me.emiliomini.dutyschedule.shared.mappings.docScedConfigFromString
 import me.emiliomini.dutyschedule.shared.services.network.Endpoints
@@ -51,6 +57,7 @@ import me.emiliomini.dutyschedule.shared.util.toEpochMilliseconds
 import me.emiliomini.dutyschedule.shared.util.toInstant
 import kotlin.math.min
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -486,6 +493,39 @@ object PrepService : DutyScheduleServiceBase {
         val upcomingDuties = DataParserService.parseLoadMinimalDutyDefinitions(
             Json.parseToJsonElement(upcomingResponse)
         )
+
+        val notificationApi = getPlatformNotificationApi()
+
+        // Build notification text with fetched duties count, next duty time, and callsign
+        val notificationText = if (upcomingDuties.isNotEmpty()) {
+            val dutyCount = upcomingDuties.size
+            val nextDuty = upcomingDuties.first()
+            val nextDutyInstant = nextDuty.begin.toInstant()
+            val callsign = nextDuty.vehicle ?: "Unknown"
+
+            val isTomorrow = nextDutyInstant < Clock.System.now().plus(1.days)
+
+            val dateDisplay = if (isTomorrow) {
+                "Tomorrow ${nextDutyInstant.format("HH:mm")}"
+            } else {
+                nextDutyInstant.format("dd.MM.YYYY HH:mm")
+            }
+
+            "$dutyCount duties fetched. Next: $dateDisplay - $callsign"
+        } else {
+            "No upcoming duties"
+        }
+
+        val notification = MultiplatformNotification(
+            37,
+            NotificationChannelMapping.PERMANENT_INFO,
+            MultiplatformNotificationPriority.LOW,
+            "Duty Info",
+            notificationText,
+
+        )
+        notificationApi.send(notification)
+
         StorageService.UPCOMING_DUTIES.update {
             it.copy(
                 minimalDutyDefinitions = upcomingDuties

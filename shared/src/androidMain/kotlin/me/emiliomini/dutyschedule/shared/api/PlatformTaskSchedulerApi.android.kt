@@ -10,6 +10,7 @@ import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotification
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotificationPriority
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformTask
 import me.emiliomini.dutyschedule.shared.mappings.NotificationChannelMapping
+import me.emiliomini.dutyschedule.shared.util.toInstant
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
@@ -19,10 +20,17 @@ class AndroidTaskSchedulerApi() : PlatformTaskSchedulerApi {
 
     override fun scheduleTask(task: MultiplatformTask) {
 
-
+        val workManager = WorkManager.getInstance(APPLICATION_CONTEXT);
         val notificationApi = getPlatformNotificationApi() as AndroidNotificationApi
+        val next = Calendar.getInstance()
+        val existingWork = workManager.getWorkInfosForUniqueWork(task.name).get()
+        var infoString = ""
+        if (existingWork.size >= 1){
+            next.timeInMillis = existingWork[0].nextScheduleTimeMillis
+            infoString = next.toInstant().toString()
+        } else infoString = "Error"
         val notification = MultiplatformNotification(38, NotificationChannelMapping.ALARMS,
-            MultiplatformNotificationPriority.NORMAL, "Test Starter", "Test Starter ${Calendar.getInstance().apply { timeInMillis = WorkManager.getInstance(APPLICATION_CONTEXT).getWorkInfosForUniqueWork(task.name).get().firstOrNull()?.nextScheduleTimeMillis ?: 0 }.toInstant()}")
+            MultiplatformNotificationPriority.NORMAL, "Test Starter", "Test Starter $next")
         notificationApi.send(notification)
 
 
@@ -34,13 +42,13 @@ class AndroidTaskSchedulerApi() : PlatformTaskSchedulerApi {
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
 
-        val request = PeriodicWorkRequestBuilder<TaskRunnerService>(1, TimeUnit.HOURS, 3, TimeUnit.HOURS)
+        val request = PeriodicWorkRequestBuilder<TaskRunnerService>(1, TimeUnit.MINUTES, 1, TimeUnit.MINUTES)
             .setInputData(data)
             .setConstraints(networkConstraint)
-            .setNextScheduleTimeOverride(sevenPmInMillis())
+            .setNextScheduleTimeOverride(Calendar.getInstance().timeInMillis+10000)//sevenPmInMillis()
             .build()
 
-            WorkManager.getInstance(APPLICATION_CONTEXT).enqueueUniquePeriodicWork(
+        workManager.enqueueUniquePeriodicWork(
             task.name,
             ExistingPeriodicWorkPolicy.UPDATE,
             request

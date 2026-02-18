@@ -1,15 +1,12 @@
 package me.emiliomini.dutyschedule.shared.api
 
 import android.Manifest
-import android.app.Activity
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.ContextWrapper
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
-import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -21,6 +18,10 @@ import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotificationCha
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotificationPriority
 import me.emiliomini.dutyschedule.shared.api.notifications.NotificationActionReceiver
 import me.emiliomini.dutyschedule.shared.api.notifications.NotificationActionRegistry
+import me.emiliomini.dutyschedule.shared.mappings.NotificationChannelMapping
+import java.util.Calendar
+
+
 
 class AndroidNotificationApi : PlatformNotificationApi {
     private var manager: NotificationManager? = null
@@ -53,6 +54,27 @@ class AndroidNotificationApi : PlatformNotificationApi {
                 .setSmallIcon(R.drawable.ic_notification).setContentTitle(notification.title)
                 .setContentText(notification.content).setPriority(notification.priority.android())
                 .setAutoCancel(true)
+
+        if (notification.channel.id == NotificationChannelMapping.PERMANENT_INFO.id){
+            notificationBuilder
+                .setOngoing(true)
+                .setUsesChronometer(true)
+                .setChronometerCountDown(true)
+                .setWhen(Calendar.getInstance().timeInMillis+15*60*1000)
+                .setAutoCancel(false)
+
+            val launchIntent = APPLICATION_CONTEXT.packageManager
+                .getLaunchIntentForPackage(APPLICATION_CONTEXT.packageName)
+            if (launchIntent != null) {
+                val contentPending = PendingIntent.getActivity(
+                    APPLICATION_CONTEXT,
+                    0,
+                    launchIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                notificationBuilder.setContentIntent(contentPending)
+            }
+        }
 
         if (notification.leftAction != null) {
             val code = NotificationActionRegistry.register(notification.leftAction)
