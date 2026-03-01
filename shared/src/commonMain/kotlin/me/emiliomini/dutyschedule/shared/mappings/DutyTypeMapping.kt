@@ -6,6 +6,7 @@ object DutyTypeMapping {
     fun get(value: String?): DutyType {
         return when (value) {
             "[ SEW ]" -> DutyType.EMS
+            "[ RTW ]" -> DutyType.EMS
             "[ Schulung ]" -> DutyType.TRAINING
             "[ Besprechung ]" -> DutyType.MEET
             "[ Übung ]" -> DutyType.DRILL
