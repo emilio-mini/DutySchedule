@@ -41,6 +41,7 @@ class AlarmSoundService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        APPLICATION_CONTEXT = this.applicationContext
 
         val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
         ringtonePlayer = RingtoneManager.getRingtone(this, alarmUri)
