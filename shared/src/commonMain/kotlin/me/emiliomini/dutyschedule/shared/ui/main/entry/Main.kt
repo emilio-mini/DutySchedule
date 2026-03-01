@@ -77,7 +77,9 @@ fun Main(modifier: Modifier = Modifier, onLogout: () -> Unit, onRestart: () -> U
                 Text(navItems[selectedNavIndex].title)
             }, actions = {
                 for (action in ScaffoldService.actions) {
-                    action.element(action.callback)
+                    if (action.visible) {
+                        action.element(action.callback)
+                    }
                 }
             }, colors = TopAppBarDefaults.topAppBarColors().copy(containerColor = Color.Transparent)
         )
