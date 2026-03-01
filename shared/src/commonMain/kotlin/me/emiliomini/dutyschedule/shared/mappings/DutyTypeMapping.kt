@@ -15,6 +15,7 @@ object DutyTypeMapping {
             "[ HÄND mobil ]" -> DutyType.HAEND
             "[ Innendienst ]" -> DutyType.ADMINISTRATIVE
             "[ Öffentlichkeitsveranstaltung ]" -> DutyType.EVENT
+            "[ TRS Blutspendeaktion ]" -> DutyType.RECERTIFICATION
             else -> DutyType.UNKNOWN
         }
     }

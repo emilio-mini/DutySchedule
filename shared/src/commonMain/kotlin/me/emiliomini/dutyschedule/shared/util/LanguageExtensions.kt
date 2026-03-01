@@ -51,6 +51,7 @@ fun DutyType.resourceString(): StringResource {
         DutyType.HAEND -> Res.string.data_dutytype_haend
         DutyType.ADMINISTRATIVE -> Res.string.data_dutytype_administrative
         DutyType.EVENT -> Res.string.data_dutytype_event
+        DutyType.BLOOD_DONATION_SERVICE -> Res.string.data_dutytype_event
         else -> Res.string.data_dutytype_unknown
     }
 }

@@ -36,6 +36,7 @@ import me.emiliomini.dutyschedule.shared.ui.icons.MedicalServices
 import me.emiliomini.dutyschedule.shared.ui.icons.QuestionMark
 import me.emiliomini.dutyschedule.shared.ui.icons.School
 import me.emiliomini.dutyschedule.shared.ui.icons.SteeringWheel
+import me.emiliomini.dutyschedule.shared.ui.icons.VolunteerActivism
 import me.emiliomini.dutyschedule.shared.util.format
 import me.emiliomini.dutyschedule.shared.util.resourceString
 import me.emiliomini.dutyschedule.shared.util.toInstant
@@ -104,6 +105,7 @@ fun MinimalDutyCard(
                             DutyType.HAEND -> MedicalServices
                             DutyType.ADMINISTRATIVE -> Coffee
                             DutyType.EVENT -> Festival
+                            DutyType.BLOOD_DONATION_SERVICE -> VolunteerActivism
                             else -> QuestionMark
                         },
                         contentDescription = null,
