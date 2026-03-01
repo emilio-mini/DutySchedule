@@ -110,6 +110,11 @@ fun AlarmsScreen(
             CardColumn {
                 var autoSetAll by remember { mutableStateOf(false) }
 
+
+                LaunchedEffect(Unit) {
+                    StorageService.USER_PREFERENCES.get()?.autoSetAlarms?.let { autoSetAll = it }
+                }
+
                 CardListItem(
                     modifier = Modifier.clickable {
                         if (blocked) return@clickable

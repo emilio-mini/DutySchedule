@@ -21,18 +21,6 @@ class AndroidTaskSchedulerApi() : PlatformTaskSchedulerApi {
     override fun scheduleTask(task: MultiplatformTask) {
 
         val workManager = WorkManager.getInstance(APPLICATION_CONTEXT);
-        val notificationApi = getPlatformNotificationApi() as AndroidNotificationApi
-        val next = Calendar.getInstance()
-        val existingWork = workManager.getWorkInfosForUniqueWork(task.name).get()
-        var infoString = ""
-        if (existingWork.size >= 1){
-            next.timeInMillis = existingWork[0].nextScheduleTimeMillis
-            infoString = next.toInstant().toString()
-        } else infoString = "Error"
-        val notification = MultiplatformNotification(38, NotificationChannelMapping.ALARMS,
-            MultiplatformNotificationPriority.NORMAL, "Test Starter", "Test Starter $next")
-        notificationApi.send(notification)
-
 
         val data = Data.Builder()
             .putString("task", task.name)
@@ -42,10 +30,10 @@ class AndroidTaskSchedulerApi() : PlatformTaskSchedulerApi {
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
 
-        val request = PeriodicWorkRequestBuilder<TaskRunnerService>(1, TimeUnit.MINUTES, 1, TimeUnit.MINUTES)
+        val request = PeriodicWorkRequestBuilder<TaskRunnerService>(1, TimeUnit.DAYS, 3, TimeUnit.HOURS)
             .setInputData(data)
             .setConstraints(networkConstraint)
-            .setNextScheduleTimeOverride(Calendar.getInstance().timeInMillis+10000)//sevenPmInMillis()
+            .setNextScheduleTimeOverride(sevenPmInMillis())
             .build()
 
         workManager.enqueueUniquePeriodicWork(

@@ -3,6 +3,7 @@
 package me.emiliomini.dutyschedule.shared.api
 
 import kotlinx.datetime.TimeZone
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -29,6 +30,11 @@ class IosAlarmApi : PlatformAlarmApi {
     override fun isAlarmSet(guid: String): Boolean {
         // TODO: Implement
         return false
+    }
+
+    override fun getNextAlarm(): Instant? {
+        // TODO: Implement
+        return Clock.System.now()
     }
 
 }

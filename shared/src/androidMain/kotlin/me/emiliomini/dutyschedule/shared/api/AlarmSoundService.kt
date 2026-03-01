@@ -14,6 +14,11 @@ import dutyschedule.shared.generated.resources.Res
 import dutyschedule.shared.generated.resources.notifications_alarms_duty_action_dismiss
 import dutyschedule.shared.generated.resources.notifications_alarms_duty_content
 import dutyschedule.shared.generated.resources.notifications_alarms_duty_title
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import me.emiliomini.dutyschedule.shared.R
 import me.emiliomini.dutyschedule.shared.mappings.NotificationChannelMapping
@@ -21,6 +26,9 @@ import org.jetbrains.compose.resources.getString
 
 
 class AlarmSoundService : Service() {
+
+    private val serviceJob = SupervisorJob()
+    private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
     private lateinit var ringtonePlayer: Ringtone
 
     companion object {
@@ -57,6 +65,9 @@ class AlarmSoundService : Service() {
             .setUsage(AudioAttributes.USAGE_ALARM)
             .build()
         ringtonePlayer.play()
+        serviceScope.launch {
+            intent?.extras?.getString("guid")?.let { getPlatformAlarmApi().cancelAlarm(it) }
+        }
 
         return START_STICKY
     }

@@ -20,7 +20,7 @@ import me.emiliomini.dutyschedule.shared.api.notifications.NotificationActionRec
 import me.emiliomini.dutyschedule.shared.api.notifications.NotificationActionRegistry
 import me.emiliomini.dutyschedule.shared.mappings.NotificationChannelMapping
 import java.util.Calendar
-
+import kotlin.time.ExperimentalTime
 
 
 class AndroidNotificationApi : PlatformNotificationApi {
@@ -45,6 +45,7 @@ class AndroidNotificationApi : PlatformNotificationApi {
             APPLICATION_CONTEXT, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
     }
 
+    @OptIn(ExperimentalTime::class)
     override fun send(notification: MultiplatformNotification) {
         logger.d("Sending notification: $notification")
         verifyOrCreateChannel(notification.channel)
@@ -58,10 +59,16 @@ class AndroidNotificationApi : PlatformNotificationApi {
         if (notification.channel.id == NotificationChannelMapping.PERMANENT_INFO.id){
             notificationBuilder
                 .setOngoing(true)
-                .setUsesChronometer(true)
-                .setChronometerCountDown(true)
-                .setWhen(Calendar.getInstance().timeInMillis+15*60*1000)
                 .setAutoCancel(false)
+
+            val nextAlarm = getPlatformAlarmApi().getNextAlarm()?.toEpochMilliseconds()
+
+            if (nextAlarm != null){
+                notificationBuilder
+                    .setUsesChronometer(true)
+                    .setChronometerCountDown(true)
+                    .setWhen(nextAlarm)
+            }
 
             val launchIntent = APPLICATION_CONTEXT.packageManager
                 .getLaunchIntentForPackage(APPLICATION_CONTEXT.packageName)

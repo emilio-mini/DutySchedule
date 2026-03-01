@@ -12,6 +12,7 @@ interface PlatformAlarmApi {
     suspend fun setAlarm(guid: String, time: Instant, zone: TimeZone = TimeZone.currentSystemDefault(), edited: Boolean)
     suspend fun cancelAlarm(guid: String)
     fun isAlarmSet(guid: String): Boolean
+    fun getNextAlarm(): Instant?
 }
 
 expect fun initializePlatformAlarmApi(): PlatformAlarmApi

@@ -17,6 +17,7 @@ import kotlinx.datetime.periodUntil
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.until
 import kotlinx.serialization.json.Json
+import me.emiliomini.dutyschedule.shared.api.getPlatformAlarmApi
 import me.emiliomini.dutyschedule.shared.api.getPlatformLogger
 import me.emiliomini.dutyschedule.shared.api.getPlatformNotificationApi
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotification
@@ -38,6 +39,7 @@ import me.emiliomini.dutyschedule.shared.datastores.YearlyDutyItems
 import me.emiliomini.dutyschedule.shared.mappings.NotificationChannelMapping
 import me.emiliomini.dutyschedule.shared.mappings.RequirementMapping
 import me.emiliomini.dutyschedule.shared.mappings.docScedConfigFromString
+import me.emiliomini.dutyschedule.shared.services.AlarmService.updateAlarms
 import me.emiliomini.dutyschedule.shared.services.network.Endpoints
 import me.emiliomini.dutyschedule.shared.services.network.MultiplatformNetworkAdapter
 import me.emiliomini.dutyschedule.shared.services.network.NetworkService
@@ -476,9 +478,9 @@ object PrepService : DutyScheduleServiceBase {
     }
 
     override suspend fun loadUpcoming(): List<MinimalDutyDefinition> {
-        val localUpcoming = StorageService.UPCOMING_DUTIES.get()
+        val localUpcoming = StorageService.UPCOMING_DUTIES.get()?.minimalDutyDefinitions
         if (localUpcoming != null && !isLoggedIn) {
-            return localUpcoming.minimalDutyDefinitions
+            return localUpcoming
         }
 
         if (incode == null) {
@@ -494,24 +496,25 @@ object PrepService : DutyScheduleServiceBase {
             Json.parseToJsonElement(upcomingResponse)
         )
 
-        val notificationApi = getPlatformNotificationApi()
 
+        if (localUpcoming != null){
+            updateAlarms(localUpcoming, upcomingDuties)
+        }
+
+        val notificationApi = getPlatformNotificationApi()
+        val alarmApi = getPlatformAlarmApi()
         // Build notification text with fetched duties count, next duty time, and callsign
         val notificationText = if (upcomingDuties.isNotEmpty()) {
             val dutyCount = upcomingDuties.size
-            val nextDuty = upcomingDuties.first()
-            val nextDutyInstant = nextDuty.begin.toInstant()
-            val callsign = nextDuty.vehicle ?: "Unknown"
 
-            val isTomorrow = nextDutyInstant < Clock.System.now().plus(1.days)
-
-            val dateDisplay = if (isTomorrow) {
-                "Tomorrow ${nextDutyInstant.format("HH:mm")}"
-            } else {
-                nextDutyInstant.format("dd.MM.YYYY HH:mm")
-            }
-
-            "$dutyCount duties fetched. Next: $dateDisplay - $callsign"
+            val nextDuty = upcomingDuties.firstOrNull { it.begin.toInstant() > Clock.System.now() }
+            val nextDutyInstant = nextDuty?.begin?.toInstant()
+            val callsign = nextDuty?.vehicle ?: "Unknown"
+            val nextAlarm = alarmApi.getNextAlarm()?.format("dd.MM.YYYY HH:mm")
+            """
+                |$dutyCount duties fetched. Next: ${nextDutyInstant?.format("dd.MM.YYYY HH:mm")} - $callsign
+                |${if (nextAlarm != null) "Alarm set for $nextAlarm." else "No alarm set"}
+            """.trimMargin()
         } else {
             "No upcoming duties"
         }

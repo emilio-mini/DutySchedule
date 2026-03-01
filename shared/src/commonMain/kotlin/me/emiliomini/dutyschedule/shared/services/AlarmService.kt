@@ -4,17 +4,21 @@ import dutyschedule.shared.generated.resources.Res
 import dutyschedule.shared.generated.resources.error_permissions_missing_alarm
 import dutyschedule.shared.generated.resources.error_permissions_missing_alarm_and_notification
 import dutyschedule.shared.generated.resources.error_permissions_missing_notification
+import io.ktor.util.debug.initContextInDebugMode
 import kotlinx.datetime.TimeZone
 import me.emiliomini.dutyschedule.shared.api.getPlatformAlarmApi
 import me.emiliomini.dutyschedule.shared.api.getPlatformNotificationApi
 import me.emiliomini.dutyschedule.shared.api.getPlatformTaskSchedulerApi
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformTask
 import me.emiliomini.dutyschedule.shared.datastores.Alarm
+import me.emiliomini.dutyschedule.shared.datastores.AlarmItems
 import me.emiliomini.dutyschedule.shared.datastores.MinimalDutyDefinition
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.util.toEpochMilliseconds
+import me.emiliomini.dutyschedule.shared.util.toInstant
 import org.jetbrains.compose.resources.getString
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -25,6 +29,13 @@ object AlarmService {
                 setAlarm(alarm.guid, Instant.fromEpochMilliseconds(alarm.timestamp), onError = onError, edited = true)
             } else {
                 getPlatformAlarmApi().cancelAlarm(alarm.guid)
+                StorageService.ALARM_ITEMS.update {
+                    val index = it.alarms.indexOfFirst { it.guid == alarm.guid }
+                    val oldAlarm = it.alarms[index]
+                    val newDuties = it.alarms.toMutableList()
+                    newDuties[index] = oldAlarm.copy(edited = true)
+                    AlarmItems(newDuties)
+                }
             }
     }
     @OptIn(ExperimentalTime::class)
@@ -63,23 +74,25 @@ object AlarmService {
 
     @OptIn(ExperimentalTime::class)
     suspend fun setAllAlarms(onError: suspend (String) -> Unit){
+        val userPreferences = StorageService.USER_PREFERENCES
+        userPreferences.update {
+            it.copy(autoSetAlarms = true)
+        }
+
         getPlatformTaskSchedulerApi().scheduleTask(MultiplatformTask.UpdateAlarms)
-        val upcomingDuties = StorageService.UPCOMING_DUTIES.get()
-
-        val currentAlarms = StorageService.ALARM_ITEMS.get()?.alarms ?: listOf<Alarm>()
-
-
-        upcomingDuties?.minimalDutyDefinitions?.forEach {
-            if (currentAlarms.any { alarm -> alarm.guid == it.guid }){
-                return@forEach
-            }
-
-            // TODO: Don't spam snackbars if permission is missing.
-            setAlarm(it, onError)
+        val upcomingDuties = StorageService.UPCOMING_DUTIES.get()?.minimalDutyDefinitions
+        if (upcomingDuties != null){
+            updateAlarms(emptyList(), upcomingDuties, onError)
         }
     }
 
     suspend fun cancelAllUneditedAlarms() {
+
+        StorageService.USER_PREFERENCES.update {
+            it.copy(autoSetAlarms = false)
+        }
+        StorageService.USER_PREFERENCES.get()
+
         getPlatformTaskSchedulerApi().cancelTask(MultiplatformTask.UpdateAlarms)
 
         val alarms = StorageService.ALARM_ITEMS
@@ -108,20 +121,45 @@ object AlarmService {
     }
 
     suspend fun fetchAlarms() {
-        val oldDuties = StorageService.UPCOMING_DUTIES.get()?.minimalDutyDefinitions?.map { it.guid }
+        // val oldDuties = StorageService.UPCOMING_DUTIES.get()?.minimalDutyDefinitions
 
         DutyScheduleService.loadUpcoming()
 
-        val updatedDuties = StorageService.UPCOMING_DUTIES.get()?.minimalDutyDefinitions
+        // val updatedDuties = StorageService.UPCOMING_DUTIES.get()?.minimalDutyDefinitions
 
 
 
-        updatedDuties?.forEach {
-            oldDuties?.minus(it.guid)
+    }
 
-            setAlarm(it, onError = { })
+    @OptIn(ExperimentalTime::class)
+    suspend fun updateAlarms(oldDuties: List<MinimalDutyDefinition>, newDuties: List<MinimalDutyDefinition>, onError: (suspend (String) -> Unit)? = null) {
+        val alarms = StorageService.ALARM_ITEMS.get()?.alarms
+        val oldDutyGuids = oldDuties.map { it.guid }.toMutableList()
+        val autoSetAlarms = StorageService.USER_PREFERENCES.getOrDefault().autoSetAlarms
+        if (autoSetAlarms){
+            newDuties.forEach {
+                val alarm = alarms?.firstOrNull { alarm -> alarm.guid == it.guid}
+                if (it.begin.toInstant() < Clock.System.now())
+                    return@forEach
+
+                oldDutyGuids.remove(it.guid)
+
+                if (alarm != null && alarm.edited && !alarm.active)
+                    return@forEach
+                
+                setAlarm(it, onError ?: { })
+            }
+
+            oldDutyGuids.forEach { removeAlarm(it) }
+        } else {
+            alarms?.forEach { oldAlarm ->
+                val new = newDuties.firstOrNull{it.guid == oldAlarm.guid} ?: return
+
+                if (new.begin.toInstant() < Clock.System.now() || (oldAlarm.edited && !oldAlarm.active))
+                    return@forEach
+
+                setAlarm(new, onError ?: { })
+            }
         }
-
-        oldDuties?.forEach { removeAlarm(it) }
     }
 }

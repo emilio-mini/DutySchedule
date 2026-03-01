@@ -92,6 +92,7 @@ class AndroidAlarmApi : PlatformAlarmApi {
         val alarmManager =
             APPLICATION_CONTEXT.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val alarmIntent = Intent(APPLICATION_CONTEXT, AlarmReceiver::class.java)
+        alarmIntent.extras?.putString("guid", guid)
         val pendingAlarmIntent = PendingIntent.getBroadcast(
             APPLICATION_CONTEXT,
             id,
@@ -107,7 +108,9 @@ class AndroidAlarmApi : PlatformAlarmApi {
 
             if (alarmIndex != -1) {
                 val alarmToUpdate = alarms[alarmIndex]
-                val updatedAlarm = alarmToUpdate.copy(active = false)
+                val updatedAlarm = alarmToUpdate.copy(
+                    active = false,
+                )
                 alarms[alarmIndex] = updatedAlarm
             }
 
@@ -126,6 +129,12 @@ class AndroidAlarmApi : PlatformAlarmApi {
             PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
         )
         return pendingIntent != null
+    }
+
+    override fun getNextAlarm(): Instant? {
+        val alarmManager =
+            APPLICATION_CONTEXT.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        return alarmManager.nextAlarmClock?.triggerTime?.let { Instant.fromEpochMilliseconds(it) }
     }
 
 }
