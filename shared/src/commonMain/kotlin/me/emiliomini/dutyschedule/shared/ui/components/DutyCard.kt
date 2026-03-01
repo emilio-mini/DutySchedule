@@ -3,7 +3,7 @@
 package me.emiliomini.dutyschedule.shared.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +21,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color.Companion.Yellow
@@ -30,6 +31,9 @@ import dutyschedule.shared.generated.resources.Res
 import dutyschedule.shared.generated.resources.base_dutycard_accessibility_requirements_issue
 import dutyschedule.shared.generated.resources.base_dutycard_no_staff
 import dutyschedule.shared.generated.resources.base_dutycard_no_vehicle
+import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import me.emiliomini.dutyschedule.shared.api.getPlatformClipboardApi
 import me.emiliomini.dutyschedule.shared.datastores.DutyDefinition
 import me.emiliomini.dutyschedule.shared.datastores.Employee
 import me.emiliomini.dutyschedule.shared.datastores.Requirement
@@ -57,6 +61,7 @@ fun AppDutyCard(
     onEmployeeClick: (Slot) -> Unit = {},
     onDutyClick: (String?, Requirement) -> Unit = { _, _ -> },
 ) {
+    val scope = rememberCoroutineScope()
     val emptyCar = Employee(name = stringResource(Res.string.base_dutycard_no_vehicle))
     val emptySeat = Employee(name = stringResource(Res.string.base_dutycard_no_staff))
 
@@ -105,7 +110,7 @@ fun AppDutyCard(
             ) {
                 duty.slots.forEachIndexed { index, slot ->
                     AppPersonnelInfo(
-                        modifier = Modifier.clickable(onClick = {
+                        modifier = Modifier.combinedClickable(onClick = {
                             if (slot.guid.isNotBlank() && slot.employeeGuid.isNullOrBlank() && !slot.info?.uppercase()
                                     ?.contains("SD")
                                     .let { it ?: false } && !RequirementMapping.VEHICLES.contains(
@@ -122,6 +127,13 @@ fun AppDutyCard(
                                 }
                             } else {
                                 onEmployeeClick(slot)
+                            }
+                        }, onLongClick = {
+                            scope.launch {
+                                getPlatformClipboardApi().copyToClipboard(
+                                    Json.encodeToString(slot),
+                                    "Slot data"
+                                )
                             }
                         }),
                         icon = if (index == 0 || duty.slots[index - 1].requirement.guid != slot.requirement.guid) slot.requirement.getIcon() else null,

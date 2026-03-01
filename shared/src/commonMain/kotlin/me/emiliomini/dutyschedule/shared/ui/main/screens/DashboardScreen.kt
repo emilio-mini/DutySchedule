@@ -91,7 +91,7 @@ fun DashboardScreen(
                     )
                     onRestart()
                 }
-            }, visible = DebugFlags.SHOW_DEBUG_INFO.active()),
+            }, visible = DebugFlags.SHOW_DEBUG_ACTIONS.active()),
             Action({ EmployeeAvatar(employee = DutyScheduleService.self!!, onLogout = onLogout) }),
             Action({ Spacer(Modifier.width(16.dp)) })
         )
