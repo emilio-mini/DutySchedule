@@ -4,7 +4,6 @@ import dutyschedule.shared.generated.resources.Res
 import dutyschedule.shared.generated.resources.error_permissions_missing_alarm
 import dutyschedule.shared.generated.resources.error_permissions_missing_alarm_and_notification
 import dutyschedule.shared.generated.resources.error_permissions_missing_notification
-import io.ktor.util.debug.initContextInDebugMode
 import kotlinx.datetime.TimeZone
 import me.emiliomini.dutyschedule.shared.api.getPlatformAlarmApi
 import me.emiliomini.dutyschedule.shared.api.getPlatformNotificationApi
@@ -135,11 +134,12 @@ object AlarmService {
     suspend fun updateAlarms(oldDuties: List<MinimalDutyDefinition>, newDuties: List<MinimalDutyDefinition>, onError: (suspend (String) -> Unit)? = null) {
         val alarms = StorageService.ALARM_ITEMS.get()?.alarms
         val oldDutyGuids = oldDuties.map { it.guid }.toMutableList()
-        val autoSetAlarms = StorageService.USER_PREFERENCES.getOrDefault().autoSetAlarms
-        if (autoSetAlarms){
+        val prefs = StorageService.USER_PREFERENCES.getOrDefault()
+        val alarmOffsetMillis = prefs.alarmOffsetMin * 60_000L
+        if (prefs.autoSetAlarms){
             newDuties.forEach {
                 val alarm = alarms?.firstOrNull { alarm -> alarm.guid == it.guid}
-                if (it.begin.toInstant() < Clock.System.now())
+                if (it.begin.toEpochMilliseconds() + alarmOffsetMillis < Clock.System.now().toEpochMilliseconds())
                     return@forEach
 
                 oldDutyGuids.remove(it.guid)

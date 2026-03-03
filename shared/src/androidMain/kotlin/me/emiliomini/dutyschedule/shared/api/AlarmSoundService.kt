@@ -17,11 +17,12 @@ import dutyschedule.shared.generated.resources.notifications_alarms_duty_title
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import me.emiliomini.dutyschedule.shared.R
 import me.emiliomini.dutyschedule.shared.mappings.NotificationChannelMapping
+import me.emiliomini.dutyschedule.shared.services.prep.live.PrepService
 import org.jetbrains.compose.resources.getString
 
 
@@ -67,7 +68,7 @@ class AlarmSoundService : Service() {
             .build()
         ringtonePlayer.play()
         serviceScope.launch {
-            intent?.extras?.getString("guid")?.let { getPlatformAlarmApi().cancelAlarm(it) }
+            PrepService.loadUpcoming()
         }
 
         return START_STICKY
@@ -80,6 +81,7 @@ class AlarmSoundService : Service() {
                 ringtonePlayer.stop()
             }
         }
+        serviceScope.cancel()
     }
 
     private fun createNotification(): Notification {

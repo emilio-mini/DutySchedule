@@ -140,4 +140,12 @@
     <string name="data_dutytype_administrative">Innendienst</string>
     <string name="data_dutytype_event">Veranstaltung</string>
     <string name="components_piechart_empty">Keine Daten verfügbar</string>
+    <string name="next_duty">Nächster Dienst</string>
+    <string name="alarm_set_for">Wecker gestellt für</string>
+    <string name="no_alarm_set">Kein Wecker gestellt</string>
+    <string name="no_upcuming_duties">Keine Dienste in nächster Zeit</string>
+    <plurals name="updated_duties">
+        <item quantity="one">Aktualisierte einen Dienst</item>
+        <item quantity="other">Aktualisierte %1$s Dienste</item>
+    </plurals>
 </resources>

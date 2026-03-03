@@ -5,6 +5,11 @@ package me.emiliomini.dutyschedule.shared.services.prep.live
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import dutyschedule.shared.generated.resources.Res
+import dutyschedule.shared.generated.resources.alarm_set_for
+import dutyschedule.shared.generated.resources.next_duty
+import dutyschedule.shared.generated.resources.no_alarm_set
+import dutyschedule.shared.generated.resources.no_upcuming_duties
 import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
@@ -13,9 +18,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
-import kotlinx.datetime.periodUntil
 import kotlinx.datetime.toLocalDateTime
-import kotlinx.datetime.until
 import kotlinx.serialization.json.Json
 import me.emiliomini.dutyschedule.shared.api.getPlatformAlarmApi
 import me.emiliomini.dutyschedule.shared.api.getPlatformLogger
@@ -57,9 +60,9 @@ import me.emiliomini.dutyschedule.shared.util.nullIfBlank
 import me.emiliomini.dutyschedule.shared.util.startOfDay
 import me.emiliomini.dutyschedule.shared.util.toEpochMilliseconds
 import me.emiliomini.dutyschedule.shared.util.toInstant
-import kotlin.math.min
+import org.jetbrains.compose.resources.getString
+    import kotlin.math.min
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.days
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -511,12 +514,17 @@ object PrepService : DutyScheduleServiceBase {
             val nextDutyInstant = nextDuty?.begin?.toInstant()
             val callsign = nextDuty?.vehicle ?: "Unknown"
             val nextAlarm = alarmApi.getNextAlarm()?.format("dd.MM.YYYY HH:mm")
+            // val dutiesFetchedString = getPluralString(Res.plurals.updated_duties, dutyCount,dutyCount)
+            val nextDutyString = getString(Res.string.next_duty)
+            val alarmSetString = getString(Res.string.alarm_set_for)
+            val noAlarmString = getString(Res.string.no_alarm_set)
+            // |$dutiesFetchedString
             """
-                |$dutyCount duties fetched. Next: ${nextDutyInstant?.format("dd.MM.YYYY HH:mm")} - $callsign
-                |${if (nextAlarm != null) "Alarm set for $nextAlarm." else "No alarm set"}
+                |$nextDutyString: ${nextDutyInstant?.format("dd.MM.YYYY HH:mm")} - $callsign
+                |${if (nextAlarm != null) "$alarmSetString $nextAlarm." else noAlarmString}
             """.trimMargin()
         } else {
-            "No upcoming duties"
+            getString(Res.string.no_upcuming_duties)
         }
 
         val notification = MultiplatformNotification(
