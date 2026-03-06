@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -15,8 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonShapes
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -25,13 +24,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -47,17 +44,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dutyschedule.shared.generated.resources.Res
 import dutyschedule.shared.generated.resources.main_alarms_none
-import dutyschedule.shared.generated.resources.main_alarms_title
 import dutyschedule.shared.generated.resources.main_alarms_upcoming
 import dutyschedule.shared.generated.resources.main_settings_section_alarms
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import me.emiliomini.dutyschedule.shared.api.getPlatformAlarmApi
-import me.emiliomini.dutyschedule.shared.api.getPlatformNotificationApi
-import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotification
-import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotificationPriority
-import me.emiliomini.dutyschedule.shared.mappings.NotificationChannelMapping
 import me.emiliomini.dutyschedule.shared.services.AlarmService
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.components.CardColumn
@@ -70,7 +62,6 @@ import me.emiliomini.dutyschedule.shared.ui.icons.Sunny
 import me.emiliomini.dutyschedule.shared.ui.main.components.DutyAlarmListItem
 import me.emiliomini.dutyschedule.shared.util.format
 import org.jetbrains.compose.resources.stringResource
-import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -78,7 +69,7 @@ import kotlin.time.Instant
 @Composable
 fun AlarmsScreen(
     modifier: Modifier = Modifier,
-    bottomBar: @Composable (() -> Unit) = {},
+    paddingValues: PaddingValues
 ) {
     LaunchedEffect(Unit) {
         // AlarmService.clean()
@@ -94,10 +85,7 @@ fun AlarmsScreen(
     val alarmItems by StorageService.ALARM_ITEMS.collectAsState()
     var blocked by remember { mutableStateOf(false) }
     Screen(
-        modifier = modifier,
-        title = stringResource(Res.string.main_alarms_title),
-        bottomBar = bottomBar,
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        modifier = modifier, paddingValues = paddingValues
     ) { innerPadding ->
         Column(
             modifier = Modifier.fillMaxSize().padding(innerPadding).padding(20.dp),

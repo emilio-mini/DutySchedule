@@ -7,6 +7,7 @@ import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -39,11 +40,12 @@ import androidx.compose.ui.unit.dp
 import dutyschedule.shared.generated.resources.Res
 import dutyschedule.shared.generated.resources.main_dashboard_hours
 import dutyschedule.shared.generated.resources.main_dashboard_section_upcoming_title
-import dutyschedule.shared.generated.resources.main_dashboard_title
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.shared.debug.DebugFlags
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
 import me.emiliomini.dutyschedule.shared.services.prep.live.PrepService
+import me.emiliomini.dutyschedule.shared.services.scaffold.Action
+import me.emiliomini.dutyschedule.shared.services.scaffold.ScaffoldService
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.components.ArcProgressIndicator
 import me.emiliomini.dutyschedule.shared.ui.components.CardListItemType
@@ -51,6 +53,7 @@ import me.emiliomini.dutyschedule.shared.ui.components.EmployeeAvatar
 import me.emiliomini.dutyschedule.shared.ui.components.LazyCardColumn
 import me.emiliomini.dutyschedule.shared.ui.components.MinimalDutyCard
 import me.emiliomini.dutyschedule.shared.ui.icons.DeleteSweep
+import me.emiliomini.dutyschedule.shared.ui.main.entry.NavItemId
 import me.emiliomini.dutyschedule.shared.util.format
 import me.emiliomini.dutyschedule.shared.util.withinLast
 import org.jetbrains.compose.resources.stringResource
@@ -65,10 +68,37 @@ import kotlin.time.ExperimentalTime
 @Composable
 fun DashboardScreen(
     modifier: Modifier = Modifier,
-    bottomBar: @Composable (() -> Unit) = {},
-    onLogout: () -> Unit,
-    onTriggerRestart: () -> Unit
+    paddingValues: PaddingValues,
+    onRestart: () -> Unit,
+    onLogout: () -> Unit
 ) {
+    val scope = rememberCoroutineScope()
+
+    ScaffoldService.setActionsForScreen(
+        NavItemId.DASHBOARD,
+        listOf(
+            Action(element = { run ->
+                IconButton(onClick = { run() }) {
+                    Icon(
+                        DeleteSweep, contentDescription = null
+                    )
+                }
+            }, callback = {
+                scope.launch {
+                    val userPreferences = StorageService.USER_PREFERENCES.getOrDefault()
+                    StorageService.clear()
+                    PrepService.logout()
+                    PrepService.login(
+                        userPreferences.username, userPreferences.password
+                    )
+                    onRestart()
+                }
+            }, visible = DebugFlags.SHOW_DEBUG_ACTIONS.active()),
+            Action({ EmployeeAvatar(employee = DutyScheduleService.self!!, onLogout = onLogout) }),
+            Action({ Spacer(Modifier.width(16.dp)) })
+        )
+    )
+
     val currentYear = Clock.System.now().format("yyyy")
     val upcomingDuties by StorageService.UPCOMING_DUTIES.collectAsState()
     val statistics by StorageService.STATISTICS.collectAsState()
@@ -79,7 +109,6 @@ fun DashboardScreen(
     var hoursLoaded by remember { mutableStateOf(true) }
     var upcomingLoaded by remember { mutableStateOf(true) }
 
-    val scope = rememberCoroutineScope()
 
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(DutyScheduleService.isLoggedIn) {
@@ -112,33 +141,9 @@ fun DashboardScreen(
 
     Screen(
         modifier = modifier,
-        title = stringResource(Res.string.main_dashboard_title),
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        actions = {
-            if (DutyScheduleService.self != null) {
-                if (DebugFlags.SHOW_DEBUG_INFO.active()) {
-                    IconButton(onClick = {
-                        scope.launch {
-                            val userPreferences = StorageService.USER_PREFERENCES.getOrDefault()
-                            StorageService.clear()
-                            PrepService.logout()
-                            PrepService.login(
-                                userPreferences.username, userPreferences.password
-                            )
-                            onTriggerRestart()
-                        }
-                    }) {
-                        Icon(DeleteSweep, contentDescription = null)
-                    }
-                }
-                EmployeeAvatar(employee = DutyScheduleService.self!!, onLogout = onLogout)
-                Spacer(Modifier.width(16.dp))
-            }
-        },
-        bottomBar = bottomBar,
+        paddingValues = paddingValues,
         pullToRefresh = PullToRefreshOptions(
-            isRefreshing = !hoursLoaded || !upcomingLoaded,
-            onRefresh = {
+            isRefreshing = !hoursLoaded || !upcomingLoaded, onRefresh = {
                 scope.launch {
                     hoursLoaded = false
                     upcomingLoaded = false
@@ -149,8 +154,7 @@ fun DashboardScreen(
                     hoursLoaded = true
                     upcomingLoaded = true
                 }
-            }
-        )
+            })
     ) { innerPadding ->
         Column(
             modifier = modifier.padding(innerPadding)

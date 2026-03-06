@@ -466,6 +466,11 @@ object PrepService : DutyScheduleServiceBase {
 
         val yearData = loadPast(year)
         if (yearData.isEmpty()) {
+            StorageService.STATISTICS.update {
+                it.copy(
+                    minutesServed = 0
+                )
+            }
             return 0f
         }
 

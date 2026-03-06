@@ -138,6 +138,7 @@
     <string name="data_dutytype_haend">HÄND Duty</string>
     <string name="data_dutytype_administrative">Administrative</string>
     <string name="data_dutytype_event">Event</string>
+    <string name="data_dutytype_blood_donation_service">Blood Donation Service</string>
     <string name="components_piechart_empty">No data available</string>
     <string name="next_duty">Next duty</string>
     <string name="alarm_set_for">Alarm set for</string>

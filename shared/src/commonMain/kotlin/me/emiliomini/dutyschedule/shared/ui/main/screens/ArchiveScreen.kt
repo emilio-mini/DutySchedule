@@ -4,6 +4,7 @@ package me.emiliomini.dutyschedule.shared.ui.main.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,11 +31,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import dutyschedule.shared.generated.resources.Res
 import dutyschedule.shared.generated.resources.main_archive_section_duties_title
-import dutyschedule.shared.generated.resources.main_archive_title
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.shared.datastores.MinimalDutyDefinition
 import me.emiliomini.dutyschedule.shared.datastores.YearlyDutyItems
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
+import me.emiliomini.dutyschedule.shared.services.scaffold.Action
+import me.emiliomini.dutyschedule.shared.services.scaffold.ScaffoldService
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.components.CardListItemType
 import me.emiliomini.dutyschedule.shared.ui.components.LazyCardColumn
@@ -42,6 +44,7 @@ import me.emiliomini.dutyschedule.shared.ui.components.MinimalDutyCard
 import me.emiliomini.dutyschedule.shared.ui.components.PieChart
 import me.emiliomini.dutyschedule.shared.ui.icons.ChevronLeft
 import me.emiliomini.dutyschedule.shared.ui.icons.ChevronRight
+import me.emiliomini.dutyschedule.shared.ui.main.entry.NavItemId
 import me.emiliomini.dutyschedule.shared.util.countByProperty
 import me.emiliomini.dutyschedule.shared.util.format
 import me.emiliomini.dutyschedule.shared.util.resourceString
@@ -52,7 +55,7 @@ import kotlin.time.ExperimentalTime
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ArchiveScreen(
-    modifier: Modifier = Modifier, bottomBar: @Composable (() -> Unit) = {}
+    modifier: Modifier = Modifier, paddingValues: PaddingValues
 ) {
     val past by StorageService.PAST_DUTIES.collectAsState()
 
@@ -83,43 +86,44 @@ fun ArchiveScreen(
         ) { YearlyDutyItems() }.minimalDutyDefinitions
     }
 
-    Screen(
-        title = stringResource(Res.string.main_archive_title),
-        actions = {
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+    ScaffoldService.setActionsForScreen(
+        NavItemId.ARCHIVE, listOf(
+            Action({ run ->
                 IconButton(
                     onClick = {
-                        selectedYear = (selectedYear.toInt() - 1).toString()
+                        run()
                     }) {
                     Icon(ChevronLeft, contentDescription = null)
                 }
-                Text(selectedYear, style = MaterialTheme.typography.titleMedium)
+            }, { selectedYear = (selectedYear.toInt() - 1).toString() }),
+            Action({ Text(selectedYear, style = MaterialTheme.typography.titleMedium) }),
+            Action({ run ->
                 IconButton(
                     onClick = {
-                        if (selectedYear == currentYear) {
-                            return@IconButton
-                        }
-                        selectedYear = (selectedYear.toInt() + 1).toString()
+                        run()
                     }, enabled = selectedYear != currentYear
                 ) {
                     Icon(ChevronRight, contentDescription = null)
                 }
-            }
-        },
-        bottomBar = bottomBar,
+            }, {
+                if (selectedYear == currentYear) {
+                    return@Action
+                }
+                selectedYear = (selectedYear.toInt() + 1).toString()
+            })
+        )
+    )
+
+    Screen(
+        paddingValues = paddingValues,
         pullToRefresh = PullToRefreshOptions(
-            isRefreshing = !loaded,
-            onRefresh = {
+            isRefreshing = !loaded, onRefresh = {
                 loaded = false
                 scope.launch {
                     DutyScheduleService.loadPast(selectedYear)
                     loaded = true
                 }
-            }
-        )
+            })
     ) { innerPadding ->
         Column(
             modifier = modifier.padding(innerPadding)

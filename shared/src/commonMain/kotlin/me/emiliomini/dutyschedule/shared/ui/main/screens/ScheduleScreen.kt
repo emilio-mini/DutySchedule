@@ -26,12 +26,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -50,7 +48,6 @@ import dutyschedule.shared.generated.resources.Res
 import dutyschedule.shared.generated.resources.main_schedule_accessibility_datepicker
 import dutyschedule.shared.generated.resources.main_schedule_datepicker_confirm
 import dutyschedule.shared.generated.resources.main_schedule_datepicker_dismiss
-import dutyschedule.shared.generated.resources.main_schedule_title
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -61,6 +58,8 @@ import me.emiliomini.dutyschedule.shared.datastores.Requirement
 import me.emiliomini.dutyschedule.shared.datastores.Slot
 import me.emiliomini.dutyschedule.shared.mappings.ShiftType
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
+import me.emiliomini.dutyschedule.shared.services.scaffold.Action
+import me.emiliomini.dutyschedule.shared.services.scaffold.ScaffoldService
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.components.AppDateInfo
 import me.emiliomini.dutyschedule.shared.ui.components.AssignConfirmSheet
@@ -69,9 +68,9 @@ import me.emiliomini.dutyschedule.shared.ui.components.EmployeeDetailSheet
 import me.emiliomini.dutyschedule.shared.ui.icons.CalendarMonth
 import me.emiliomini.dutyschedule.shared.ui.icons.ChevronLeft
 import me.emiliomini.dutyschedule.shared.ui.icons.ChevronRight
+import me.emiliomini.dutyschedule.shared.ui.main.entry.NavItemId
 import me.emiliomini.dutyschedule.shared.util.WEEK_MILLIS
 import me.emiliomini.dutyschedule.shared.util.format
-import me.emiliomini.dutyschedule.shared.util.isNotNullOrBlank
 import me.emiliomini.dutyschedule.shared.util.startOfWeek
 import me.emiliomini.dutyschedule.shared.util.toInstant
 import org.jetbrains.compose.resources.stringResource
@@ -82,8 +81,7 @@ import kotlin.time.Instant
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ScheduleScreen(
-    modifier: Modifier = Modifier,
-    bottomBar: @Composable (() -> Unit) = {},
+    modifier: Modifier = Modifier, paddingValues: PaddingValues
 ) {
     val timeNow = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
     val currentMillis = LocalDateTime(
@@ -167,39 +165,39 @@ fun ScheduleScreen(
     val stationScrollState = rememberScrollState()
     var detailViewEmployee by remember { mutableStateOf<Slot?>(null) }
 
-    Screen(
-        modifier = modifier,
-        title = stringResource(Res.string.main_schedule_title),
-        actions = {
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(
-                    onClick = {
-                        val startOfWeek = selectedStartDate.toInstant().startOfWeek()
-                        selectedStartDate = startOfWeek.toEpochMilliseconds() - WEEK_MILLIS
-                        selectedEndDate = selectedStartDate!! + WEEK_MILLIS
-                    }
-                ) {
-                    Icon(ChevronLeft, contentDescription = null)
+    ScaffoldService.setActionsForScreen(
+        NavItemId.SCHEDULE, listOf(
+            Action({ run ->
+                IconButton(onClick = { run() }) {
+                    Icon(
+                        ChevronLeft, contentDescription = null
+                    )
                 }
+            }, {
+                val startOfWeek = selectedStartDate.toInstant().startOfWeek()
+                selectedStartDate = startOfWeek.toEpochMilliseconds() - WEEK_MILLIS
+                selectedEndDate = selectedStartDate!! + WEEK_MILLIS
+            }), Action({
                 Text(
                     "KW${selectedStartDate.toInstant().format("ww")}",
                     style = MaterialTheme.typography.titleMedium
                 )
-                IconButton(
-                    onClick = {
-                        val startOfWeek = selectedStartDate.toInstant().startOfWeek()
-                        selectedStartDate = startOfWeek.toEpochMilliseconds() + WEEK_MILLIS
-                        selectedEndDate = selectedStartDate!! + WEEK_MILLIS
-                    }
-                ) {
-                    Icon(ChevronRight, contentDescription = null)
+            }), Action({ run ->
+                IconButton(onClick = { run() }) {
+                    Icon(
+                        ChevronRight, contentDescription = null
+                    )
                 }
-            }
-        },
-        bottomBar = bottomBar
+            }, {
+                val startOfWeek = selectedStartDate.toInstant().startOfWeek()
+                selectedStartDate = startOfWeek.toEpochMilliseconds() + WEEK_MILLIS
+                selectedEndDate = selectedStartDate!! + WEEK_MILLIS
+            })
+        )
+    )
+
+    Screen(
+        modifier = modifier, paddingValues = paddingValues
     ) { innerPadding ->
         Column(
             modifier = Modifier.padding(innerPadding).padding(horizontal = 20.dp)

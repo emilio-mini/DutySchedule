@@ -139,6 +139,7 @@
     <string name="data_dutytype_haend">HÄND Dienst</string>
     <string name="data_dutytype_administrative">Innendienst</string>
     <string name="data_dutytype_event">Veranstaltung</string>
+    <string name="data_dutytype_blood_donation_service">Blutspendedienst</string>
     <string name="components_piechart_empty">Keine Daten verfügbar</string>
     <string name="next_duty">Nächster Dienst</string>
     <string name="alarm_set_for">Wecker gestellt für</string>
