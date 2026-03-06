@@ -13,6 +13,9 @@
     <string name="main_settings_account_logout_title">Abmelden</string>
     <string name="main_settings_account_logout_content">Entfernt alle Zugangsdaten vom Gerät</string>
     <string name="base_dutycard_accessibility_requirements_issue">Anforderungen nicht erfüllt</string>
+    <string name="error_permissions_missing_alarm_and_notification">Alarme and Benachrichtigungen können nicht gesendet werden</string>
+    <string name="error_permissions_missing_alarm">Alarme können nicht gesetzt werden</string>
+    <string name="error_permissions_missing_notification">Benachrichtigungen könnte nicht gesendet werden</string>
     <string name="main_schedule_title">Dienstplan</string>
     <string name="main_schedule_accessibility_datepicker">Klicken um einen neuen Zeitraum auszuwählen</string>
     <string name="main_schedule_datepicker_confirm">OK</string>
@@ -138,4 +141,12 @@
     <string name="data_dutytype_event">Veranstaltung</string>
     <string name="data_dutytype_blood_donation_service">Blutspendedienst</string>
     <string name="components_piechart_empty">Keine Daten verfügbar</string>
+    <string name="next_duty">Nächster Dienst</string>
+    <string name="alarm_set_for">Wecker gestellt für</string>
+    <string name="no_alarm_set">Kein Wecker gestellt</string>
+    <string name="no_upcuming_duties">Keine Dienste in nächster Zeit</string>
+    <plurals name="updated_duties">
+        <item quantity="one">Aktualisierte einen Dienst</item>
+        <item quantity="other">Aktualisierte %1$s Dienste</item>
+    </plurals>
 </resources>

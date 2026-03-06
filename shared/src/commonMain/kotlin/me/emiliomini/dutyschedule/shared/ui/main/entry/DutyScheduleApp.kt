@@ -10,6 +10,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import me.emiliomini.dutyschedule.shared.api.getPlatformTaskSchedulerApi
+import me.emiliomini.dutyschedule.shared.api.models.MultiplatformTask
 import me.emiliomini.dutyschedule.shared.services.network.NetworkService
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
@@ -37,6 +39,10 @@ fun DutyScheduleApp(composableLoadActions: @Composable () -> Unit) {
                 NetworkService.keepAlive()
             }
         }
+    }
+
+    LaunchedEffect(Unit) {
+        getPlatformTaskSchedulerApi().scheduleTask(MultiplatformTask.UpdateAlarms)
     }
 
     if (!loaded) {

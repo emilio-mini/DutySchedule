@@ -3,13 +3,15 @@
 package me.emiliomini.dutyschedule.shared.api
 
 import kotlinx.datetime.TimeZone
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 class IosAlarmApi : PlatformAlarmApi {
 
-    override fun requestPermission() {
+    override fun requestPermission(): Boolean {
         // TODO: Implement
+        return false
     }
 
     override fun isPermissionGranted(): Boolean {
@@ -17,21 +19,22 @@ class IosAlarmApi : PlatformAlarmApi {
         return false
     }
 
-    override suspend fun setAlarm(
-        id: Int,
-        time: Instant,
-        zone: TimeZone
-    ) {
+    override suspend fun setAlarm(guid: String, time: Instant, zone: TimeZone, edited: Boolean) {
         // TODO: Implement
     }
 
-    override suspend fun cancelAlarm(id: Int) {
+    override suspend fun cancelAlarm(guid: String) {
         // TODO: Implement
     }
 
-    override fun isAlarmSet(id: Int): Boolean {
+    override fun isAlarmSet(guid: String): Boolean {
         // TODO: Implement
         return false
+    }
+
+    override fun getNextAlarm(): Instant? {
+        // TODO: Implement
+        return Clock.System.now()
     }
 
 }

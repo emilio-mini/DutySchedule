@@ -22,6 +22,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -107,6 +109,8 @@ fun DashboardScreen(
     var hoursLoaded by remember { mutableStateOf(true) }
     var upcomingLoaded by remember { mutableStateOf(true) }
 
+
+    val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(DutyScheduleService.isLoggedIn) {
         if (!DutyScheduleService.isLoggedIn) {
             return@LaunchedEffect
@@ -136,7 +140,9 @@ fun DashboardScreen(
     )
 
     Screen(
-        modifier = modifier, paddingValues = paddingValues, pullToRefresh = PullToRefreshOptions(
+        modifier = modifier,
+        paddingValues = paddingValues,
+        pullToRefresh = PullToRefreshOptions(
             isRefreshing = !hoursLoaded || !upcomingLoaded, onRefresh = {
                 scope.launch {
                     hoursLoaded = false
@@ -198,7 +204,8 @@ fun DashboardScreen(
                     key = { _, duty -> duty.guid }) { index, duty ->
                     MinimalDutyCard(
                         duty = duty,
-                        type = if (index == 0 && upcomingDuties.minimalDutyDefinitions.size == 1) CardListItemType.SINGLE else if (index == 0) CardListItemType.TOP else if (index == upcomingDuties.minimalDutyDefinitions.size - 1) CardListItemType.BOTTOM else CardListItemType.DEFAULT
+                        type = if (index == 0 && upcomingDuties.minimalDutyDefinitions.size == 1) CardListItemType.SINGLE else if (index == 0) CardListItemType.TOP else if (index == upcomingDuties.minimalDutyDefinitions.size - 1) CardListItemType.BOTTOM else CardListItemType.DEFAULT,
+                        snackbarHostState = snackbarHostState
                     )
                     if (index == upcomingDuties.minimalDutyDefinitions.size - 1) {
                         Spacer(Modifier.height(20.dp))

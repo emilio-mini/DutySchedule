@@ -9,4 +9,7 @@ object NotificationChannelMapping {
         "alarms", "Duty Alarms", "Channel for duty alarms",
         MultiplatformNotificationPriority.URGENT
     )
+    val PERMANENT_INFO = MultiplatformNotificationChannel(
+        "info", "Duty Infos", "Channel for duty infos", MultiplatformNotificationPriority.LOW
+    )
 }

@@ -24,6 +24,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -49,9 +50,11 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import me.emiliomini.dutyschedule.shared.api.getPlatformAlarmApi
-import me.emiliomini.dutyschedule.shared.datastores.Alarm
+import me.emiliomini.dutyschedule.shared.services.AlarmService
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.components.CardColumn
+import me.emiliomini.dutyschedule.shared.ui.components.CardListItem
+import me.emiliomini.dutyschedule.shared.ui.components.CardListItemType
 import me.emiliomini.dutyschedule.shared.ui.icons.AlarmOff
 import me.emiliomini.dutyschedule.shared.ui.icons.AlarmOn
 import me.emiliomini.dutyschedule.shared.ui.icons.NightsStay
@@ -72,11 +75,15 @@ fun AlarmsScreen(
         // AlarmService.clean()
     }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    val onError: suspend (String) -> Unit = {
+        snackbarHostState.showSnackbar(it)
+    }
     val scope = rememberCoroutineScope()
     val timeFormat = "HH:mm"
     val dateFormat = "dd/MM/yyyy"
     val alarmItems by StorageService.ALARM_ITEMS.collectAsState()
-
+    var blocked by remember { mutableStateOf(false) }
     Screen(
         modifier = modifier, paddingValues = paddingValues
     ) { innerPadding ->
@@ -89,7 +96,82 @@ fun AlarmsScreen(
                 color = MaterialTheme.colorScheme.primary
             )
             CardColumn {
-                DutyAlarmListItem()
+                var autoSetAll by remember { mutableStateOf(false) }
+
+
+                LaunchedEffect(Unit) {
+                    StorageService.USER_PREFERENCES.get()?.autoSetAlarms?.let { autoSetAll = it }
+                }
+
+                CardListItem(
+                    modifier = Modifier.clickable {
+                        if (blocked) return@clickable
+
+                        blocked = true
+                        autoSetAll = !autoSetAll
+                        scope.launch {
+                            if (autoSetAll){
+                                AlarmService.setAllAlarms(onError)
+                            } else {
+                                AlarmService.cancelAllUneditedAlarms()
+                            }
+                            blocked = false
+                        }
+                    }.background(
+                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        shape = RoundedCornerShape(
+                            topStart =  12.dp,
+                            topEnd =  12.dp,
+                            bottomStart = 4.dp,
+                            bottomEnd = 4.dp
+                        )
+                    ),
+                    headlineContent = {
+                        Text(
+                            "Automatisch Alarme setzen",
+                        )
+                    },
+                    trailingContent = {
+                        Switch(
+                            checked = autoSetAll,
+                            onCheckedChange = {
+                                if (blocked) return@Switch
+
+                                blocked = true
+                                autoSetAll = it
+                                scope.launch {
+                                    if (autoSetAll){
+                                        AlarmService.setAllAlarms(onError)
+                                    } else {
+                                        AlarmService.cancelAllUneditedAlarms()
+                                    }
+                                    blocked = false
+                                }
+                              },
+                            thumbContent = {
+                                Icon(
+                                    modifier = Modifier.size(SwitchDefaults.IconSize),
+                                    imageVector = if (autoSetAll) AlarmOn else AlarmOff,
+                                    contentDescription = null
+                                )
+                            }
+                        )
+                    },
+                    type = CardListItemType.SINGLE
+                )
+
+                DutyAlarmListItem(
+                    modifier = Modifier.background(
+                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        shape = RoundedCornerShape(
+                            topStart =  4.dp,
+                            topEnd =  4.dp,
+                            bottomStart = 12.dp,
+                            bottomEnd = 12.dp
+                        )
+                    )
+
+                )
             }
             Spacer(modifier = Modifier.height(8.dp))
             if (alarmItems.alarms.isEmpty()) {
@@ -125,10 +207,9 @@ fun AlarmsScreen(
                                 key = { _, alarm -> alarm.code }) { index, alarm ->
                                 var active by remember {
                                     mutableStateOf(
-                                        getPlatformAlarmApi().isAlarmSet(alarm.code)
+                                        getPlatformAlarmApi().isAlarmSet(alarm.guid)
                                     )
                                 }
-                                var blocked by remember { mutableStateOf(false) }
                                 val swipeToDismissBoxState = rememberSwipeToDismissBoxState()
                                 val date = Instant.fromEpochMilliseconds(alarm.timestamp)
 
@@ -152,12 +233,7 @@ fun AlarmsScreen(
                                     onDismiss = {
                                         scope.launch {
                                             blocked = true
-                                            getPlatformAlarmApi().cancelAlarm(alarm.code)
-                                            StorageService.ALARM_ITEMS.update {
-                                                it.copy(
-                                                    alarms = it.alarms.filter { it.code != alarm.code }
-                                                )
-                                            }
+                                            AlarmService.removeAlarm(alarm.guid)
                                             blocked = false
                                         }
                                     }) {
@@ -181,7 +257,7 @@ fun AlarmsScreen(
                                                 active = !active
 
                                                 scope.launch {
-                                                    setAlarm(alarm, active)
+                                                    AlarmService.updateAlarm(alarm, active, onError)
                                                     blocked = false
                                                 }
                                             }), colors = ListItemDefaults.colors(
@@ -216,7 +292,7 @@ fun AlarmsScreen(
                                                 active = !active
 
                                                 scope.launch {
-                                                    setAlarm(alarm, active)
+                                                    AlarmService.updateAlarm(alarm, active, onError)
                                                     blocked = false
                                                 }
                                             })
@@ -231,10 +307,3 @@ fun AlarmsScreen(
     }
 }
 
-private suspend fun setAlarm(alarm: Alarm, enabled: Boolean) {
-    if (enabled) {
-        getPlatformAlarmApi().setAlarm(alarm.code, Instant.fromEpochMilliseconds(alarm.timestamp))
-    } else {
-        getPlatformAlarmApi().cancelAlarm(alarm.code)
-    }
-}

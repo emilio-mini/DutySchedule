@@ -19,15 +19,16 @@ import kotlin.time.Instant
 class AndroidAlarmApi : PlatformAlarmApi {
     private val logger = getPlatformLogger("AndroidAlarmApi")
 
-    override fun requestPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+    override fun requestPermission(): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !isPermissionGranted()) {
             val intent =
                 Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
                     data = Uri.fromParts("package", APPLICATION_CONTEXT.packageName, null)
                 }
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             APPLICATION_CONTEXT.startActivity(intent)
-        }
+            return isPermissionGranted()
+        } else return true
     }
 
     override fun isPermissionGranted(): Boolean {
@@ -40,11 +41,8 @@ class AndroidAlarmApi : PlatformAlarmApi {
         }
     }
 
-    override suspend fun setAlarm(
-        id: Int,
-        time: Instant,
-        zone: TimeZone
-    ) {
+    override suspend fun setAlarm(guid: String, time: Instant, zone: TimeZone, edited: Boolean) {
+        val id = guid.hashCode()
         val alarmManager =
             APPLICATION_CONTEXT.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
@@ -69,14 +67,17 @@ class AndroidAlarmApi : PlatformAlarmApi {
 
         StorageService.ALARM_ITEMS.update { alarmItems ->
             val alarms = alarmItems.alarms.toMutableList()
-            val alarmIndex = alarms.indexOfFirst { it.code == id }
+            val alarmIndex = alarms.indexOfFirst { it.guid == guid }
 
             if (alarmIndex != -1) {
                 val alarmToUpdate = alarms[alarmIndex]
-                val updatedAlarm = alarmToUpdate.copy(active = true)
+                val updatedAlarm = alarmToUpdate.copy(
+                    active = true,
+                    edited = edited
+                )
                 alarms[alarmIndex] = updatedAlarm
             } else {
-                val alarm = Alarm(true, time.toEpochMilliseconds(), id)
+                val alarm = Alarm(true, time.toEpochMilliseconds(), id, edited, guid)
                 alarms.add(alarm)
             }
 
@@ -86,10 +87,12 @@ class AndroidAlarmApi : PlatformAlarmApi {
         logger.d("Alarm $id set")
     }
 
-    override suspend fun cancelAlarm(id: Int) {
+    override suspend fun cancelAlarm(guid: String) {
+        val id = guid.hashCode()
         val alarmManager =
             APPLICATION_CONTEXT.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val alarmIntent = Intent(APPLICATION_CONTEXT, AlarmReceiver::class.java)
+        alarmIntent.extras?.putString("guid", guid)
         val pendingAlarmIntent = PendingIntent.getBroadcast(
             APPLICATION_CONTEXT,
             id,
@@ -101,11 +104,13 @@ class AndroidAlarmApi : PlatformAlarmApi {
 
         StorageService.ALARM_ITEMS.update { alarmItems ->
             val alarms = alarmItems.alarms.toMutableList()
-            val alarmIndex = alarms.indexOfFirst { it.code == id }
+            val alarmIndex = alarms.indexOfFirst { it.guid == guid }
 
             if (alarmIndex != -1) {
                 val alarmToUpdate = alarms[alarmIndex]
-                val updatedAlarm = alarmToUpdate.copy(active = false)
+                val updatedAlarm = alarmToUpdate.copy(
+                    active = false,
+                )
                 alarms[alarmIndex] = updatedAlarm
             }
 
@@ -114,7 +119,8 @@ class AndroidAlarmApi : PlatformAlarmApi {
         logger.d("Alarm $id cancelled")
     }
 
-    override fun isAlarmSet(id: Int): Boolean {
+    override fun isAlarmSet(guid: String): Boolean {
+        val id = guid.hashCode()
         val alarmIntent = Intent(APPLICATION_CONTEXT, AlarmReceiver::class.java)
         val pendingIntent = PendingIntent.getBroadcast(
             APPLICATION_CONTEXT,
@@ -123,6 +129,12 @@ class AndroidAlarmApi : PlatformAlarmApi {
             PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
         )
         return pendingIntent != null
+    }
+
+    override fun getNextAlarm(): Instant? {
+        val alarmManager =
+            APPLICATION_CONTEXT.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        return alarmManager.nextAlarmClock?.triggerTime?.let { Instant.fromEpochMilliseconds(it) }
     }
 
 }
