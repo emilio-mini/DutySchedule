@@ -39,7 +39,6 @@ import me.emiliomini.dutyschedule.shared.datastores.OrgItems
 import me.emiliomini.dutyschedule.shared.datastores.Requirement
 import me.emiliomini.dutyschedule.shared.datastores.Slot
 import me.emiliomini.dutyschedule.shared.datastores.YearlyDutyItems
-import me.emiliomini.dutyschedule.shared.mappings.NotificationChannelMapping
 import me.emiliomini.dutyschedule.shared.mappings.RequirementMapping
 import me.emiliomini.dutyschedule.shared.mappings.docScedConfigFromString
 import me.emiliomini.dutyschedule.shared.services.AlarmService.updateAlarms
@@ -503,39 +502,6 @@ object PrepService : DutyScheduleServiceBase {
         if (localUpcoming != null){
             updateAlarms(localUpcoming, upcomingDuties)
         }
-
-        val notificationApi = getPlatformNotificationApi()
-        val alarmApi = getPlatformAlarmApi()
-        // Build notification text with fetched duties count, next duty time, and callsign
-        val notificationText = if (upcomingDuties.isNotEmpty()) {
-            val dutyCount = upcomingDuties.size
-
-            val nextDuty = upcomingDuties.firstOrNull { it.begin.toInstant() > Clock.System.now() }
-            val nextDutyInstant = nextDuty?.begin?.toInstant()
-            val callsign = nextDuty?.vehicle ?: "Unknown"
-            val nextAlarm = alarmApi.getNextAlarm()?.format("dd.MM.YYYY HH:mm")
-            // val dutiesFetchedString = getPluralString(Res.plurals.updated_duties, dutyCount,dutyCount)
-            val nextDutyString = getString(Res.string.next_duty)
-            val alarmSetString = getString(Res.string.alarm_set_for)
-            val noAlarmString = getString(Res.string.no_alarm_set)
-            // |$dutiesFetchedString
-            """
-                |$nextDutyString: ${nextDutyInstant?.format("dd.MM.YYYY HH:mm")} - $callsign
-                |${if (nextAlarm != null) "$alarmSetString $nextAlarm." else noAlarmString}
-            """.trimMargin()
-        } else {
-            getString(Res.string.no_upcuming_duties)
-        }
-
-        val notification = MultiplatformNotification(
-            37,
-            NotificationChannelMapping.PERMANENT_INFO,
-            MultiplatformNotificationPriority.LOW,
-            "Duty Info",
-            notificationText,
-
-        )
-        notificationApi.send(notification)
 
         StorageService.UPCOMING_DUTIES.update {
             it.copy(

@@ -1,5 +1,6 @@
 package me.emiliomini.dutyschedule.shared.services
 
+import com.mohamedrejeb.calf.permissions.Permission
 import dutyschedule.shared.generated.resources.Res
 import dutyschedule.shared.generated.resources.error_permissions_missing_alarm
 import dutyschedule.shared.generated.resources.error_permissions_missing_alarm_and_notification
@@ -83,6 +84,7 @@ object AlarmService {
         if (upcomingDuties != null){
             updateAlarms(emptyList(), upcomingDuties, onError)
         }
+        NotificationService.sendInfoNotification()
     }
 
     suspend fun cancelAllUneditedAlarms() {
@@ -108,6 +110,8 @@ object AlarmService {
                 }
             )
         }
+        NotificationService.sendInfoNotification()
+        
     }
 
     suspend fun removeAlarm(guid: String) {
@@ -139,7 +143,7 @@ object AlarmService {
         if (prefs.autoSetAlarms){
             newDuties.forEach {
                 val alarm = alarms?.firstOrNull { alarm -> alarm.guid == it.guid}
-                if (it.begin.toEpochMilliseconds() + alarmOffsetMillis < Clock.System.now().toEpochMilliseconds())
+                if (it.begin.toEpochMilliseconds() - alarmOffsetMillis < Clock.System.now().toEpochMilliseconds())
                     return@forEach
 
                 oldDutyGuids.remove(it.guid)
@@ -161,5 +165,6 @@ object AlarmService {
                 setAlarm(new, onError ?: { })
             }
         }
+        NotificationService.sendInfoNotification()
     }
 }
