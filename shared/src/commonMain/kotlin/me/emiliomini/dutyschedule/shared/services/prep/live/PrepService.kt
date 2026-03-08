@@ -48,7 +48,6 @@ import me.emiliomini.dutyschedule.shared.util.isNightShift
 import me.emiliomini.dutyschedule.shared.util.midpointInstant
 import me.emiliomini.dutyschedule.shared.util.nullIfBlank
 import me.emiliomini.dutyschedule.shared.util.startOfDay
-import me.emiliomini.dutyschedule.shared.util.toEpochMilliseconds
 import me.emiliomini.dutyschedule.shared.util.toInstant
 import kotlin.math.min
 import kotlin.time.Clock
@@ -166,29 +165,32 @@ object PrepService : DutyScheduleServiceBase {
         val localPreferences = StorageService.USER_PREFERENCES.get()
         val username = localPreferences?.username
         val password = localPreferences?.password
-        val incode = StorageService.INCODE.get()
-        val maxAge = 5L * 60L * 1_000L
 
         if (username.isNullOrBlank() || password.isNullOrBlank()) {
             logger.d("No username or password found")
             return false
         }
 
-        // Restoring from local data
-        this.loadSelf(null, null)
+        val result = NetworkService.getBase()
+        val resultBody = result.bodyAsText()
+        if (resultBody.isNotEmpty()) {
+            val incode = DataExtractorService.extractIncode(resultBody)
 
-        val lastIncodeUseMillis = incode?.lastUsed?.toEpochMilliseconds() ?: 0L
-        if (incode != null && Clock.System.now()
-                .toEpochMilliseconds() - maxAge >= lastIncodeUseMillis
-        ) {
-            logger.d("Recent incode found. Trying to restore using keepAlive")
-            val keepAlive = NetworkService.keepAlive().bodyAsText()
-            if (keepAlive == "true") {
+            if (incode != null) {
                 this.incode = incode
+
+                StorageService.INCODE.update {
+                    this.incode ?: it
+                }
+
+                this.self = this.loadSelf(null, null)
                 this.isLoggedIn = true
+
+                logger.d("Restored login from previous session ${Json.encodeToString(this.incode)}")
                 return true
             }
         }
+
 
         logger.d("Restoring by re-running login process")
         return this.login(username, password)
@@ -224,10 +226,11 @@ object PrepService : DutyScheduleServiceBase {
                     this.self!!
                 }
             }
+            logger.d("Loaded identity")
             return this.self
         }
 
-        logger.d("Loaded self identity")
+        logger.d("Failed to load identity")
         return null
     }
 

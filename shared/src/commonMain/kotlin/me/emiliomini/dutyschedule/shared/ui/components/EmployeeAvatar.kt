@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -20,6 +21,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import dutyschedule.shared.generated.resources.Res
@@ -46,6 +48,7 @@ import me.emiliomini.dutyschedule.shared.ui.icons.Close
 import me.emiliomini.dutyschedule.shared.ui.icons.Domain
 import me.emiliomini.dutyschedule.shared.ui.icons.Info
 import me.emiliomini.dutyschedule.shared.ui.icons.Logout
+import me.emiliomini.dutyschedule.shared.ui.modifiers.shimmer
 import me.emiliomini.dutyschedule.shared.util.format
 import me.emiliomini.dutyschedule.shared.versionCode
 import me.emiliomini.dutyschedule.shared.versionName
@@ -54,27 +57,27 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun EmployeeAvatar(
     modifier: Modifier = Modifier,
-    employee: Employee,
+    employee: Employee?,
     canExpand: Boolean = true,
     onLogout: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
 
-    val employeeNames = employee.name.split(" ")
+    val employeeNames = employee?.name?.split(" ") ?: emptyList()
     val initial =
         if (employeeNames.size >= 2) employeeNames[1][0] else if (employeeNames.isNotEmpty() && employeeNames[0].isNotBlank()) employeeNames[0][0] else ""
 
-    val isSelf = employee.guid == DutyScheduleService.self?.guid
+    val isSelf = employee?.guid == DutyScheduleService.self?.guid
 
     var expanded by remember { mutableStateOf(false) }
     var employeeOrg by remember { mutableStateOf<Org?>(null) }
 
     LaunchedEffect(employee) {
-        employeeOrg = DutyScheduleService.getOrg(employee.defaultOrg ?: "")
+        employeeOrg = DutyScheduleService.getOrg(employee?.defaultOrg ?: "")
     }
 
     InitialsAvatar(
-        modifier = modifier,
+        modifier = modifier.clip(CircleShape).shimmer(isLoading = employee == null),
         initials = "$initial",
         enabled = canExpand,
         onClick = {
@@ -82,7 +85,7 @@ fun EmployeeAvatar(
         }
     )
 
-    if (expanded) {
+    if (employee != null && expanded) {
         Dialog(
             onDismissRequest = {
                 expanded = false

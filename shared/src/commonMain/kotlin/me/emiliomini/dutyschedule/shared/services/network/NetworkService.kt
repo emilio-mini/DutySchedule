@@ -1,23 +1,17 @@
 package me.emiliomini.dutyschedule.shared.services.network
 
-import io.ktor.client.request.forms.FormDataContent
-import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitForm
 import io.ktor.client.request.get
 import io.ktor.client.request.headers
 import io.ktor.client.request.parameter
-import io.ktor.client.request.post
 import io.ktor.client.request.url
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.Parameters
-import io.ktor.http.ParametersBuilder
 import io.ktor.http.parameters
 import io.ktor.utils.io.InternalAPI
 import me.emiliomini.dutyschedule.shared.api.getPlatformLogger
 import me.emiliomini.dutyschedule.shared.datastores.Incode
-import me.emiliomini.dutyschedule.shared.mappings.docScedConfigFromString
 import me.emiliomini.dutyschedule.shared.services.network.MultiplatformNetworkAdapter.HTTP
 import me.emiliomini.dutyschedule.shared.util.format
 import me.emiliomini.dutyschedule.shared.util.isInvalid
@@ -31,6 +25,10 @@ object NetworkService {
 
     private val logger = getPlatformLogger("NetworkService")
 
+    suspend fun getBase(): HttpResponse {
+        return HTTP.get(Endpoints.SCHEDULE_BASE.url)
+    }
+
     @OptIn(InternalAPI::class)
     suspend fun login(username: String, password: String): HttpResponse {
         val formResponse = HTTP.submitForm(
@@ -43,8 +41,10 @@ object NetworkService {
             }
         )
 
-        return if (formResponse.status == HttpStatusCode.Found && formResponse.bodyAsText().isBlank()) {
-            HTTP.get(Endpoints.SCHEDULE_BASE.url)
+        return if (formResponse.status == HttpStatusCode.Found && formResponse.bodyAsText()
+                .isBlank()
+        ) {
+            getBase()
         } else {
             formResponse
         }

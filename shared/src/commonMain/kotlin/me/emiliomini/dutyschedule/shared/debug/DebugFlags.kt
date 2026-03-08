@@ -1,7 +1,7 @@
 package me.emiliomini.dutyschedule.shared.debug
 
 enum class DebugFlags(private var value: Boolean) {
-    DISABLE_COOKIE_PERSISTENCE(true),
+    DISABLE_COOKIE_PERSISTENCE(false),
     SHOW_DEBUG_ACTIONS(false),
     SHOW_DEBUG_INFO(false);
 
