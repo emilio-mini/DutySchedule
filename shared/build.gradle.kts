@@ -107,6 +107,7 @@ kotlin {
                 // Material
                 implementation(libs.androidx.material3)
                 implementation(libs.androidx.compose.material.icons.extended)
+                implementation(libs.androidx.work.runtime.ktx)
             }
         }
 

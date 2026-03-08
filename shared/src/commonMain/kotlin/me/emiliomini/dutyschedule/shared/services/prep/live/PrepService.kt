@@ -32,6 +32,7 @@ import me.emiliomini.dutyschedule.shared.datastores.Slot
 import me.emiliomini.dutyschedule.shared.datastores.YearlyDutyItems
 import me.emiliomini.dutyschedule.shared.mappings.RequirementMapping
 import me.emiliomini.dutyschedule.shared.mappings.docScedConfigFromString
+import me.emiliomini.dutyschedule.shared.services.AlarmService.updateAlarms
 import me.emiliomini.dutyschedule.shared.services.network.Endpoints
 import me.emiliomini.dutyschedule.shared.services.network.MultiplatformNetworkAdapter
 import me.emiliomini.dutyschedule.shared.services.network.NetworkService
@@ -474,9 +475,9 @@ object PrepService : DutyScheduleServiceBase {
     }
 
     override suspend fun loadUpcoming(): List<MinimalDutyDefinition> {
-        val localUpcoming = StorageService.UPCOMING_DUTIES.get()
+        val localUpcoming = StorageService.UPCOMING_DUTIES.get()?.minimalDutyDefinitions
         if (localUpcoming != null && !isLoggedIn) {
-            return localUpcoming.minimalDutyDefinitions
+            return localUpcoming
         }
 
         if (incode == null) {
@@ -491,6 +492,12 @@ object PrepService : DutyScheduleServiceBase {
         val upcomingDuties = DataParserService.parseLoadMinimalDutyDefinitions(
             Json.parseToJsonElement(upcomingResponse)
         )
+
+
+        if (localUpcoming != null) {
+            updateAlarms(localUpcoming, upcomingDuties)
+        }
+
         StorageService.UPCOMING_DUTIES.update {
             it.copy(
                 minimalDutyDefinitions = upcomingDuties

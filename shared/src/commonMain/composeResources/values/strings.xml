@@ -14,6 +14,9 @@
     <string name="base_dutycard_no_vehicle">None Assigned</string>
     <string name="base_dutycard_no_staff">Empty Seat</string>
     <string name="base_dutycard_accessibility_requirements_issue">Requirements not met</string>
+    <string name="error_permissions_missing_alarm_and_notification">Alarm and notification permissions missing</string>
+    <string name="error_permissions_missing_alarm">Alarm permissions missing</string>
+    <string name="error_permissions_missing_notification">Notification permissions missing</string>
     <string name="main_schedule_title">Duty Schedule</string>
     <string name="main_schedule_accessibility_datepicker">Click to pick a date range</string>
     <string name="main_schedule_datepicker_confirm">OK</string>
@@ -137,4 +140,12 @@
     <string name="data_dutytype_event">Event</string>
     <string name="data_dutytype_blood_donation_service">Blood Donation Service</string>
     <string name="components_piechart_empty">No data available</string>
+    <string name="next_duty">Next duty</string>
+    <string name="alarm_set_for">Alarm set for</string>
+    <string name="no_alarm_set">No alarm set</string>
+    <string name="no_upcoming_duties">No upcoming duties</string>
+    <plurals name="updated_duties">
+        <item quantity="one">Updated %1$s duty</item>
+        <item quantity="other">Updated %1$s duties</item>
+    </plurals>
 </resources>

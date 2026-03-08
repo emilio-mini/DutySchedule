@@ -12,7 +12,11 @@ data class Alarm(
     @ProtoNumber(2)
     val timestamp: Long = 0,
     @ProtoNumber(3)
-    val code: Int = 0
+    val code: Int = 0,
+    @ProtoNumber(4)
+    val edited: Boolean = true,
+    @ProtoNumber(5)
+    val guid: String = ""
 ) : MultiplatformDataModel
 
 fun Alarm.isDefault(): Boolean {
