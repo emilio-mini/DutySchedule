@@ -1,7 +1,5 @@
 package me.emiliomini.dutyschedule.shared.services.network
 
-import io.ktor.client.request.forms.submitForm
-import io.ktor.client.request.get
 import io.ktor.client.request.headers
 import io.ktor.client.request.parameter
 import io.ktor.client.request.url
@@ -12,7 +10,6 @@ import io.ktor.http.parameters
 import io.ktor.utils.io.InternalAPI
 import me.emiliomini.dutyschedule.shared.api.getPlatformLogger
 import me.emiliomini.dutyschedule.shared.datastores.Incode
-import me.emiliomini.dutyschedule.shared.services.network.MultiplatformNetworkAdapter.HTTP
 import me.emiliomini.dutyschedule.shared.util.format
 import me.emiliomini.dutyschedule.shared.util.isInvalid
 import kotlin.time.ExperimentalTime
@@ -20,18 +17,17 @@ import kotlin.time.Instant
 
 
 object NetworkService {
-    private const val UNAUTHORIZED_MESSAGE = "Error 401: Unauthorized API Call"
     private const val TIMESTAMP_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
 
     private val logger = getPlatformLogger("NetworkService")
 
-    suspend fun getBase(): HttpResponse {
-        return HTTP.get(Endpoints.SCHEDULE_BASE.url)
+    suspend fun getBase(): HttpResponse? {
+        return MultiplatformNetworkAdapter.get(Endpoints.SCHEDULE_BASE.url)
     }
 
     @OptIn(InternalAPI::class)
-    suspend fun login(username: String, password: String): HttpResponse {
-        val formResponse = HTTP.submitForm(
+    suspend fun login(username: String, password: String): HttpResponse? {
+        val formResponse = MultiplatformNetworkAdapter.submitForm(
             url = Endpoints.LOGIN.url,
             formParameters = parameters {
                 append("client", "RKOOE")
@@ -40,6 +36,9 @@ object NetworkService {
                 append("remember", "1")
             }
         )
+        if (formResponse == null) {
+            return null
+        }
 
         return if (formResponse.status == HttpStatusCode.Found && formResponse.bodyAsText()
                 .isBlank()
@@ -50,14 +49,14 @@ object NetworkService {
         }
     }
 
-    suspend fun keepAlive(): HttpResponse {
-        return HTTP.get {
+    suspend fun keepAlive(): HttpResponse? {
+        return MultiplatformNetworkAdapter.get {
             url(Endpoints.KEEP_ALIVE.url)
         }
     }
 
-    suspend fun dispo(): HttpResponse {
-        return HTTP.get {
+    suspend fun dispo(): HttpResponse? {
+        return MultiplatformNetworkAdapter.get {
             url(Endpoints.DISPO.url)
         }
     }
@@ -74,7 +73,7 @@ object NetworkService {
             return null
         }
 
-        return HTTP.submitForm(
+        return MultiplatformNetworkAdapter.submitForm(
             url = Endpoints.LOAD_PLAN.url,
             formParameters = parameters {
                 append("orgUnitDataGuid", orgUnitDataGuid)
@@ -100,7 +99,7 @@ object NetworkService {
             return null
         }
 
-        return HTTP.submitForm(
+        return MultiplatformNetworkAdapter.submitForm(
             url = Endpoints.LOAD_UPCOMING.url,
             formParameters = parameters {
                 append("year", "")
@@ -129,7 +128,7 @@ object NetworkService {
             return null
         }
 
-        return HTTP.submitForm(
+        return MultiplatformNetworkAdapter.submitForm(
             url = Endpoints.LOAD_PAST.url,
             formParameters = parameters {
                 append("year", year)
@@ -160,7 +159,7 @@ object NetworkService {
             return null
         }
 
-        return HTTP.submitForm(
+        return MultiplatformNetworkAdapter.submitForm(
             url = Endpoints.GET_MESSAGES.url,
             formParameters = parameters {
                 append("orgUnitDataGuid", orgUnitDataGuid)
@@ -190,7 +189,7 @@ object NetworkService {
             return null
         }
 
-        return HTTP.submitForm(
+        return MultiplatformNetworkAdapter.submitForm(
             url = Endpoints.GET_RESOURCES.url,
             formParameters = parameters {
                 append("orgUnitDataGuid", orgUnitDataGuid)
@@ -220,7 +219,7 @@ object NetworkService {
             return null
         }
 
-        return HTTP.submitForm(
+        return MultiplatformNetworkAdapter.submitForm(
             url = Endpoints.GET_STAFF.url,
             formParameters = parameters {
                 append("orgUnitDataGuid", orgUnitDataGuid)
@@ -245,8 +244,8 @@ object NetworkService {
     suspend fun loadDocScedCalendar(
         orgUnitDataGuid: String,
         gran: String? = null // optional: "wee" | "mon" | "nextMon" | "ges"
-    ): HttpResponse {
-        return HTTP.get {
+    ): HttpResponse? {
+        return MultiplatformNetworkAdapter.get {
             url {
                 url(Endpoints.DOCSCED.url)
                 parameter("site", "calendar")
@@ -268,7 +267,7 @@ object NetworkService {
             return null
         }
 
-        return HTTP.submitForm(
+        return MultiplatformNetworkAdapter.submitForm(
             url = Endpoints.CREATE_AND_ALLOCATE_DUTY.url,
             formParameters = parameters {
                 append("plan", planDataGuid)

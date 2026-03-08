@@ -5,16 +5,20 @@ package me.emiliomini.dutyschedule.shared.services.prep.live
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import io.ktor.client.request.get
-import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
+import me.emiliomini.dutyschedule.shared.api.getPlatformConnectivityApi
 import me.emiliomini.dutyschedule.shared.api.getPlatformLogger
 import me.emiliomini.dutyschedule.shared.comparators.DutyDefinitionComparator
 import me.emiliomini.dutyschedule.shared.datastores.CreateDutyResponse
@@ -55,12 +59,21 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 object PrepService : DutyScheduleServiceBase {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val logger = getPlatformLogger("PrepService")
     private var incode: Incode? = null
     private val messages = mutableMapOf<String, List<Message>>()
 
     override var isLoggedIn by mutableStateOf(false)
     override var self by mutableStateOf<Employee?>(null)
+
+    init {
+        getPlatformConnectivityApi().isConnected.onEach { status ->
+            if (status) {
+                this.restoreLogin()
+            }
+        }.launchIn(scope)
+    }
 
     override fun getMessages(): Map<String, List<Message>> {
         return this.messages
@@ -83,7 +96,7 @@ object PrepService : DutyScheduleServiceBase {
 
     override suspend fun login(username: String, password: String): Boolean {
         logger.d("Running login...")
-        val loginResult: HttpResponse = NetworkService.login(username, password)
+        val loginResult = NetworkService.login(username, password) ?: return false
 
         logger.d("Resulted in status ${loginResult.status}")
         val responseBody = loginResult.bodyAsText()
@@ -149,10 +162,7 @@ object PrepService : DutyScheduleServiceBase {
     }
 
     override suspend fun previouslyLoggedIn(): Boolean {
-        val localPreferences = StorageService.USER_PREFERENCES.get()
-        if (localPreferences == null) {
-            return false
-        }
+        val localPreferences = StorageService.USER_PREFERENCES.get() ?: return false
 
         val username = localPreferences.username
         val password = localPreferences.password
@@ -172,8 +182,8 @@ object PrepService : DutyScheduleServiceBase {
         }
 
         val result = NetworkService.getBase()
-        val resultBody = result.bodyAsText()
-        if (resultBody.isNotEmpty()) {
+        val resultBody = result?.bodyAsText()
+        if (!resultBody.isNullOrEmpty()) {
             val incode = DataExtractorService.extractIncode(resultBody)
 
             if (incode != null) {
@@ -237,9 +247,9 @@ object PrepService : DutyScheduleServiceBase {
     override suspend fun loadOrgs(): OrgItems? {
         val orgs = StorageService.ORG_ITEMS.get()
         if (orgs == null || orgs.orgs.isEmpty()) {
-            val dispoBody = NetworkService.dispo().bodyAsText()
-            if (dispoBody.isBlank()) {
-                logger.e("Failed to load orgs - missing dispo body")
+            val dispoBody = NetworkService.dispo()?.bodyAsText()
+            if (dispoBody.isNullOrBlank()) {
+                logger.e("Failed to load orgs - missing dispo body or network failure")
                 return null
             }
 
@@ -250,7 +260,7 @@ object PrepService : DutyScheduleServiceBase {
             }
 
             val orgTreeUrl = Endpoints.withScheduleBase(orgTreeLocation)
-            val orgTreeBody = MultiplatformNetworkAdapter.HTTP.get(orgTreeUrl).bodyAsText()
+            val orgTreeBody = MultiplatformNetworkAdapter.get(orgTreeUrl)?.bodyAsText() ?: ""
             if (orgTreeBody.isBlank()) {
                 logger.e("Failed to load orgs - missing org tree body")
                 return null
@@ -274,9 +284,9 @@ object PrepService : DutyScheduleServiceBase {
     }
 
     override suspend fun loadAllowedOrgs(): List<String>? {
-        val dispoBody = NetworkService.dispo().bodyAsText()
-        if (dispoBody.isEmpty()) {
-            logger.e("Failed to load allowed orgs - missing dispo body")
+        val dispoBody = NetworkService.dispo()?.bodyAsText()
+        if (dispoBody.isNullOrEmpty()) {
+            logger.e("Failed to load allowed orgs - missing dispo body or network failure")
             return null
         }
 
@@ -552,7 +562,7 @@ object PrepService : DutyScheduleServiceBase {
         val parsed = try {
             DataParserService.parseCreateAndAllocateDuty(Json.parseToJsonElement(body))
         } catch (e: Exception) {
-            logger.e("Invalid JSON! $body")
+            logger.e("Invalid JSON! $body $e")
             null
         }
 
@@ -571,9 +581,9 @@ object PrepService : DutyScheduleServiceBase {
             return duties
         }
 
-        val html = NetworkService.loadDocScedCalendar(config, gran = "ges").bodyAsText()
-        if (html.isBlank()) {
-            logger.w("DocSced: failed to load html for org: $config")
+        val html = NetworkService.loadDocScedCalendar(config, gran = "ges")?.bodyAsText()
+        if (html.isNullOrEmpty()) {
+            logger.w("DocSced: failed to load html for org: $config; Possible network failure")
             return duties
         }
         val days = DocScedParserService.parseHaendData(html).getOrNull().orEmpty()
