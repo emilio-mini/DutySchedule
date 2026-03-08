@@ -64,12 +64,13 @@ object PrepService : DutyScheduleServiceBase {
     private var incode: Incode? = null
     private val messages = mutableMapOf<String, List<Message>>()
 
+    private var isRestoringLogin by mutableStateOf(false)
     override var isLoggedIn by mutableStateOf(false)
     override var self by mutableStateOf<Employee?>(null)
 
     init {
         getPlatformConnectivityApi().isConnected.onEach { status ->
-            if (status) {
+            if (status && !isRestoringLogin) {
                 this.restoreLogin()
             }
         }.launchIn(scope)
@@ -171,6 +172,7 @@ object PrepService : DutyScheduleServiceBase {
     }
 
     override suspend fun restoreLogin(): Boolean {
+        isRestoringLogin = true
         logger.d("Trying to restore login...")
         val localPreferences = StorageService.USER_PREFERENCES.get()
         val username = localPreferences?.username
@@ -178,7 +180,15 @@ object PrepService : DutyScheduleServiceBase {
 
         if (username.isNullOrBlank() || password.isNullOrBlank()) {
             logger.d("No username or password found")
+            isRestoringLogin = false
             return false
+        }
+
+        this.self = this.loadSelf(null, null)
+        if (this.self == null) {
+            val result = this.login(username, password)
+            isRestoringLogin = false
+            return result
         }
 
         val result = NetworkService.getBase()
@@ -192,17 +202,17 @@ object PrepService : DutyScheduleServiceBase {
                 StorageService.INCODE.update {
                     this.incode ?: it
                 }
-
-                this.self = this.loadSelf(null, null)
                 this.isLoggedIn = true
 
                 logger.d("Restored login from previous session ${Json.encodeToString(this.incode)}")
+                isRestoringLogin = false
                 return true
             }
         }
 
 
         logger.d("Restoring by re-running login process")
+        isRestoringLogin = false
         return this.login(username, password)
     }
 
