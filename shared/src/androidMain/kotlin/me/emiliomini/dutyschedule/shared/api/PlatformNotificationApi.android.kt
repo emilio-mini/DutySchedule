@@ -19,7 +19,6 @@ import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotificationPri
 import me.emiliomini.dutyschedule.shared.api.notifications.NotificationActionReceiver
 import me.emiliomini.dutyschedule.shared.api.notifications.NotificationActionRegistry
 import me.emiliomini.dutyschedule.shared.mappings.NotificationChannelMapping
-import java.util.Calendar
 import kotlin.time.ExperimentalTime
 
 
@@ -41,8 +40,9 @@ class AndroidNotificationApi : PlatformNotificationApi {
     }
 
     override fun isPermissionGranted(): Boolean {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && ContextCompat.checkSelfPermission(
-            APPLICATION_CONTEXT, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) ContextCompat.checkSelfPermission(
+            APPLICATION_CONTEXT, Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED else true
     }
 
     @OptIn(ExperimentalTime::class)
@@ -56,14 +56,14 @@ class AndroidNotificationApi : PlatformNotificationApi {
                 .setContentText(notification.content).setPriority(notification.priority.android())
                 .setAutoCancel(true)
 
-        if (notification.channel.id == NotificationChannelMapping.PERMANENT_INFO.id){
+        if (notification.channel.id == NotificationChannelMapping.PERMANENT_INFO.id) {
             notificationBuilder
                 .setOngoing(true)
                 .setAutoCancel(false)
 
             val nextAlarm = getPlatformAlarmApi().getNextAlarm()?.toEpochMilliseconds()
 
-            if (nextAlarm != null){
+            if (nextAlarm != null) {
                 notificationBuilder
                     .setUsesChronometer(true)
                     .setChronometerCountDown(true)
@@ -142,8 +142,7 @@ class AndroidNotificationApi : PlatformNotificationApi {
         ) {
             NotificationManagerCompat.from(APPLICATION_CONTEXT)
                 .notify(notification.id, notificationBuilder.build())
-        }
-        else {
+        } else {
             logger.d("No POST_NOTIFICATIONS permission") // TODO Internationalize
         }
     }

@@ -143,7 +143,7 @@
     <string name="next_duty">Next duty</string>
     <string name="alarm_set_for">Alarm set for</string>
     <string name="no_alarm_set">No alarm set</string>
-    <string name="no_upcuming_duties">No upcoming duties</string>
+    <string name="no_upcoming_duties">No upcoming duties</string>
     <plurals name="updated_duties">
         <item quantity="one">Updated %1$s duty</item>
         <item quantity="other">Updated %1$s duties</item>

@@ -144,7 +144,7 @@
     <string name="next_duty">Nächster Dienst</string>
     <string name="alarm_set_for">Wecker gestellt für</string>
     <string name="no_alarm_set">Kein Wecker gestellt</string>
-    <string name="no_upcuming_duties">Keine Dienste in nächster Zeit</string>
+    <string name="no_upcoming_duties">Keine Dienste in nächster Zeit</string>
     <plurals name="updated_duties">
         <item quantity="one">Aktualisierte einen Dienst</item>
         <item quantity="other">Aktualisierte %1$s Dienste</item>

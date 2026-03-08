@@ -4,7 +4,7 @@ import dutyschedule.shared.generated.resources.Res
 import dutyschedule.shared.generated.resources.alarm_set_for
 import dutyschedule.shared.generated.resources.next_duty
 import dutyschedule.shared.generated.resources.no_alarm_set
-import dutyschedule.shared.generated.resources.no_upcuming_duties
+import dutyschedule.shared.generated.resources.no_upcoming_duties
 import me.emiliomini.dutyschedule.shared.api.getPlatformAlarmApi
 import me.emiliomini.dutyschedule.shared.api.getPlatformNotificationApi
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotification
@@ -19,8 +19,9 @@ import kotlin.time.ExperimentalTime
 
 object NotificationService {
     @OptIn(ExperimentalTime::class)
-    suspend fun sendInfoNotification (){
-        val upcomingDuties = StorageService.UPCOMING_DUTIES.get()?.minimalDutyDefinitions ?: emptyList()
+    suspend fun sendInfoNotification() {
+        val upcomingDuties =
+            StorageService.UPCOMING_DUTIES.get()?.minimalDutyDefinitions ?: emptyList()
         val notificationApi = getPlatformNotificationApi()
         val alarmApi = getPlatformAlarmApi()
         // Build notification text with fetched duties count, next duty time, and callsign
@@ -29,19 +30,19 @@ object NotificationService {
 
             val nextDuty = upcomingDuties.firstOrNull { it.begin.toInstant() > Clock.System.now() }
             val nextDutyInstant = nextDuty?.begin?.toInstant()
-            val callsign = nextDuty?.vehicle ?: "Unknown"
-            val nextAlarm = alarmApi.getNextAlarm()?.format("dd.MM.YYYY HH:mm")
+            val callsign = nextDuty?.vehicle
+            val nextAlarm = alarmApi.getNextAlarm()?.format("dd.MM.yyyy HH:mm")
             // val dutiesFetchedString = getPluralString(Res.plurals.updated_duties, dutyCount,dutyCount)
             val nextDutyString = getString(Res.string.next_duty)
             val alarmSetString = getString(Res.string.alarm_set_for)
             val noAlarmString = getString(Res.string.no_alarm_set)
             // |$dutiesFetchedString
             """
-                |$nextDutyString: ${nextDutyInstant?.format("dd.MM.YYYY HH:mm")} - $callsign
+                |$nextDutyString: ${nextDutyInstant?.format("dd.MM.yyyy HH:mm")}${if (callsign != null) " ($callsign)" else ""}
                 |${if (nextAlarm != null) "$alarmSetString $nextAlarm." else noAlarmString}
             """.trimMargin()
         } else {
-            getString(Res.string.no_upcuming_duties)
+            getString(Res.string.no_upcoming_duties)
         }
 
         val notification = MultiplatformNotification(

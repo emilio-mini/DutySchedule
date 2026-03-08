@@ -16,9 +16,9 @@ class TaskRunnerService(ctx: Context, params: WorkerParameters): CoroutineWorker
 
         when(task){
             MultiplatformTask.UpdateAlarms -> {
+                APPLICATION_CONTEXT = this.applicationContext;
                 AlarmService.fetchAlarms()
 
-                APPLICATION_CONTEXT = this.applicationContext;
                 val notification = MultiplatformNotification(37, NotificationChannelMapping.ALARMS,
                     MultiplatformNotificationPriority.NORMAL, "Duty Update", "Updated Duties at ${Calendar.getInstance().time}") // TODO Internationalize
                 val notificationApi = getPlatformNotificationApi() as AndroidNotificationApi

@@ -5,11 +5,6 @@ package me.emiliomini.dutyschedule.shared.services.prep.live
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import dutyschedule.shared.generated.resources.Res
-import dutyschedule.shared.generated.resources.alarm_set_for
-import dutyschedule.shared.generated.resources.next_duty
-import dutyschedule.shared.generated.resources.no_alarm_set
-import dutyschedule.shared.generated.resources.no_upcuming_duties
 import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
@@ -20,11 +15,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
-import me.emiliomini.dutyschedule.shared.api.getPlatformAlarmApi
 import me.emiliomini.dutyschedule.shared.api.getPlatformLogger
-import me.emiliomini.dutyschedule.shared.api.getPlatformNotificationApi
-import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotification
-import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotificationPriority
 import me.emiliomini.dutyschedule.shared.comparators.DutyDefinitionComparator
 import me.emiliomini.dutyschedule.shared.datastores.CreateDutyResponse
 import me.emiliomini.dutyschedule.shared.datastores.DutyDefinition
@@ -59,8 +50,7 @@ import me.emiliomini.dutyschedule.shared.util.nullIfBlank
 import me.emiliomini.dutyschedule.shared.util.startOfDay
 import me.emiliomini.dutyschedule.shared.util.toEpochMilliseconds
 import me.emiliomini.dutyschedule.shared.util.toInstant
-import org.jetbrains.compose.resources.getString
-    import kotlin.math.min
+import kotlin.math.min
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -504,7 +494,7 @@ object PrepService : DutyScheduleServiceBase {
         )
 
 
-        if (localUpcoming != null){
+        if (localUpcoming != null) {
             updateAlarms(localUpcoming, upcomingDuties)
         }
 
