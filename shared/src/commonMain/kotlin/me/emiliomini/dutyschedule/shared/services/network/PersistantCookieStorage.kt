@@ -63,4 +63,8 @@ class PersistentCookieStorage() : CookiesStorage {
     }
 
     override fun close() {}
+
+    suspend fun clearAll() = mutex.withLock {
+        cache?.clear()
+    }
 }

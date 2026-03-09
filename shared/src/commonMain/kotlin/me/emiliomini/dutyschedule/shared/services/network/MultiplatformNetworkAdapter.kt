@@ -22,6 +22,7 @@ import me.emiliomini.dutyschedule.shared.api.getPlatformLogger
  */
 object MultiplatformNetworkAdapter {
     private val connectivityApi = getPlatformConnectivityApi()
+    private val cookieStorage = PersistentCookieStorage()
     private val HTTP: HttpClient = HttpClient {
         followRedirects = true
 
@@ -42,8 +43,12 @@ object MultiplatformNetworkAdapter {
         }
 
         install(HttpCookies) {
-            storage = PersistentCookieStorage()
+            storage = cookieStorage
         }
+    }
+
+    suspend fun clearCookies() {
+        cookieStorage.clearAll()
     }
 
     suspend fun get(

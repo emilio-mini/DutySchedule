@@ -97,6 +97,7 @@ object PrepService : DutyScheduleServiceBase {
 
     override suspend fun login(username: String, password: String): Boolean {
         logger.d("Running login...")
+        MultiplatformNetworkAdapter.clearCookies()
         val loginResult = NetworkService.login(username, password) ?: return false
 
         logger.d("Resulted in status ${loginResult.status}")
@@ -172,6 +173,9 @@ object PrepService : DutyScheduleServiceBase {
     }
 
     override suspend fun restoreLogin(): Boolean {
+        if (isRestoringLogin) {
+            return false
+        }
         isRestoringLogin = true
         logger.d("Trying to restore login...")
         val localPreferences = StorageService.USER_PREFERENCES.get()
