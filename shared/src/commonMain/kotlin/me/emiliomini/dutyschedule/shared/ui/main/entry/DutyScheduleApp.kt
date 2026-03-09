@@ -4,6 +4,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -23,11 +24,16 @@ fun DutyScheduleApp(composableLoadActions: @Composable () -> Unit) {
     val scope = rememberCoroutineScope()
     var loaded by remember { mutableStateOf(false) }
     var previouslyLoggedIn by remember { mutableStateOf(false) }
+    var themeMode by remember { mutableIntStateOf(0) }
+    var dynamicColor by remember { mutableStateOf(true) }
 
     LaunchedEffect(loaded) {
         if (!loaded) {
             StorageService.initialize()
             previouslyLoggedIn = DutyScheduleService.previouslyLoggedIn()
+            val prefs = StorageService.USER_PREFERENCES.getOrDefault()
+            themeMode = prefs.themeMode
+            dynamicColor = prefs.dynamicColor
             loaded = true
         }
     }
@@ -42,7 +48,12 @@ fun DutyScheduleApp(composableLoadActions: @Composable () -> Unit) {
     }
 
     LaunchedEffect(Unit) {
-        getPlatformTaskSchedulerApi().scheduleTask(MultiplatformTask.UpdateAlarms)
+        val prefs = StorageService.USER_PREFERENCES.getOrDefault()
+        if (prefs.backgroundUpdaterEnabled) {
+            getPlatformTaskSchedulerApi().scheduleTask(MultiplatformTask.UpdateAlarms)
+        } else {
+            getPlatformTaskSchedulerApi().cancelTask(MultiplatformTask.UpdateAlarms)
+        }
     }
 
     if (!loaded) {
@@ -55,7 +66,7 @@ fun DutyScheduleApp(composableLoadActions: @Composable () -> Unit) {
     } else {
 
         if (!DutyScheduleService.isLoggedIn && !previouslyLoggedIn) {
-            DutyScheduleTheme {
+            DutyScheduleTheme(themeMode = themeMode, dynamicColor = dynamicColor) {
                 Onboarding()
             }
         } else {
@@ -65,8 +76,10 @@ fun DutyScheduleApp(composableLoadActions: @Composable () -> Unit) {
                 }
             }
 
-            DutyScheduleTheme {
+            DutyScheduleTheme(themeMode = themeMode, dynamicColor = dynamicColor) {
                 Main(
+                    onThemeModeChange = { newMode -> themeMode = newMode },
+                    onDynamicColorChange = { enabled -> dynamicColor = enabled },
                     onLogout = {
                         scope.launch {
                             DutyScheduleService.logout()

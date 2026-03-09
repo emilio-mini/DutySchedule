@@ -145,6 +145,17 @@
     <string name="alarm_set_for">Wecker gestellt für</string>
     <string name="no_alarm_set">Kein Wecker gestellt</string>
     <string name="no_upcoming_duties">Keine Dienste in nächster Zeit</string>
+    <string name="main_settings_section_notifications">Benachrichtigungen</string>
+    <string name="main_settings_notifications_permanent_title">Dauerhafte Benachrichtigung</string>
+    <string name="main_settings_notifications_permanent_content">Dauerhafte Dienst-Info Benachrichtigung anzeigen</string>
+    <string name="main_settings_section_background">Hintergrund</string>
+    <string name="main_settings_background_updater_title">Hintergrundaktualisierung</string>
+    <string name="main_settings_background_updater_content">Wecker automatisch im Hintergrund aktualisieren</string>
+    <string name="main_settings_section_appearance">Aussehen</string>
+    <string name="main_settings_appearance_theme_title">Erscheinungsbild</string>
+    <string name="main_settings_appearance_theme_system">System</string>
+    <string name="main_settings_appearance_theme_light">Hell</string>
+    <string name="main_settings_appearance_theme_dark">Dunkel</string>
     <plurals name="updated_duties">
         <item quantity="one">Aktualisierte einen Dienst</item>
         <item quantity="other">Aktualisierte %1$s Dienste</item>
