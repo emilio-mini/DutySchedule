@@ -138,5 +138,10 @@
     <string name="data_dutytype_recertification">Recertification</string>
     <string name="data_dutytype_haend">HÄND Duty</string>
     <string name="data_dutytype_administrative">Administrative</string>
+    <string name="data_dutytype_event">Event</string>
+    <string name="data_dutytype_blood_donation_service">Blood Donation Service</string>
     <string name="components_piechart_empty">No data available</string>
+    <string name="widget_next_duty_title">Next Duty</string>
+    <string name="widget_next_duty_empty">No upcoming duty</string>
+    <string name="widget_next_duty_description">Shows your next upcoming duty</string>
 </resources>
