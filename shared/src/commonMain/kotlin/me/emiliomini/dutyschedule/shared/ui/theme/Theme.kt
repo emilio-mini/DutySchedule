@@ -61,11 +61,18 @@ private val DarkColorScheme = darkColorScheme(
     outline = Color(0xFFA08C8A)
 )
 
+/** themeMode: 0 = system, 1 = light, 2 = dark */
 @Composable
 fun DutyScheduleTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    themeMode: Int = 0,
     content: @Composable () -> Unit
 ) {
+    val systemDark = isSystemInDarkTheme()
+    val darkTheme = when (themeMode) {
+        1 -> false
+        2 -> true
+        else -> systemDark
+    }
     val colorScheme = when {
         darkTheme -> DarkColorScheme
         else -> LightColorScheme

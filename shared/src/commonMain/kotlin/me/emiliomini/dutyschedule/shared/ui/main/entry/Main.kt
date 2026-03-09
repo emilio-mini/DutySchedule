@@ -23,24 +23,28 @@ import dutyschedule.shared.generated.resources.main_alarms_title
 import dutyschedule.shared.generated.resources.main_archive_title
 import dutyschedule.shared.generated.resources.main_dashboard_title
 import dutyschedule.shared.generated.resources.main_schedule_title
+import dutyschedule.shared.generated.resources.main_settings_title
 import dutyschedule.shared.generated.resources.nav_alarms
 import dutyschedule.shared.generated.resources.nav_archive
 import dutyschedule.shared.generated.resources.nav_dashboard
 import dutyschedule.shared.generated.resources.nav_schedule
+import dutyschedule.shared.generated.resources.nav_settings
 import me.emiliomini.dutyschedule.shared.services.scaffold.ScaffoldService
 import me.emiliomini.dutyschedule.shared.ui.icons.Alarm
 import me.emiliomini.dutyschedule.shared.ui.icons.Archive
 import me.emiliomini.dutyschedule.shared.ui.icons.Dashboard
 import me.emiliomini.dutyschedule.shared.ui.icons.Schedule
+import me.emiliomini.dutyschedule.shared.ui.icons.Settings
 import me.emiliomini.dutyschedule.shared.ui.main.screens.AlarmsScreen
 import me.emiliomini.dutyschedule.shared.ui.main.screens.ArchiveScreen
 import me.emiliomini.dutyschedule.shared.ui.main.screens.DashboardScreen
 import me.emiliomini.dutyschedule.shared.ui.main.screens.ScheduleScreen
+import me.emiliomini.dutyschedule.shared.ui.main.screens.SettingsScreen
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Main(modifier: Modifier = Modifier, onLogout: () -> Unit, onRestart: () -> Unit) {
+fun Main(modifier: Modifier = Modifier, onThemeModeChange: (Int) -> Unit, onLogout: () -> Unit, onRestart: () -> Unit) {
     val snackbarHostState = remember { SnackbarHostState() }
     ScaffoldService.registerSnackbar(snackbarHostState)
     var selectedNavIndex by remember { mutableIntStateOf(0) }
@@ -68,6 +72,12 @@ fun Main(modifier: Modifier = Modifier, onLogout: () -> Unit, onRestart: () -> U
             label = stringResource(Res.string.nav_alarms),
             title = stringResource(Res.string.main_alarms_title),
             icon = Alarm
+        ),
+        NavItem(
+            id = NavItemId.SETTINGS,
+            label = stringResource(Res.string.nav_settings),
+            title = stringResource(Res.string.main_settings_title),
+            icon = Settings
         ),
     )
 
@@ -110,6 +120,8 @@ fun Main(modifier: Modifier = Modifier, onLogout: () -> Unit, onRestart: () -> U
             2 -> ArchiveScreen(paddingValues = paddingValues)
 
             3 -> AlarmsScreen(paddingValues = paddingValues)
+
+            4 -> SettingsScreen(paddingValues = paddingValues, onThemeModeChange = onThemeModeChange, onLogout = onLogout)
         }
     }
 }
@@ -119,5 +131,5 @@ data class NavItem(
 )
 
 enum class NavItemId {
-    DASHBOARD, SCHEDULE, ARCHIVE, ALARMS
+    DASHBOARD, SCHEDULE, ARCHIVE, ALARMS, SETTINGS
 }

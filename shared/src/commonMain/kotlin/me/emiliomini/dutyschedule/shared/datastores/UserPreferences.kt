@@ -18,7 +18,13 @@ data class UserPreferences(
     @ProtoNumber(5)
     val lastSelectedOrg: String = "",
     @ProtoNumber(6)
-    val autoSetAlarms: Boolean = false
+    val autoSetAlarms: Boolean = false,
+    @ProtoNumber(7)
+    val permanentNotification: Boolean = true,
+    @ProtoNumber(8)
+    val backgroundUpdaterEnabled: Boolean = true,
+    @ProtoNumber(9)
+    val themeMode: Int = 0 // 0 = system, 1 = light, 2 = dark
 ) : MultiplatformDataModel
 
 fun UserPreferences.isDefault(): Boolean {

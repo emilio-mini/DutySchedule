@@ -20,6 +20,9 @@ import kotlin.time.ExperimentalTime
 object NotificationService {
     @OptIn(ExperimentalTime::class)
     suspend fun sendInfoNotification() {
+        val prefs = StorageService.USER_PREFERENCES.getOrDefault()
+        if (!prefs.permanentNotification) return
+
         val upcomingDuties =
             StorageService.UPCOMING_DUTIES.get()?.minimalDutyDefinitions ?: emptyList()
         val notificationApi = getPlatformNotificationApi()
@@ -55,5 +58,16 @@ object NotificationService {
             )
         notificationApi.send(notification)
 
+    }
+
+    fun cancelInfoNotification() {
+        val notification = MultiplatformNotification(
+            37,
+            NotificationChannelMapping.PERMANENT_INFO,
+            MultiplatformNotificationPriority.LOW,
+            "",
+            ""
+        )
+        getPlatformNotificationApi().dismiss(notification)
     }
 }
