@@ -3,7 +3,6 @@ package me.emiliomini.dutyschedule.shared.ui.main.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -29,6 +28,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import dutyschedule.shared.generated.resources.Res
+import dutyschedule.shared.generated.resources.main_settings_appearance_dynamic_color_content
+import dutyschedule.shared.generated.resources.main_settings_appearance_dynamic_color_title
 import dutyschedule.shared.generated.resources.main_settings_appearance_theme_dark
 import dutyschedule.shared.generated.resources.main_settings_appearance_theme_light
 import dutyschedule.shared.generated.resources.main_settings_appearance_theme_system
@@ -52,6 +53,7 @@ import me.emiliomini.dutyschedule.shared.ui.components.CardListItemType
 import me.emiliomini.dutyschedule.shared.ui.icons.AlarmOff
 import me.emiliomini.dutyschedule.shared.ui.icons.AlarmOn
 import me.emiliomini.dutyschedule.shared.ui.main.components.DutyAlarmListItem
+import me.emiliomini.dutyschedule.shared.ui.theme.isDynamicColorSupported
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -60,6 +62,7 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
     paddingValues: PaddingValues = PaddingValues(0.dp),
     onThemeModeChange: (Int) -> Unit,
+    onDynamicColorChange: (Boolean) -> Unit,
     onLogout: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -67,12 +70,14 @@ fun SettingsScreen(
     var permanentNotification by remember { mutableStateOf(true) }
     var backgroundUpdaterEnabled by remember { mutableStateOf(true) }
     var themeMode by remember { mutableIntStateOf(0) }
+    var dynamicColor by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
         val prefs = StorageService.USER_PREFERENCES.getOrDefault()
         permanentNotification = prefs.permanentNotification
         backgroundUpdaterEnabled = prefs.backgroundUpdaterEnabled
         themeMode = prefs.themeMode
+        dynamicColor = prefs.dynamicColor
     }
 
     Screen(modifier = modifier, paddingValues = paddingValues) { innerPadding ->
@@ -176,6 +181,31 @@ fun SettingsScreen(
                 color = MaterialTheme.colorScheme.primary
             )
             CardColumn {
+                if (isDynamicColorSupported()) {
+                    CardListItem(
+                        headlineContent = {
+                            Text(stringResource(Res.string.main_settings_appearance_dynamic_color_title))
+                        },
+                        supportingContent = {
+                            Text(stringResource(Res.string.main_settings_appearance_dynamic_color_content))
+                        },
+                        trailingContent = {
+                            Switch(
+                                checked = dynamicColor,
+                                onCheckedChange = { checked ->
+                                    dynamicColor = checked
+                                    onDynamicColorChange(checked)
+                                    scope.launch {
+                                        StorageService.USER_PREFERENCES.update {
+                                            it.copy(dynamicColor = checked)
+                                        }
+                                    }
+                                }
+                            )
+                        },
+                        type = CardListItemType.TOP
+                    )
+                }
                 CardListItem(
                     headlineContent = {
                         Text(stringResource(Res.string.main_settings_appearance_theme_title))
@@ -209,7 +239,7 @@ fun SettingsScreen(
                             }
                         }
                     },
-                    type = CardListItemType.SINGLE
+                    type = if (isDynamicColorSupported()) CardListItemType.BOTTOM else CardListItemType.SINGLE
                 )
             }
         }

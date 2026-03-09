@@ -44,7 +44,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Main(modifier: Modifier = Modifier, onThemeModeChange: (Int) -> Unit, onLogout: () -> Unit, onRestart: () -> Unit) {
+fun Main(modifier: Modifier = Modifier, onThemeModeChange: (Int) -> Unit, onDynamicColorChange: (Boolean) -> Unit, onLogout: () -> Unit, onRestart: () -> Unit) {
     val snackbarHostState = remember { SnackbarHostState() }
     ScaffoldService.registerSnackbar(snackbarHostState)
     var selectedNavIndex by remember { mutableIntStateOf(0) }
@@ -129,6 +129,7 @@ fun Main(modifier: Modifier = Modifier, onThemeModeChange: (Int) -> Unit, onLogo
         ) {
             SettingsScreen(
                 onThemeModeChange = onThemeModeChange,
+                onDynamicColorChange = onDynamicColorChange,
                 onLogout = onLogout
             )
         }

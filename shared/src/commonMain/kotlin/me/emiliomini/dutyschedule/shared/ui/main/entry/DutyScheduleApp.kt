@@ -25,12 +25,15 @@ fun DutyScheduleApp(composableLoadActions: @Composable () -> Unit) {
     var loaded by remember { mutableStateOf(false) }
     var previouslyLoggedIn by remember { mutableStateOf(false) }
     var themeMode by remember { mutableIntStateOf(0) }
+    var dynamicColor by remember { mutableStateOf(true) }
 
     LaunchedEffect(loaded) {
         if (!loaded) {
             StorageService.initialize()
             previouslyLoggedIn = DutyScheduleService.previouslyLoggedIn()
-            themeMode = StorageService.USER_PREFERENCES.getOrDefault().themeMode
+            val prefs = StorageService.USER_PREFERENCES.getOrDefault()
+            themeMode = prefs.themeMode
+            dynamicColor = prefs.dynamicColor
             loaded = true
         }
     }
@@ -63,7 +66,7 @@ fun DutyScheduleApp(composableLoadActions: @Composable () -> Unit) {
     } else {
 
         if (!DutyScheduleService.isLoggedIn && !previouslyLoggedIn) {
-            DutyScheduleTheme(themeMode = themeMode) {
+            DutyScheduleTheme(themeMode = themeMode, dynamicColor = dynamicColor) {
                 Onboarding()
             }
         } else {
@@ -73,9 +76,10 @@ fun DutyScheduleApp(composableLoadActions: @Composable () -> Unit) {
                 }
             }
 
-            DutyScheduleTheme(themeMode = themeMode) {
+            DutyScheduleTheme(themeMode = themeMode, dynamicColor = dynamicColor) {
                 Main(
                     onThemeModeChange = { newMode -> themeMode = newMode },
+                    onDynamicColorChange = { enabled -> dynamicColor = enabled },
                     onLogout = {
                         scope.launch {
                             DutyScheduleService.logout()
