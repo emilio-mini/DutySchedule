@@ -58,7 +58,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun SettingsScreen(
     modifier: Modifier = Modifier,
-    paddingValues: PaddingValues,
+    paddingValues: PaddingValues = PaddingValues(0.dp),
     onThemeModeChange: (Int) -> Unit,
     onLogout: () -> Unit
 ) {
@@ -78,7 +78,7 @@ fun SettingsScreen(
     Screen(modifier = modifier, paddingValues = paddingValues) { innerPadding ->
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .padding(innerPadding)
                 .padding(20.dp)
                 .verticalScroll(rememberScrollState()),
