@@ -1,6 +1,5 @@
 package me.emiliomini.dutyschedule.shared.services
 
-import com.mohamedrejeb.calf.permissions.Permission
 import dutyschedule.shared.generated.resources.Res
 import dutyschedule.shared.generated.resources.error_permissions_missing_alarm
 import dutyschedule.shared.generated.resources.error_permissions_missing_alarm_and_notification
@@ -88,7 +87,6 @@ object AlarmService {
     }
 
     suspend fun cancelAllUneditedAlarms() {
-
         StorageService.USER_PREFERENCES.update {
             it.copy(autoSetAlarms = false)
         }
@@ -111,7 +109,6 @@ object AlarmService {
             )
         }
         NotificationService.sendInfoNotification()
-        
     }
 
     suspend fun removeAlarm(guid: String) {
@@ -124,14 +121,8 @@ object AlarmService {
     }
 
     suspend fun fetchAlarms() {
-        // val oldDuties = StorageService.UPCOMING_DUTIES.get()?.minimalDutyDefinitions
-
+        DutyScheduleService.restoreLogin()
         DutyScheduleService.loadUpcoming()
-
-        // val updatedDuties = StorageService.UPCOMING_DUTIES.get()?.minimalDutyDefinitions
-
-
-
     }
 
     @OptIn(ExperimentalTime::class)
