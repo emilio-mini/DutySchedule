@@ -148,9 +148,12 @@ object AlarmService {
             oldDutyGuids.forEach { removeAlarm(it) }
         } else {
             alarms?.forEach { oldAlarm ->
+                if (!oldAlarm.active)
+                    return@forEach
+
                 val new = newDuties.firstOrNull{it.guid == oldAlarm.guid} ?: return@forEach
 
-                if (new.begin.toInstant() < Clock.System.now() || (oldAlarm.edited && !oldAlarm.active))
+                if (new.begin.toEpochMilliseconds() - alarmOffsetMillis < Clock.System.now().toEpochMilliseconds() || (oldAlarm.edited && !oldAlarm.active))
                     return@forEach
 
                 setAlarm(new, onError ?: { })
