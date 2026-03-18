@@ -28,39 +28,64 @@ import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
+import androidx.glance.material3.ColorProviders
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.shared.api.APPLICATION_CONTEXT
 import me.emiliomini.dutyschedule.shared.datastores.DutyType
+import me.emiliomini.dutyschedule.shared.datastores.Employee
 import me.emiliomini.dutyschedule.shared.datastores.MinimalDutyDefinition
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
+import me.emiliomini.dutyschedule.shared.ui.theme.DutyScheduleDarkColorScheme
+import me.emiliomini.dutyschedule.shared.ui.theme.DutyScheduleLightColorScheme
 import me.emiliomini.dutyschedule.shared.util.format
 import me.emiliomini.dutyschedule.ui.main.activity.MainActivity
 import kotlin.time.ExperimentalTime
+
+private val WidgetColors = ColorProviders(
+    light = DutyScheduleLightColorScheme,
+    dark = DutyScheduleDarkColorScheme,
+)
 
 class NextDutyWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         APPLICATION_CONTEXT = context.applicationContext
 
-        val nextDuty: MinimalDutyDefinition? = try {
+        val nextDuty: MinimalDutyDefinition?
+        val self: Employee?
+        try {
             StorageService.initialize()
-            StorageService.UPCOMING_DUTIES.getOrDefault().minimalDutyDefinitions.firstOrNull()
+            nextDuty =
+                StorageService.UPCOMING_DUTIES.getOrDefault().minimalDutyDefinitions.firstOrNull()
+            self = StorageService.SELF.getOrDefault().takeIf { it.name.isNotBlank() }
         } catch (e: Exception) {
-            null
+            return provideContent {
+                GlanceTheme(colors = WidgetColors) {
+                    NextDutyWidgetContent(context = context, nextDuty = null, selfName = null)
+                }
+            }
         }
 
         provideContent {
-            GlanceTheme {
-                NextDutyWidgetContent(context = context, nextDuty = nextDuty)
+            GlanceTheme(colors = WidgetColors) {
+                NextDutyWidgetContent(
+                    context = context,
+                    nextDuty = nextDuty,
+                    selfName = self?.name,
+                )
             }
         }
     }
 }
 
 @Composable
-private fun NextDutyWidgetContent(context: Context, nextDuty: MinimalDutyDefinition?) {
+private fun NextDutyWidgetContent(
+    context: Context,
+    nextDuty: MinimalDutyDefinition?,
+    selfName: String?,
+) {
     val openAppAction = actionStartActivity<MainActivity>()
     Box(
         modifier = GlanceModifier
@@ -91,12 +116,14 @@ private fun NextDutyWidgetContent(context: Context, nextDuty: MinimalDutyDefinit
                             fontSize = 12.sp,
                         )
                     )
+                    Spacer(modifier = GlanceModifier.height(4.dp))
                     Box(
                         modifier = GlanceModifier
                             .defaultWeight()
                             .width(1.dp)
                             .background(GlanceTheme.colors.outline)
                     )
+                    Spacer(modifier = GlanceModifier.height(4.dp))
                     Text(
                         text = nextDuty.end.format("HH:mm"),
                         style = TextStyle(
@@ -131,16 +158,21 @@ private fun NextDutyWidgetContent(context: Context, nextDuty: MinimalDutyDefinit
                         iconRes = nextDuty.type.toWidgetIconRes(),
                         label = typeLabel,
                         name = vehicleName,
-                        highlight = true,
+                        state = StaffState.TYPE_HEADER,
                     )
 
                     for (name in nextDuty.staff) {
                         Spacer(modifier = GlanceModifier.height(8.dp))
+                        val isDriver = name == nextDuty.driverName
+                        val isSelf = name == selfName
                         DutyInfoRow(
-                            iconRes = R.drawable.ic_widget_person,
+                            iconRes = if (isDriver) R.drawable.ic_widget_steering_wheel else R.drawable.ic_widget_person,
                             label = "",
                             name = name,
-                            highlight = false,
+                            state = when {
+                                isSelf -> StaffState.SELF
+                                else -> StaffState.DEFAULT
+                            },
                         )
                     }
                 }
@@ -149,12 +181,14 @@ private fun NextDutyWidgetContent(context: Context, nextDuty: MinimalDutyDefinit
     }
 }
 
+private enum class StaffState { TYPE_HEADER, SELF, DEFAULT }
+
 @Composable
 private fun DutyInfoRow(
     iconRes: Int,
     label: String,
     name: String,
-    highlight: Boolean,
+    state: StaffState,
 ) {
     Row(verticalAlignment = Alignment.Vertical.CenterVertically) {
         Image(
@@ -162,7 +196,11 @@ private fun DutyInfoRow(
             contentDescription = null,
             modifier = GlanceModifier.size(24.dp),
             colorFilter = ColorFilter.tint(
-                if (highlight) GlanceTheme.colors.primary else GlanceTheme.colors.onSurface
+                when (state) {
+                    StaffState.TYPE_HEADER -> GlanceTheme.colors.primary
+                    StaffState.SELF -> GlanceTheme.colors.primary
+                    StaffState.DEFAULT -> GlanceTheme.colors.onSurface
+                }
             )
         )
         Spacer(modifier = GlanceModifier.width(12.dp))
@@ -179,7 +217,10 @@ private fun DutyInfoRow(
             Text(
                 text = name,
                 style = TextStyle(
-                    color = GlanceTheme.colors.onSurface,
+                    color = when (state) {
+                        StaffState.SELF -> GlanceTheme.colors.primary
+                        StaffState.TYPE_HEADER, StaffState.DEFAULT -> GlanceTheme.colors.onSurface
+                    },
                     fontSize = 14.sp,
                 )
             )
@@ -189,7 +230,8 @@ private fun DutyInfoRow(
 
 private fun DutyType.toWidgetIconRes(): Int = when (this) {
     DutyType.EMS, DutyType.HAEND, DutyType.BLOOD_DONATION_SERVICE -> R.drawable.ic_widget_ambulance
-    DutyType.TRAINING, DutyType.DRILL, DutyType.VEHICLE_TRAINING, DutyType.RECERTIFICATION -> R.drawable.ic_widget_school
+    DutyType.TRAINING, DutyType.DRILL, DutyType.RECERTIFICATION -> R.drawable.ic_widget_school
+    DutyType.VEHICLE_TRAINING -> R.drawable.ic_widget_steering_wheel
     else -> R.drawable.ic_widget_person
 }
 
@@ -209,3 +251,4 @@ private fun DutyType.toStringRes(): Int = when (this) {
 
 private fun String.stripTypeBrackets(): String =
     this.replace(Regex("^\\[\\s*|\\s*]$"), "").trim()
+

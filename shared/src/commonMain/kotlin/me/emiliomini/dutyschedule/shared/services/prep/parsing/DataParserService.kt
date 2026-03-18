@@ -12,6 +12,7 @@ import me.emiliomini.dutyschedule.shared.datastores.CreateDutyResponse
 import me.emiliomini.dutyschedule.shared.datastores.CreatedDuty
 import me.emiliomini.dutyschedule.shared.datastores.DutyDefinition
 import me.emiliomini.dutyschedule.shared.datastores.DutyGroup
+import me.emiliomini.dutyschedule.shared.datastores.DutyType
 import me.emiliomini.dutyschedule.shared.datastores.Employee
 import me.emiliomini.dutyschedule.shared.datastores.Message
 import me.emiliomini.dutyschedule.shared.datastores.MinimalDutyDefinition
@@ -225,7 +226,8 @@ object DataParserService {
                 type = type,
                 typeString = typeString ?: "",
                 vehicle = vehicle,
-                staff = staffList
+                staff = staffList,
+                driverName = if (type.hasDriverSlot()) staffList.firstOrNull() else null
             )
         }
     }
@@ -340,4 +342,9 @@ object DataParserService {
             duty = duty
         )
     }
+}
+/** Returns true for duty types that include a dedicated driver (Einsatzleiter) slot. */
+private fun DutyType.hasDriverSlot(): Boolean = when (this) {
+    DutyType.EMS, DutyType.HAEND, DutyType.VEHICLE_TRAINING -> true
+    else -> false
 }

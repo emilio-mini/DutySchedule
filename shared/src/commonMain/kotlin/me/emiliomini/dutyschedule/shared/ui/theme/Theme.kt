@@ -9,7 +9,7 @@ import androidx.compose.ui.graphics.Color
 
 private val Red = Color(0xFFD32F2F)
 
-private val LightColorScheme = lightColorScheme(
+val DutyScheduleLightColorScheme = lightColorScheme(
     primary = Red,
     onPrimary = Color.White,
     primaryContainer = Color(0xFFFFDAD4),
@@ -35,7 +35,7 @@ private val LightColorScheme = lightColorScheme(
     outline = Color(0xFF857370)
 )
 
-private val DarkColorScheme = darkColorScheme(
+val DutyScheduleDarkColorScheme = darkColorScheme(
     primary = Color(0xFFFFB4A8),
     onPrimary = Color(0xFF690000),
     primaryContainer = Color(0xFF930000),
@@ -67,8 +67,8 @@ fun DutyScheduleTheme(
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+        darkTheme -> DutyScheduleDarkColorScheme
+        else -> DutyScheduleLightColorScheme
     }
 
     MaterialTheme(
