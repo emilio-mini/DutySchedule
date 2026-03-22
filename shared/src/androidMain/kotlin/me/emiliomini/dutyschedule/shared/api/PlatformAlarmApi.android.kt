@@ -13,6 +13,7 @@ import kotlinx.datetime.TimeZone
 import me.emiliomini.dutyschedule.shared.datastores.Alarm
 import me.emiliomini.dutyschedule.shared.datastores.AlarmItems
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -42,6 +43,11 @@ class AndroidAlarmApi : PlatformAlarmApi {
     }
 
     override suspend fun setAlarm(guid: String, time: Instant, zone: TimeZone, edited: Boolean) {
+
+        if (time.toEpochMilliseconds() < Clock.System.now().toEpochMilliseconds()) {
+            return
+        }
+
         val id = guid.hashCode()
         val alarmManager =
             APPLICATION_CONTEXT.getSystemService(Context.ALARM_SERVICE) as AlarmManager
