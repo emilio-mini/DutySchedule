@@ -24,11 +24,13 @@ import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxHeight
 import androidx.glance.layout.fillMaxSize
+import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
 import androidx.glance.material3.ColorProviders
+import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import me.emiliomini.dutyschedule.R
@@ -53,19 +55,14 @@ class NextDutyWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         APPLICATION_CONTEXT = context.applicationContext
 
-        val nextDuty: MinimalDutyDefinition?
-        val self: Employee?
+        var nextDuty: MinimalDutyDefinition? = null
+        var self: Employee? = null
         try {
             StorageService.initialize()
             nextDuty =
                 StorageService.UPCOMING_DUTIES.getOrDefault().minimalDutyDefinitions.firstOrNull()
             self = StorageService.SELF.getOrDefault().takeIf { it.name.isNotBlank() }
         } catch (e: Exception) {
-            return provideContent {
-                GlanceTheme(colors = WidgetColors) {
-                    NextDutyWidgetContent(context = context, nextDuty = null, selfName = null)
-                }
-            }
         }
 
         provideContent {
@@ -101,80 +98,101 @@ private fun NextDutyWidgetContent(
                 style = TextStyle(color = GlanceTheme.colors.onSurface)
             )
         } else {
-            Row(modifier = GlanceModifier.fillMaxSize()) {
-                // Left time column with vertical divider
-                Column(
-                    modifier = GlanceModifier
-                        .fillMaxHeight()
-                        .padding(start = 16.dp, top = 16.dp, bottom = 16.dp),
-                    horizontalAlignment = Alignment.Horizontal.CenterHorizontally,
-                ) {
-                    Text(
-                        text = nextDuty.begin.format("HH:mm"),
-                        style = TextStyle(
-                            color = GlanceTheme.colors.outline,
-                            fontSize = 12.sp,
-                        )
-                    )
-                    Spacer(modifier = GlanceModifier.height(4.dp))
-                    Box(
+            Box {
+                Row(modifier = GlanceModifier.fillMaxSize()) {
+                    // Left time column with vertical divider
+                    Column(
                         modifier = GlanceModifier
-                            .defaultWeight()
-                            .width(1.dp)
-                            .background(GlanceTheme.colors.outline)
-                    )
-                    Spacer(modifier = GlanceModifier.height(4.dp))
-                    Text(
-                        text = nextDuty.end.format("HH:mm"),
-                        style = TextStyle(
-                            color = GlanceTheme.colors.outline,
-                            fontSize = 12.sp,
+                            .fillMaxHeight()
+                            .padding(start = 16.dp, top = 16.dp, bottom = 16.dp),
+                        horizontalAlignment = Alignment.Horizontal.CenterHorizontally,
+                    ) {
+                        Text(
+                            text = nextDuty.begin.format("HH:mm"),
+                            style = TextStyle(
+                                color = GlanceTheme.colors.outline,
+                                fontSize = 12.sp,
+                            )
                         )
-                    )
-                    Spacer(modifier = GlanceModifier.height(4.dp))
-                    Text(
-                        text = nextDuty.begin.format("dd.MM."),
-                        style = TextStyle(
-                            color = GlanceTheme.colors.outline,
-                            fontSize = 10.sp,
-                        )
-                    )
-                }
-
-                // Right info column: vehicle/type row + staff rows
-                Column(
-                    modifier = GlanceModifier
-                        .defaultWeight()
-                        .padding(start = 12.dp, top = 16.dp, end = 16.dp, bottom = 16.dp),
-                    verticalAlignment = Alignment.Vertical.CenterVertically,
-                ) {
-                    val typeLabel = nextDuty.typeString.stripTypeBrackets()
-                        .ifBlank { context.getString(nextDuty.type.toStringRes()) }
-
-                    val vehicleName = nextDuty.vehicle
-                        ?: context.getString(nextDuty.type.toStringRes())
-
-                    DutyInfoRow(
-                        iconRes = nextDuty.type.toWidgetIconRes(),
-                        label = typeLabel,
-                        name = vehicleName,
-                        state = StaffState.TYPE_HEADER,
-                    )
-
-                    for (name in nextDuty.staff) {
-                        Spacer(modifier = GlanceModifier.height(8.dp))
-                        val isDriver = name == nextDuty.driverName
-                        val isSelf = name == selfName
-                        DutyInfoRow(
-                            iconRes = if (isDriver) R.drawable.ic_widget_steering_wheel else R.drawable.ic_widget_person,
-                            label = "",
-                            name = name,
-                            state = when {
-                                isSelf -> StaffState.SELF
-                                else -> StaffState.DEFAULT
-                            },
+                        Spacer(modifier = GlanceModifier.height(4.dp))
+                        Box(
+                            modifier = GlanceModifier
+                                .defaultWeight()
+                                .width(1.dp)
+                                .background(GlanceTheme.colors.outline)
+                        ) { }
+                        Spacer(modifier = GlanceModifier.height(4.dp))
+                        Text(
+                            text = nextDuty.end.format("HH:mm"),
+                            style = TextStyle(
+                                color = GlanceTheme.colors.outline,
+                                fontSize = 12.sp,
+                            )
                         )
                     }
+
+                    // Right info column: vehicle/type row + staff rows
+                    Column(
+                        modifier = GlanceModifier
+                            .defaultWeight()
+                            .padding(start = 12.dp, top = 16.dp, end = 16.dp, bottom = 16.dp),
+                        verticalAlignment = Alignment.Vertical.CenterVertically,
+                    ) {
+                        val typeLabel = nextDuty.typeString.stripTypeBrackets()
+                            .ifBlank { context.getString(nextDuty.type.toStringRes()) }
+
+                        val vehicleName = nextDuty.vehicle
+                            ?: context.getString(nextDuty.type.toStringRes())
+
+                        DutyInfoRow(
+                            iconRes = nextDuty.type.toWidgetIconRes(),
+                            label = typeLabel,
+                            name = vehicleName,
+                            state = StaffState.TYPE_HEADER,
+                        )
+
+
+                        for (name in nextDuty.staff) {
+                            Spacer(modifier = GlanceModifier.height(8.dp))
+                            val isDriver = name == nextDuty.driverName
+                            val isSelf = name == selfName
+                            DutyInfoRow(
+                                iconRes = if (isDriver) R.drawable.ic_widget_steering_wheel else R.drawable.ic_widget_person,
+                                label = "",
+                                name = name,
+                                state = when {
+                                    isSelf -> StaffState.SELF
+                                    else -> StaffState.DEFAULT
+                                },
+                            )
+                        }
+                    }
+                }
+
+                Row(
+                    modifier = GlanceModifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp, end = 16.dp),
+                    horizontalAlignment = Alignment.Horizontal.End,
+                    verticalAlignment = Alignment.Vertical.Bottom
+                ) {
+                    Text(
+                        text = nextDuty.begin.format("d"),
+                        style = TextStyle(
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = GlanceTheme.colors.primary
+                        )
+                    )
+                    Spacer(GlanceModifier.width(4.dp))
+                    Text(
+                        nextDuty.begin.format("MMMM"),
+                        style = TextStyle(
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = GlanceTheme.colors.onBackground
+                        )
+                    )
                 }
             }
         }
