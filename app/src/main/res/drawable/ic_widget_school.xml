@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  School icon – Material Symbols (Apache 2.0)
+  Derived from shared/src/commonMain/kotlin/.../icons/School.kt
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M242,711 q-20,-11,-31,-29.5 T200,640 v-192 l-96,-53 q-11,-6,-16,-15 t-5,-20 q0,-11,5,-20 t16,-15 l338,-184 q9,-5,18.5,-7.5 T480,131 q10,0,19.5,2.5 T518,141 l381,208 q10,5,15.5,14.5 T920,384 v256 q0,17,-11.5,28.5 T880,680 q-17,0,-28.5,-11.5 T840,640 v-236 l-80,44 v192 q0,23,-11,41.5 T718,711 L518,819 q-9,5,-18.5,7.5 T480,829 q-10,0,-19.5,-2.5 T442,819 L242,711 Z m238,-203 l274,-148 l-274,-148 l-274,148 l274,148 Z m0,241 l200,-108 v-151 l-161,89 q-9,5,-19,7.5 t-20,2.5 q-10,0,-20,-2.5 t-19,-7.5 l-161,-89 v151 l200,108 Z" />
+</vector>
