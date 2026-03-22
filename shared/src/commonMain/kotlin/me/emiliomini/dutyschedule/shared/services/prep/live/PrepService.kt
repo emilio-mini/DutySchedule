@@ -374,17 +374,6 @@ object PrepService : DutyScheduleServiceBase {
         from: Instant,
         to: Instant
     ): List<OrgDay> {
-        val localTimeline = StorageService.TIMELINE.get()?.orgTimelines?.get(orgUnitDataGuid)
-        if (localTimeline != null && !isLoggedIn) {
-            val days = localTimeline.timeline.values
-                .filter { day ->
-                    val dayInstant = day.date.toInstant()
-                    dayInstant >= from && dayInstant <= to
-                }
-                .sortedBy { it.date.toInstant() }
-            if (days.isNotEmpty()) return days
-        }
-
         // Load plan
         var (duties, groups) = this.loadPlan(orgUnitDataGuid, from, to)
         if (duties.isEmpty()) {

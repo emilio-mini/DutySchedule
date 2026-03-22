@@ -116,6 +116,8 @@ fun ScheduleScreen(
     var createError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
+    var timelineLoaded by remember { mutableStateOf(false) }
+
     val timeline: List<OrgDay>? = remember(timelineItems, selectedOrg, selectedStartDate, selectedEndDate) {
         val org = selectedOrg ?: return@remember null
         val orgTimeline = timelineItems.orgTimelines[org] ?: return@remember null
@@ -164,11 +166,13 @@ fun ScheduleScreen(
             )
         }
 
+        timelineLoaded = false
         DutyScheduleService.loadTimeline(
             selectedOrg!!,
             Instant.fromEpochMilliseconds(selectedStartDate!!),
             Instant.fromEpochMilliseconds(selectedEndDate!!)
         )
+        timelineLoaded = true
 
         DutyScheduleService.loadMessages(
             selectedOrg!!,
@@ -212,7 +216,20 @@ fun ScheduleScreen(
     )
 
     Screen(
-        modifier = modifier, paddingValues = paddingValues
+        modifier = modifier,
+        paddingValues = paddingValues,
+        pullToRefresh = PullToRefreshOptions(
+            isRefreshing = !timelineLoaded, onRefresh = {
+                scope.launch {
+                    timelineLoaded = false
+                    DutyScheduleService.loadTimeline(
+                        selectedOrg ?: return@launch,
+                        Instant.fromEpochMilliseconds(selectedStartDate ?: return@launch),
+                        Instant.fromEpochMilliseconds(selectedEndDate ?: return@launch)
+                    )
+                    timelineLoaded = true
+                }
+            })
     ) { innerPadding ->
         Column(
             modifier = Modifier.padding(innerPadding).padding(horizontal = 20.dp)
