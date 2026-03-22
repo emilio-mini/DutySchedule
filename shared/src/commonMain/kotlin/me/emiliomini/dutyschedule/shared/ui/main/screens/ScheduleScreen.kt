@@ -102,7 +102,7 @@ fun ScheduleScreen(
     var selectedStartDate by remember { mutableStateOf<Long?>(currentMillis) }
     var selectedEndDate by remember { mutableStateOf<Long?>(currentMillis + WEEK_MILLIS) }
 
-    var timeline by remember { mutableStateOf<List<OrgDay>?>(null) }
+    val timelineItems by StorageService.TIMELINE.collectAsState()
 
     var allowedOrgs by remember { mutableStateOf<List<String>?>(null) }
     var selectedOrg by remember { mutableStateOf<String?>(null) }
@@ -115,6 +115,22 @@ fun ScheduleScreen(
     var creating by remember { mutableStateOf(false) }
     var createError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
+
+    val timeline: List<OrgDay>? = remember(timelineItems, selectedOrg, selectedStartDate, selectedEndDate) {
+        val org = selectedOrg ?: return@remember null
+        val orgTimeline = timelineItems.orgTimelines[org] ?: return@remember null
+        val fromMs = selectedStartDate ?: return@remember null
+        val toMs = selectedEndDate ?: return@remember null
+        val fromInst = Instant.fromEpochMilliseconds(fromMs)
+        val toInst = Instant.fromEpochMilliseconds(toMs)
+        orgTimeline.timeline.values
+            .filter { day ->
+                val dayInstant = day.date.toInstant()
+                dayInstant >= fromInst && dayInstant <= toInst
+            }
+            .sortedBy { it.date.toInstant() }
+            .takeIf { it.isNotEmpty() }
+    }
 
     LaunchedEffect(userPreferences) {
         allowedOrgs = userPreferences.allowedOrgs
@@ -148,8 +164,7 @@ fun ScheduleScreen(
             )
         }
 
-        timeline = null
-        timeline = DutyScheduleService.loadTimeline(
+        DutyScheduleService.loadTimeline(
             selectedOrg!!,
             Instant.fromEpochMilliseconds(selectedStartDate!!),
             Instant.fromEpochMilliseconds(selectedEndDate!!)
@@ -364,7 +379,7 @@ fun ScheduleScreen(
                 if (ok) {
                     pendingPlanGuid = null
                     // Refresh timeline
-                    timeline = DutyScheduleService.loadTimeline(
+                    DutyScheduleService.loadTimeline(
                         selectedOrg!!,
                         Instant.fromEpochMilliseconds(selectedStartDate!!),
                         Instant.fromEpochMilliseconds(selectedEndDate!!)
