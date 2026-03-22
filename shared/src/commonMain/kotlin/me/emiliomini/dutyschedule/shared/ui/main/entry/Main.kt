@@ -2,6 +2,7 @@ package me.emiliomini.dutyschedule.shared.ui.main.entry
 
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -10,9 +11,11 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -36,14 +39,17 @@ import me.emiliomini.dutyschedule.shared.ui.main.screens.AlarmsScreen
 import me.emiliomini.dutyschedule.shared.ui.main.screens.ArchiveScreen
 import me.emiliomini.dutyschedule.shared.ui.main.screens.DashboardScreen
 import me.emiliomini.dutyschedule.shared.ui.main.screens.ScheduleScreen
+import me.emiliomini.dutyschedule.shared.ui.main.screens.SettingsScreen
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Main(modifier: Modifier = Modifier, onLogout: () -> Unit, onRestart: () -> Unit) {
+fun Main(modifier: Modifier = Modifier, onThemeModeChange: (Int) -> Unit, onDynamicColorChange: (Boolean) -> Unit, onLogout: () -> Unit, onRestart: () -> Unit) {
     val snackbarHostState = remember { SnackbarHostState() }
     ScaffoldService.registerSnackbar(snackbarHostState)
     var selectedNavIndex by remember { mutableIntStateOf(0) }
+    var showSettings by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val navItems = listOf(
         NavItem(
             id = NavItemId.DASHBOARD,
@@ -102,7 +108,10 @@ fun Main(modifier: Modifier = Modifier, onLogout: () -> Unit, onRestart: () -> U
     }, snackbarHost = { SnackbarHost(snackbarHostState) }) { paddingValues ->
         when (selectedNavIndex) {
             0 -> DashboardScreen(
-                paddingValues = paddingValues, onRestart = onRestart, onLogout = onLogout
+                paddingValues = paddingValues,
+                onRestart = onRestart,
+                onLogout = onLogout,
+                onShowSettings = { showSettings = true }
             )
 
             1 -> ScheduleScreen(paddingValues = paddingValues)
@@ -110,6 +119,19 @@ fun Main(modifier: Modifier = Modifier, onLogout: () -> Unit, onRestart: () -> U
             2 -> ArchiveScreen(paddingValues = paddingValues)
 
             3 -> AlarmsScreen(paddingValues = paddingValues)
+        }
+    }
+
+    if (showSettings) {
+        ModalBottomSheet(
+            onDismissRequest = { showSettings = false },
+            sheetState = sheetState
+        ) {
+            SettingsScreen(
+                onThemeModeChange = onThemeModeChange,
+                onDynamicColorChange = onDynamicColorChange,
+                onLogout = onLogout
+            )
         }
     }
 }

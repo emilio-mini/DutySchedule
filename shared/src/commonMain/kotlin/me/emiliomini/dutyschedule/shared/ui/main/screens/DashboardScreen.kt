@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import dutyschedule.shared.generated.resources.Res
 import dutyschedule.shared.generated.resources.main_dashboard_hours
 import dutyschedule.shared.generated.resources.main_dashboard_section_upcoming_title
+import dutyschedule.shared.generated.resources.nav_settings
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.shared.debug.DebugFlags
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
@@ -52,6 +53,7 @@ import me.emiliomini.dutyschedule.shared.ui.components.EmployeeAvatar
 import me.emiliomini.dutyschedule.shared.ui.components.LazyCardColumn
 import me.emiliomini.dutyschedule.shared.ui.components.MinimalDutyCard
 import me.emiliomini.dutyschedule.shared.ui.icons.DeleteSweep
+import me.emiliomini.dutyschedule.shared.ui.icons.Settings
 import me.emiliomini.dutyschedule.shared.ui.main.entry.NavItemId
 import me.emiliomini.dutyschedule.shared.util.format
 import me.emiliomini.dutyschedule.shared.util.withinLast
@@ -69,7 +71,8 @@ fun DashboardScreen(
     modifier: Modifier = Modifier,
     paddingValues: PaddingValues,
     onRestart: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onShowSettings: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
 
@@ -93,6 +96,11 @@ fun DashboardScreen(
                     onRestart()
                 }
             }, visible = DebugFlags.SHOW_DEBUG_ACTIONS.active()),
+            Action(element = { run ->
+                IconButton(onClick = { run() }) {
+                    Icon(Settings, contentDescription = stringResource(Res.string.nav_settings))
+                }
+            }, callback = onShowSettings),
             Action({ EmployeeAvatar(employee = DutyScheduleService.self, onLogout = onLogout) }),
             Action({ Spacer(Modifier.width(16.dp)) })
         )
