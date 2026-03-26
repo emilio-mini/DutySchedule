@@ -31,7 +31,6 @@ import me.emiliomini.dutyschedule.shared.datastores.MinimalDutyDefinition
 import me.emiliomini.dutyschedule.shared.datastores.Org
 import me.emiliomini.dutyschedule.shared.datastores.OrgDay
 import me.emiliomini.dutyschedule.shared.datastores.OrgItems
-import me.emiliomini.dutyschedule.shared.datastores.OrgTimeline
 import me.emiliomini.dutyschedule.shared.datastores.Requirement
 import me.emiliomini.dutyschedule.shared.datastores.Slot
 import me.emiliomini.dutyschedule.shared.datastores.YearlyDutyItems
@@ -446,16 +445,6 @@ object PrepService : DutyScheduleServiceBase {
             it.copy(
                 dayShifts = dayShifts,
                 nightShifts = nightShifts
-            )
-        }
-
-        StorageService.TIMELINE.update { current ->
-            val existingOrg = current.orgTimelines[orgUnitDataGuid]
-                ?: OrgTimeline(orgUnitDataGuid)
-            current.copy(
-                orgTimelines = current.orgTimelines + (orgUnitDataGuid to existingOrg.copy(
-                    timeline = existingOrg.timeline + days
-                ))
             )
         }
 
