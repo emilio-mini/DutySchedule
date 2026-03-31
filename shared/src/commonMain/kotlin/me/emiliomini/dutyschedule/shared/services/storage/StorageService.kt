@@ -7,6 +7,7 @@ import me.emiliomini.dutyschedule.shared.datastores.Employee
 import me.emiliomini.dutyschedule.shared.datastores.EmployeeItems
 import me.emiliomini.dutyschedule.shared.datastores.Incode
 import me.emiliomini.dutyschedule.shared.datastores.OrgItems
+import me.emiliomini.dutyschedule.shared.datastores.OrgTimeline
 import me.emiliomini.dutyschedule.shared.datastores.PastDutyItems
 import me.emiliomini.dutyschedule.shared.datastores.Statistics
 import me.emiliomini.dutyschedule.shared.datastores.UpcomingDutyItems
@@ -55,6 +56,12 @@ object StorageService {
         UpcomingDutyItems.serializer(),
         UpcomingDutyItems()
     )
+    val CACHED_TIMELINE = MultiplatformDataStore(
+        "timeline",
+        onUpdate = { store, newData -> storageApi.update(store, newData) },
+        OrgTimeline.serializer(),
+        OrgTimeline()
+    )
     val PAST_DUTIES = MultiplatformDataStore(
         "past_duties",
         onUpdate = { store, newData -> storageApi.update(store, newData) },
@@ -82,6 +89,7 @@ object StorageService {
         INCODE,
         SELF,
         UPCOMING_DUTIES,
+        CACHED_TIMELINE,
         PAST_DUTIES,
         EMPLOYEES,
         COOKIES

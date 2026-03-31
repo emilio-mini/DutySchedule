@@ -24,7 +24,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -38,7 +37,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -102,8 +100,6 @@ fun ScheduleScreen(
     var selectedStartDate by remember { mutableStateOf<Long?>(currentMillis) }
     var selectedEndDate by remember { mutableStateOf<Long?>(currentMillis + WEEK_MILLIS) }
 
-    var timeline by remember { mutableStateOf<List<OrgDay>?>(null) }
-
     var allowedOrgs by remember { mutableStateOf<List<String>?>(null) }
     var selectedOrg by remember { mutableStateOf<String?>(null) }
     val orgItems by StorageService.ORG_ITEMS.collectAsState()
@@ -115,6 +111,36 @@ fun ScheduleScreen(
     var creating by remember { mutableStateOf(false) }
     var createError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
+
+    var timelineLoaded by remember { mutableStateOf(true) }
+
+    var timeline by remember { mutableStateOf<List<OrgDay>?>(null) }
+
+    suspend fun fetch() {
+        if (selectedOrg == null || selectedStartDate == null || selectedEndDate == null)
+            return
+
+        timelineLoaded = false
+        timeline = DutyScheduleService.loadTimeline(
+            selectedOrg!!,
+            Instant.fromEpochMilliseconds(selectedStartDate!!),
+            Instant.fromEpochMilliseconds(selectedEndDate!!)
+        )
+
+        DutyScheduleService.loadMessages(
+            selectedOrg!!,
+            Instant.fromEpochMilliseconds(selectedStartDate!!),
+            Instant.fromEpochMilliseconds(selectedEndDate!!)
+        )
+        timelineLoaded = true
+    }
+
+    LaunchedEffect(Unit){
+        if (timeline == null && selectedStartDate == currentMillis && selectedEndDate == currentMillis + WEEK_MILLIS) {
+            StorageService.initialize()
+            timeline = StorageService.CACHED_TIMELINE.get()?.timeline
+        }
+    }
 
     LaunchedEffect(userPreferences) {
         allowedOrgs = userPreferences.allowedOrgs
@@ -137,10 +163,6 @@ fun ScheduleScreen(
             return@LaunchedEffect
         }
 
-        if (selectedStartDate == null || selectedEndDate == null) {
-            selectedStartDate = currentMillis
-            selectedEndDate = currentMillis + WEEK_MILLIS
-        }
 
         StorageService.USER_PREFERENCES.update {
             it.copy(
@@ -148,19 +170,21 @@ fun ScheduleScreen(
             )
         }
 
-        timeline = null
-        timeline = DutyScheduleService.loadTimeline(
-            selectedOrg!!,
-            Instant.fromEpochMilliseconds(selectedStartDate!!),
-            Instant.fromEpochMilliseconds(selectedEndDate!!)
-        )
+        if (selectedStartDate == null || selectedEndDate == null) {
+            selectedStartDate = currentMillis
+            selectedEndDate = currentMillis + WEEK_MILLIS
+        }
 
-        DutyScheduleService.loadMessages(
-            selectedOrg!!,
-            Instant.fromEpochMilliseconds(selectedStartDate!!),
-            Instant.fromEpochMilliseconds(selectedEndDate!!)
-        )
+        fetch()
+        if (selectedStartDate == currentMillis && selectedEndDate == currentMillis + WEEK_MILLIS){
+            StorageService.CACHED_TIMELINE.update {
+                it.copy(
+                    timeline = timeline ?: emptyList()
+                )
+            }
+        }
     }
+
 
     val stationScrollState = rememberScrollState()
     var detailViewEmployee by remember { mutableStateOf<Slot?>(null) }
@@ -177,6 +201,10 @@ fun ScheduleScreen(
                 val startOfWeek = selectedStartDate.toInstant().startOfWeek()
                 selectedStartDate = startOfWeek.toEpochMilliseconds() - WEEK_MILLIS
                 selectedEndDate = selectedStartDate!! + WEEK_MILLIS
+
+                scope.launch {
+                    fetch()
+                }
             }), Action({
                 Text(
                     "KW${selectedStartDate.toInstant().format("ww")}",
@@ -192,12 +220,23 @@ fun ScheduleScreen(
                 val startOfWeek = selectedStartDate.toInstant().startOfWeek()
                 selectedStartDate = startOfWeek.toEpochMilliseconds() + WEEK_MILLIS
                 selectedEndDate = selectedStartDate!! + WEEK_MILLIS
+
+                scope.launch {
+                    fetch()
+                }
             })
         )
     )
 
     Screen(
-        modifier = modifier, paddingValues = paddingValues
+        modifier = modifier,
+        paddingValues = paddingValues,
+        pullToRefresh = PullToRefreshOptions(
+            isRefreshing = !timelineLoaded, onRefresh = {
+                scope.launch {
+                    fetch()
+                }
+            })
     ) { innerPadding ->
         Column(
             modifier = Modifier.padding(innerPadding).padding(horizontal = 20.dp)
@@ -240,7 +279,6 @@ fun ScheduleScreen(
                     )
                 }
             }
-            if (timeline != null) {
                 LazyColumn(
                     modifier = modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -272,15 +310,6 @@ fun ScheduleScreen(
                             })
                     }
                 }
-            } else {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    LoadingIndicator()
-                }
-            }
         }
     }
 
@@ -363,12 +392,8 @@ fun ScheduleScreen(
                 creating = false
                 if (ok) {
                     pendingPlanGuid = null
-                    // Refresh timeline
-                    timeline = DutyScheduleService.loadTimeline(
-                        selectedOrg!!,
-                        Instant.fromEpochMilliseconds(selectedStartDate!!),
-                        Instant.fromEpochMilliseconds(selectedEndDate!!)
-                    )
+
+                    fetch()
 
                     showThanks = true
                 } else {

@@ -72,6 +72,7 @@ import me.emiliomini.dutyschedule.shared.ui.icons.Notes
 import me.emiliomini.dutyschedule.shared.ui.icons.PersonPlay
 import me.emiliomini.dutyschedule.shared.ui.icons.Schedule
 import me.emiliomini.dutyschedule.shared.ui.icons.Sms
+import me.emiliomini.dutyschedule.shared.datastores.Timestamp
 import me.emiliomini.dutyschedule.shared.util.format
 import me.emiliomini.dutyschedule.shared.util.getIcon
 import me.emiliomini.dutyschedule.shared.util.infoResourceString
@@ -146,7 +147,7 @@ fun EmployeeDetailSheet(
                         )
                     }
                     Text(
-                        text = employee!!.identifier ?: "*****",
+                        text = employee!!.identifier.ifBlank { "*****" },
                         style = MaterialTheme.typography.bodyMediumEmphasized
                     )
                 }
@@ -323,7 +324,7 @@ fun EmployeeDetailSheet(
                                             orgs.firstOrNull { it.identifier == employee!!.defaultOrg }
                                     }
 
-                                    Text(primaryOrg?.title ?: (employee!!.defaultOrg ?: ""))
+                                    Text(primaryOrg?.title ?: employee!!.defaultOrg)
                                 }, supportingContent = {
                                     Text(stringResource(Res.string.main_schedule_infobox_primary))
                                 }, colors = ListItemDefaults.colors(
@@ -368,7 +369,7 @@ fun EmployeeDetailSheet(
                                 )
                             )
                         }
-                        if (employee!!.birthdate != null) {
+                        if (employee!!.birthdate != Timestamp()) {
                             ListItem(
                                 modifier = Modifier.background(
                                     color = MaterialTheme.colorScheme.surfaceContainerHighest,
@@ -377,7 +378,7 @@ fun EmployeeDetailSheet(
                                     Icon(Cake, contentDescription = null)
                                 }, headlineContent = {
                                     Text(
-                                        employee!!.birthdate!!.format("d MMMM yyyy")
+                                        employee!!.birthdate.format("d MMMM yyyy")
                                     )
                                 }, supportingContent = {
                                     Text(stringResource(Res.string.main_schedule_infobox_birthday))

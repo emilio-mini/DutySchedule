@@ -10,7 +10,7 @@ data class OrgTimeline(
     @ProtoNumber(1)
     val guid: String = "",
     @ProtoNumber(2)
-    val timeline: Map<String, OrgDay> = emptyMap()
+    val timeline: List<OrgDay> = emptyList()
 ) : MultiplatformDataModel
 
 fun OrgTimeline.isDefault(): Boolean {

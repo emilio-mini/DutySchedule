@@ -12,15 +12,15 @@ data class Employee(
     @ProtoNumber(2)
     val name: String = "",
     @ProtoNumber(3)
-    val identifier: String? = null,
+    val identifier: String = "",
     @ProtoNumber(4)
-    val phone: String? = null,
+    val phone: String = "",
     @ProtoNumber(5)
-    val email: String? = null,
+    val email: String = "",
     @ProtoNumber(6)
-    val defaultOrg: String? = null,
+    val defaultOrg: String = "",
     @ProtoNumber(7)
-    val birthdate: Timestamp? = null,
+    val birthdate: Timestamp = Timestamp(),
     @ProtoNumber(8)
     val resourceTypeGuid: String = "",
     @ProtoNumber(9)
