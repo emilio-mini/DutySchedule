@@ -21,6 +21,9 @@ class AndroidStorageApi() : PlatformStorageApi {
 
     override suspend fun initialize(stores: List<MultiplatformDataStore<out MultiplatformDataModel>>) {
         for (store in stores) {
+            if (dataStores.containsKey(store.id)) {
+                continue
+            }
             val serializer = ProtoAdapter(store.serializer as KSerializer<MultiplatformDataModel>)
             val dataStore = DataStoreFactory.create(
                 serializer = serializer,

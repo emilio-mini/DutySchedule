@@ -97,8 +97,8 @@ fun ScheduleScreen(
     val dateRangePickerState = rememberDateRangePickerState()
 
     var showDatePicker by remember { mutableStateOf(false) }
-    var selectedStartDate by remember { mutableStateOf<Long?>(null) }
-    var selectedEndDate by remember { mutableStateOf<Long?>(null) }
+    var selectedStartDate by remember { mutableStateOf<Long?>(currentMillis) }
+    var selectedEndDate by remember { mutableStateOf<Long?>(currentMillis + WEEK_MILLIS) }
 
     var allowedOrgs by remember { mutableStateOf<List<String>?>(null) }
     var selectedOrg by remember { mutableStateOf<String?>(null) }
@@ -136,7 +136,7 @@ fun ScheduleScreen(
     }
 
     LaunchedEffect(Unit){
-        if (timeline == null) {
+        if (timeline == null && selectedStartDate == currentMillis && selectedEndDate == currentMillis + WEEK_MILLIS) {
             StorageService.initialize()
             timeline = StorageService.CACHED_TIMELINE.get()?.timeline
         }
@@ -330,9 +330,6 @@ fun ScheduleScreen(
                 selectedEndDate = endMillis
 
                 showDatePicker = false
-                scope.launch {
-                    fetch()
-                }
             }) {
                 Text(stringResource(Res.string.main_schedule_datepicker_confirm))
             }
@@ -395,12 +392,8 @@ fun ScheduleScreen(
                 creating = false
                 if (ok) {
                     pendingPlanGuid = null
-                    // Refresh timeline
-                    DutyScheduleService.loadTimeline(
-                        selectedOrg!!,
-                        Instant.fromEpochMilliseconds(selectedStartDate!!),
-                        Instant.fromEpochMilliseconds(selectedEndDate!!)
-                    )
+
+                    fetch()
 
                     showThanks = true
                 } else {
