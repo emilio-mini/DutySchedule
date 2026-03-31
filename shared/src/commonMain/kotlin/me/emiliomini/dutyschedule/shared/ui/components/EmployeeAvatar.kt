@@ -50,6 +50,7 @@ import me.emiliomini.dutyschedule.shared.ui.icons.Info
 import me.emiliomini.dutyschedule.shared.ui.icons.Logout
 import me.emiliomini.dutyschedule.shared.ui.modifiers.shimmer
 import me.emiliomini.dutyschedule.shared.util.format
+import me.emiliomini.dutyschedule.shared.datastores.Timestamp
 import me.emiliomini.dutyschedule.shared.versionCode
 import me.emiliomini.dutyschedule.shared.versionName
 import org.jetbrains.compose.resources.stringResource
@@ -151,7 +152,7 @@ fun EmployeeAvatar(
                                     Text(stringResource(Res.string.base_avatar_dialog_mail))
                                 }
                             )
-                            if (employee.birthdate != null) {
+                            if (employee.birthdate != Timestamp()) {
                                 CardListItem(
                                     containerColor = MaterialTheme.colorScheme.surfaceContainer,
                                     leadingContent = {
@@ -175,7 +176,6 @@ fun EmployeeAvatar(
                                 headlineContent = {
                                     Text(
                                         if (employeeOrg != null) employeeOrg!!.title else employee.defaultOrg
-                                            ?: ""
                                     )
                                 },
                                 supportingContent = {

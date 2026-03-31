@@ -10,7 +10,7 @@ data class Slot(
     @ProtoNumber(1)
     val guid: String = "",
     @ProtoNumber(2)
-    val employeeGuid: String? = null,
+    val employeeGuid: String = "",
     @ProtoNumber(3)
     val requirement: Requirement = Requirement(),
     @ProtoNumber(4)
@@ -18,9 +18,9 @@ data class Slot(
     @ProtoNumber(5)
     val end: Timestamp = Timestamp(),
     @ProtoNumber(6)
-    val info: String? = null,
+    val info: String = "",
     @ProtoNumber(7)
-    val inlineEmployee: Employee? = Employee()
+    val inlineEmployee: Employee = Employee()
 ) : MultiplatformDataModel
 
 fun Slot.isDefault(): Boolean {

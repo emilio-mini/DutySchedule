@@ -10,7 +10,7 @@ data class DutyGroup(
     @ProtoNumber(1)
     val guid: String = "",
     @ProtoNumber(2)
-    val title: String? = null
+    val title: String = ""
 ) : MultiplatformDataModel
 
 fun DutyGroup.isDefault(): Boolean {

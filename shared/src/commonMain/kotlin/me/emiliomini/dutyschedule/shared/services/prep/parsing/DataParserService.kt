@@ -21,6 +21,7 @@ import me.emiliomini.dutyschedule.shared.datastores.Requirement
 import me.emiliomini.dutyschedule.shared.datastores.Resource
 import me.emiliomini.dutyschedule.shared.datastores.Skill
 import me.emiliomini.dutyschedule.shared.datastores.Slot
+import me.emiliomini.dutyschedule.shared.datastores.Timestamp
 import me.emiliomini.dutyschedule.shared.json.forEachElement
 import me.emiliomini.dutyschedule.shared.json.mapElements
 import me.emiliomini.dutyschedule.shared.json.value
@@ -82,8 +83,8 @@ object DataParserService {
                     guid = it.o.value(DutyDefinitionMapping.GUID) ?: DutyDefinition().guid,
                     begin = it.o.value(DutyDefinitionMapping.BEGIN) ?: DutyDefinition().begin,
                     end = it.o.value(DutyDefinitionMapping.END) ?: DutyDefinition().end,
-                    groupGuid = it.o.value(DutyDefinitionMapping.PARENT_GUID).nullIfBlank(),
-                    info = it.o.value(DutyDefinitionMapping.INFO).nullIfBlank()
+                    groupGuid = it.o.value(DutyDefinitionMapping.PARENT_GUID) ?: "",
+                    info = it.o.value(DutyDefinitionMapping.INFO) ?: ""
                 )
             })
         )
@@ -155,14 +156,14 @@ object DataParserService {
 
             val assignedEmployee = Slot(
                 guid = guid ?: Slot().guid,
-                employeeGuid = employeeGuid.nullIfBlank(),
+                employeeGuid = employeeGuid ?: "",
                 requirement = Requirement(
                     guid = requirement ?: Requirement().guid
                 ),
                 begin = it.o.value(DutyDefinitionMapping.BEGIN) ?: Slot().begin,
                 end = it.o.value(DutyDefinitionMapping.END) ?: Slot().end,
-                info = it.o.value(DutyDefinitionMapping.INFO),
-                inlineEmployee = if (employeeGuid.isNullOrBlank()) null else employee
+                info = it.o.value(DutyDefinitionMapping.INFO) ?: "",
+                inlineEmployee = if (employeeGuid.isNullOrBlank()) Employee() else employee
             )
 
             duties[parentGuid] = duties[parentGuid]!!.copy(
@@ -244,13 +245,13 @@ object DataParserService {
             Employee(
                 guid = it.o.value(EmployeeMapping.GUID) ?: Employee().guid,
                 name = it.o.value(EmployeeMapping.NAME) ?: Employee().name,
-                identifier = it.o.value(EmployeeMapping.IDENTIFIER),
-                phone = it.o.value(EmployeeMapping.PHONE),
-                email = it.o.value(EmployeeMapping.EMAIL),
-                defaultOrg = it.o.value(EmployeeMapping.DEFAULT_ORG),
+                identifier = it.o.value(EmployeeMapping.IDENTIFIER) ?: "",
+                phone = it.o.value(EmployeeMapping.PHONE) ?: "",
+                email = it.o.value(EmployeeMapping.EMAIL) ?: "",
+                defaultOrg = it.o.value(EmployeeMapping.DEFAULT_ORG) ?: "",
                 resourceTypeGuid = it.o.value(EmployeeMapping.RESOURCE_TYPE_GUID)
                     ?: Employee().resourceTypeGuid,
-                birthdate = it.o.value(EmployeeMapping.BIRTHDATE),
+                birthdate = it.o.value(EmployeeMapping.BIRTHDATE) ?: Timestamp(),
                 skills = skills.toList().map {
                     Skill(guid = it)
                 }

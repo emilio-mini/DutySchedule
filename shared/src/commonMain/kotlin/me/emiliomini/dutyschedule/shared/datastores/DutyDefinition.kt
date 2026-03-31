@@ -16,9 +16,9 @@ data class DutyDefinition(
     @ProtoNumber(4)
     val slots: List<Slot> = emptyList(),
     @ProtoNumber(5)
-    val info: String? = null,
+    val info: String = "",
     @ProtoNumber(6)
-    val groupGuid: String? = null
+    val groupGuid: String = ""
 ) : MultiplatformDataModel
 
 fun DutyDefinition.isDefault(): Boolean {
