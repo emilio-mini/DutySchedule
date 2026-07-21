@@ -4,6 +4,7 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 
 enum class ColorPreset(val id: Int) {
     DEFAULT(0),
@@ -17,8 +18,47 @@ enum class ColorPreset(val id: Int) {
     }
 }
 
+/**
+ * `lightColorScheme()`/`darkColorScheme()` only require primary/secondary/tertiary/background/
+ * surface roles; every unspecified role (the surfaceDim/Bright/Container* ladder that Card,
+ * NavigationBar, etc. actually render with) silently falls back to the M3 baseline scheme's
+ * fixed neutral values. That made every static preset look identical in card and nav-bar
+ * backgrounds. These helpers derive that ladder from each theme's own surface/onSurface tones
+ * (matching the tonal steps of the real M3 baseline palette) so it stays hue-consistent per preset.
+ */
+private class SurfaceContainers(
+    val dim: Color,
+    val bright: Color,
+    val containerLowest: Color,
+    val containerLow: Color,
+    val container: Color,
+    val containerHigh: Color,
+    val containerHighest: Color,
+)
+
+private fun lightSurfaceContainers(surface: Color, onSurface: Color) = SurfaceContainers(
+    dim = lerp(surface, onSurface, 0.144f),
+    bright = surface,
+    containerLowest = lerp(surface, Color.White, 0.6f),
+    containerLow = lerp(surface, onSurface, 0.031f),
+    container = lerp(surface, onSurface, 0.049f),
+    containerHigh = lerp(surface, onSurface, 0.080f),
+    containerHighest = lerp(surface, onSurface, 0.108f),
+)
+
+private fun darkSurfaceContainers(surface: Color, onSurface: Color) = SurfaceContainers(
+    dim = surface,
+    bright = lerp(surface, onSurface, 0.186f),
+    containerLowest = lerp(surface, Color.Black, 0.457f),
+    containerLow = lerp(surface, onSurface, 0.010f),
+    container = lerp(surface, onSurface, 0.027f),
+    containerHigh = lerp(surface, onSurface, 0.077f),
+    containerHighest = lerp(surface, onSurface, 0.132f),
+)
+
 private val Red = Color(0xFFD32F2F)
 
+private val DutyScheduleLightSurfaces = lightSurfaceContainers(Color(0xFFFFFBFF), Color(0xFF201A19))
 val DutyScheduleLightColorScheme = lightColorScheme(
     primary = Red,
     onPrimary = Color.White,
@@ -42,9 +82,17 @@ val DutyScheduleLightColorScheme = lightColorScheme(
     onSurface = Color(0xFF201A19),
     surfaceVariant = Color(0xFFE9E9E9),
     onSurfaceVariant = Color(0xFF534341),
-    outline = Color(0xFF857370)
+    outline = Color(0xFF857370),
+    surfaceDim = DutyScheduleLightSurfaces.dim,
+    surfaceBright = DutyScheduleLightSurfaces.bright,
+    surfaceContainerLowest = DutyScheduleLightSurfaces.containerLowest,
+    surfaceContainerLow = DutyScheduleLightSurfaces.containerLow,
+    surfaceContainer = DutyScheduleLightSurfaces.container,
+    surfaceContainerHigh = DutyScheduleLightSurfaces.containerHigh,
+    surfaceContainerHighest = DutyScheduleLightSurfaces.containerHighest
 )
 
+private val DutyScheduleDarkSurfaces = darkSurfaceContainers(Color(0xFF201A19), Color(0xFFEDE0DE))
 val DutyScheduleDarkColorScheme = darkColorScheme(
     primary = Color(0xFFFFB4A8),
     onPrimary = Color(0xFF690000),
@@ -68,9 +116,17 @@ val DutyScheduleDarkColorScheme = darkColorScheme(
     onSurface = Color(0xFFEDE0DE),
     surfaceVariant = Color(0xFF2C2C2C),
     onSurfaceVariant = Color(0xFFD8C2BF),
-    outline = Color(0xFFA08C8A)
+    outline = Color(0xFFA08C8A),
+    surfaceDim = DutyScheduleDarkSurfaces.dim,
+    surfaceBright = DutyScheduleDarkSurfaces.bright,
+    surfaceContainerLowest = DutyScheduleDarkSurfaces.containerLowest,
+    surfaceContainerLow = DutyScheduleDarkSurfaces.containerLow,
+    surfaceContainer = DutyScheduleDarkSurfaces.container,
+    surfaceContainerHigh = DutyScheduleDarkSurfaces.containerHigh,
+    surfaceContainerHighest = DutyScheduleDarkSurfaces.containerHighest
 )
 
+private val BlueLightSurfaces = lightSurfaceContainers(Color(0xFFFDFCFF), Color(0xFF1A1C1E))
 val BlueLightColorScheme = lightColorScheme(
     primary = Color(0xFF0061A4),
     onPrimary = Color.White,
@@ -94,9 +150,17 @@ val BlueLightColorScheme = lightColorScheme(
     onSurface = Color(0xFF1A1C1E),
     surfaceVariant = Color(0xFFDFE2EB),
     onSurfaceVariant = Color(0xFF43474E),
-    outline = Color(0xFF73777F)
+    outline = Color(0xFF73777F),
+    surfaceDim = BlueLightSurfaces.dim,
+    surfaceBright = BlueLightSurfaces.bright,
+    surfaceContainerLowest = BlueLightSurfaces.containerLowest,
+    surfaceContainerLow = BlueLightSurfaces.containerLow,
+    surfaceContainer = BlueLightSurfaces.container,
+    surfaceContainerHigh = BlueLightSurfaces.containerHigh,
+    surfaceContainerHighest = BlueLightSurfaces.containerHighest
 )
 
+private val BlueDarkSurfaces = darkSurfaceContainers(Color(0xFF1A1C1E), Color(0xFFE2E2E5))
 val BlueDarkColorScheme = darkColorScheme(
     primary = Color(0xFF9ECAFF),
     onPrimary = Color(0xFF003258),
@@ -120,9 +184,17 @@ val BlueDarkColorScheme = darkColorScheme(
     onSurface = Color(0xFFE2E2E5),
     surfaceVariant = Color(0xFF43474E),
     onSurfaceVariant = Color(0xFFC3C7CF),
-    outline = Color(0xFF8D9199)
+    outline = Color(0xFF8D9199),
+    surfaceDim = BlueDarkSurfaces.dim,
+    surfaceBright = BlueDarkSurfaces.bright,
+    surfaceContainerLowest = BlueDarkSurfaces.containerLowest,
+    surfaceContainerLow = BlueDarkSurfaces.containerLow,
+    surfaceContainer = BlueDarkSurfaces.container,
+    surfaceContainerHigh = BlueDarkSurfaces.containerHigh,
+    surfaceContainerHighest = BlueDarkSurfaces.containerHighest
 )
 
+private val GreenLightSurfaces = lightSurfaceContainers(Color(0xFFFCFDF6), Color(0xFF1A1C18))
 val GreenLightColorScheme = lightColorScheme(
     primary = Color(0xFF2E6E32),
     onPrimary = Color.White,
@@ -146,9 +218,17 @@ val GreenLightColorScheme = lightColorScheme(
     onSurface = Color(0xFF1A1C18),
     surfaceVariant = Color(0xFFDFE4D8),
     onSurfaceVariant = Color(0xFF43483F),
-    outline = Color(0xFF73796E)
+    outline = Color(0xFF73796E),
+    surfaceDim = GreenLightSurfaces.dim,
+    surfaceBright = GreenLightSurfaces.bright,
+    surfaceContainerLowest = GreenLightSurfaces.containerLowest,
+    surfaceContainerLow = GreenLightSurfaces.containerLow,
+    surfaceContainer = GreenLightSurfaces.container,
+    surfaceContainerHigh = GreenLightSurfaces.containerHigh,
+    surfaceContainerHighest = GreenLightSurfaces.containerHighest
 )
 
+private val GreenDarkSurfaces = darkSurfaceContainers(Color(0xFF1A1C18), Color(0xFFE2E3DC))
 val GreenDarkColorScheme = darkColorScheme(
     primary = Color(0xFF94D690),
     onPrimary = Color(0xFF00390D),
@@ -172,9 +252,17 @@ val GreenDarkColorScheme = darkColorScheme(
     onSurface = Color(0xFFE2E3DC),
     surfaceVariant = Color(0xFF43483F),
     onSurfaceVariant = Color(0xFFC3C8BC),
-    outline = Color(0xFF8D9387)
+    outline = Color(0xFF8D9387),
+    surfaceDim = GreenDarkSurfaces.dim,
+    surfaceBright = GreenDarkSurfaces.bright,
+    surfaceContainerLowest = GreenDarkSurfaces.containerLowest,
+    surfaceContainerLow = GreenDarkSurfaces.containerLow,
+    surfaceContainer = GreenDarkSurfaces.container,
+    surfaceContainerHigh = GreenDarkSurfaces.containerHigh,
+    surfaceContainerHighest = GreenDarkSurfaces.containerHighest
 )
 
+private val PurpleLightSurfaces = lightSurfaceContainers(Color(0xFFFFFBFE), Color(0xFF1C1B1F))
 val PurpleLightColorScheme = lightColorScheme(
     primary = Color(0xFF6750A4),
     onPrimary = Color.White,
@@ -198,9 +286,17 @@ val PurpleLightColorScheme = lightColorScheme(
     onSurface = Color(0xFF1C1B1F),
     surfaceVariant = Color(0xFFE7E0EC),
     onSurfaceVariant = Color(0xFF49454F),
-    outline = Color(0xFF79747E)
+    outline = Color(0xFF79747E),
+    surfaceDim = PurpleLightSurfaces.dim,
+    surfaceBright = PurpleLightSurfaces.bright,
+    surfaceContainerLowest = PurpleLightSurfaces.containerLowest,
+    surfaceContainerLow = PurpleLightSurfaces.containerLow,
+    surfaceContainer = PurpleLightSurfaces.container,
+    surfaceContainerHigh = PurpleLightSurfaces.containerHigh,
+    surfaceContainerHighest = PurpleLightSurfaces.containerHighest
 )
 
+private val PurpleDarkSurfaces = darkSurfaceContainers(Color(0xFF1C1B1F), Color(0xFFE6E1E5))
 val PurpleDarkColorScheme = darkColorScheme(
     primary = Color(0xFFD0BCFF),
     onPrimary = Color(0xFF381E72),
@@ -224,7 +320,14 @@ val PurpleDarkColorScheme = darkColorScheme(
     onSurface = Color(0xFFE6E1E5),
     surfaceVariant = Color(0xFF49454F),
     onSurfaceVariant = Color(0xFFCAC4D0),
-    outline = Color(0xFF938F99)
+    outline = Color(0xFF938F99),
+    surfaceDim = PurpleDarkSurfaces.dim,
+    surfaceBright = PurpleDarkSurfaces.bright,
+    surfaceContainerLowest = PurpleDarkSurfaces.containerLowest,
+    surfaceContainerLow = PurpleDarkSurfaces.containerLow,
+    surfaceContainer = PurpleDarkSurfaces.container,
+    surfaceContainerHigh = PurpleDarkSurfaces.containerHigh,
+    surfaceContainerHighest = PurpleDarkSurfaces.containerHighest
 )
 
 /** The static (non-dynamic) color scheme for [colorPreset], falling back to [ColorPreset.DEFAULT] for [ColorPreset.DYNAMIC]. */
