@@ -50,7 +50,8 @@
     <string name="main_schedule_infobox_info">Info</string>
     <string name="notification_update_title">Update available!</string>
     <string name="notification_update_content">%1$s -> %2$s</string>
-    <string name="main_settings_section_alarms">Settings</string>
+    <string name="main_settings_section_alarms">Alarms</string>
+    <string name="main_alarms_auto_set_title">Automatically set alarms</string>
     <string name="main_settings_alarms_pre_event_begin_title">Duty Alarm</string>
     <string name="main_settings_alarms_pre_event_begin_content">%1$s before a duty starts</string>
     <string name="main_settings_alarms_pre_event_begin_dialog_title">Select a time</string>

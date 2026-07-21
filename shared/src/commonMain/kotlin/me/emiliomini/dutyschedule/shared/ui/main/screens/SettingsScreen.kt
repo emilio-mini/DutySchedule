@@ -28,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import dutyschedule.shared.generated.resources.Res
+import dutyschedule.shared.generated.resources.main_alarms_auto_set_title
 import dutyschedule.shared.generated.resources.main_settings_appearance_dynamic_color_content
 import dutyschedule.shared.generated.resources.main_settings_appearance_dynamic_color_title
 import dutyschedule.shared.generated.resources.main_settings_appearance_theme_dark
@@ -45,7 +46,9 @@ import dutyschedule.shared.generated.resources.main_settings_section_notificatio
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.shared.api.getPlatformTaskSchedulerApi
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformTask
+import me.emiliomini.dutyschedule.shared.services.AlarmService
 import me.emiliomini.dutyschedule.shared.services.NotificationService
+import me.emiliomini.dutyschedule.shared.services.scaffold.ScaffoldService
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.components.CardColumn
 import me.emiliomini.dutyschedule.shared.ui.components.CardListItem
@@ -62,20 +65,22 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
     paddingValues: PaddingValues = PaddingValues(0.dp),
     onThemeModeChange: (Int) -> Unit,
-    onDynamicColorChange: (Boolean) -> Unit,
-    onLogout: () -> Unit
+    onDynamicColorChange: (Boolean) -> Unit
 ) {
     val scope = rememberCoroutineScope()
 
     var permanentNotification by remember { mutableStateOf(true) }
     var backgroundUpdaterEnabled by remember { mutableStateOf(true) }
+    var autoSetAlarms by remember { mutableStateOf(false) }
     var themeMode by remember { mutableIntStateOf(0) }
     var dynamicColor by remember { mutableStateOf(true) }
+    var alarmActionBlocked by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         val prefs = StorageService.USER_PREFERENCES.getOrDefault()
         permanentNotification = prefs.permanentNotification
         backgroundUpdaterEnabled = prefs.backgroundUpdaterEnabled
+        autoSetAlarms = prefs.autoSetAlarms
         themeMode = prefs.themeMode
         dynamicColor = prefs.dynamicColor
     }
@@ -172,7 +177,41 @@ fun SettingsScreen(
                 color = MaterialTheme.colorScheme.primary
             )
             CardColumn {
-                DutyAlarmListItem()
+                CardListItem(
+                    headlineContent = {
+                        Text(stringResource(Res.string.main_alarms_auto_set_title))
+                    },
+                    trailingContent = {
+                        Switch(
+                            checked = autoSetAlarms,
+                            onCheckedChange = { checked ->
+                                if (alarmActionBlocked) return@Switch
+
+                                alarmActionBlocked = true
+                                autoSetAlarms = checked
+                                scope.launch {
+                                    if (checked) {
+                                        AlarmService.setAllAlarms {
+                                            ScaffoldService.snackbarHostState?.showSnackbar(it)
+                                        }
+                                    } else {
+                                        AlarmService.cancelAllUneditedAlarms()
+                                    }
+                                    alarmActionBlocked = false
+                                }
+                            },
+                            thumbContent = {
+                                Icon(
+                                    modifier = Modifier.size(SwitchDefaults.IconSize),
+                                    imageVector = if (autoSetAlarms) AlarmOn else AlarmOff,
+                                    contentDescription = null
+                                )
+                            }
+                        )
+                    },
+                    type = CardListItemType.TOP
+                )
+                DutyAlarmListItem(type = CardListItemType.BOTTOM)
             }
 
             // ── Appearance / Theme ─────────────────────────────────────────────

@@ -50,7 +50,8 @@
     <string name="main_schedule_infobox_info">Info</string>
     <string name="notification_update_title">Update verfügbar!</string>
     <string name="notification_update_content">%1$s -> %2$s</string>
-    <string name="main_settings_section_alarms">Einstellungen</string>
+    <string name="main_settings_section_alarms">Wecker</string>
+    <string name="main_alarms_auto_set_title">Automatisch Alarme setzen</string>
     <string name="main_settings_alarms_pre_event_begin_title">Dienst Wecker</string>
     <string name="main_settings_alarms_pre_event_begin_content">%1$s vor Dienstbeginn</string>
     <string name="main_settings_alarms_pre_event_begin_dialog_title">Zeit auswählen</string>
@@ -156,6 +157,8 @@
     <string name="main_settings_appearance_theme_system">System</string>
     <string name="main_settings_appearance_theme_light">Hell</string>
     <string name="main_settings_appearance_theme_dark">Dunkel</string>
+    <string name="main_settings_appearance_dynamic_color_title">Dynamische Farben</string>
+    <string name="main_settings_appearance_dynamic_color_content">Farben deines Hintergrundbilds verwenden</string>
     <plurals name="updated_duties">
         <item quantity="one">Aktualisierte einen Dienst</item>
         <item quantity="other">Aktualisierte %1$s Dienste</item>

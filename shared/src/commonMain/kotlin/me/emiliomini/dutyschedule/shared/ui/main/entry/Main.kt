@@ -129,8 +129,7 @@ fun Main(modifier: Modifier = Modifier, onThemeModeChange: (Int) -> Unit, onDyna
         ) {
             SettingsScreen(
                 onThemeModeChange = onThemeModeChange,
-                onDynamicColorChange = onDynamicColorChange,
-                onLogout = onLogout
+                onDynamicColorChange = onDynamicColorChange
             )
         }
     }
