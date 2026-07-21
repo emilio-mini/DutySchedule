@@ -174,7 +174,7 @@ object DemoService : DutyScheduleServiceBase {
     }
 
     override suspend fun previouslyLoggedIn(): Boolean {
-        return false
+        return StorageService.USER_PREFERENCES.get()?.isDemoMode == true
     }
 
     override suspend fun restoreLogin(): Boolean {
@@ -578,7 +578,8 @@ object DemoService : DutyScheduleServiceBase {
         StorageService.USER_PREFERENCES.update {
             it.copy(
                 allowedOrgs = listOf(org.guid, secondOrg.guid),
-                lastSelectedOrg = org.guid
+                lastSelectedOrg = org.guid,
+                isDemoMode = true
             )
         }
         StorageService.EMPLOYEES.update { EmployeeItems(employees = employeesByGuid) }

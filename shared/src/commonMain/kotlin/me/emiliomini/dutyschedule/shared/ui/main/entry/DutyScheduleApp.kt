@@ -15,6 +15,7 @@ import me.emiliomini.dutyschedule.shared.api.getPlatformTaskSchedulerApi
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformTask
 import me.emiliomini.dutyschedule.shared.services.network.NetworkService
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
+import me.emiliomini.dutyschedule.shared.services.prep.demo.DemoService
 import me.emiliomini.dutyschedule.shared.services.prep.live.PrepService
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.main.screens.LoadingScreen
@@ -32,8 +33,11 @@ fun DutyScheduleApp(composableLoadActions: @Composable () -> Unit) {
     LaunchedEffect(loaded) {
         if (!loaded) {
             StorageService.initialize()
-            previouslyLoggedIn = DutyScheduleService.previouslyLoggedIn()
             val prefs = StorageService.USER_PREFERENCES.getOrDefault()
+            if (prefs.isDemoMode && DutyScheduleService !== DemoService) {
+                DutyScheduleService = DemoService
+            }
+            previouslyLoggedIn = DutyScheduleService.previouslyLoggedIn()
             themeMode = prefs.themeMode
             colorPreset = ColorPreset.fromId(prefs.colorPreset)
             loaded = true
