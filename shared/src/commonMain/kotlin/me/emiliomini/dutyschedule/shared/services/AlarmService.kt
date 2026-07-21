@@ -42,25 +42,37 @@ object AlarmService {
     }
     @OptIn(ExperimentalTime::class)
     suspend fun setAlarm(guid: String, time: Instant, zone: TimeZone = TimeZone.currentSystemDefault(), onError: suspend (String) -> Unit, edited: Boolean){
-        with(getPlatformAlarmApi()){
-
-            val alarmPermission = requestPermission()
-            val notificationPermission = getPlatformNotificationApi().requestPermission()
-
-            val errorMessage = when {
-                !alarmPermission && !notificationPermission -> getString(Res.string.error_permissions_missing_alarm_and_notification)
-                !alarmPermission -> getString(Res.string.error_permissions_missing_alarm)
-                !notificationPermission -> getString(Res.string.error_permissions_missing_notification)
-                else -> null
-            }
-
-            if (errorMessage != null) {
-                onError(errorMessage)
-                return
-            }
-
-            setAlarm(guid, time, zone, edited)
+        if (!ensurePermissions(onError)) {
+            return
         }
+        getPlatformAlarmApi().setAlarm(guid, time, zone, edited)
+    }
+
+    /**
+     * Checks (and, if needed, requests) the alarm + notification permissions once. Must be
+     * called before any loop that sets multiple alarms - each individual setAlarm() call also
+     * checks permissions, but requesting the exact-alarm permission opens a system settings
+     * screen via startActivity(), which can't report the outcome synchronously. Calling it once
+     * per duty in a loop fired that screen repeatedly for every upcoming duty, which the OS
+     * eventually stops honoring, and never let the user actually interact with any of them.
+     */
+    private suspend fun ensurePermissions(onError: suspend (String) -> Unit): Boolean {
+        val alarmPermission = getPlatformAlarmApi().requestPermission()
+        val notificationPermission = getPlatformNotificationApi().requestPermission()
+
+        val errorMessage = when {
+            !alarmPermission && !notificationPermission -> getString(Res.string.error_permissions_missing_alarm_and_notification)
+            !alarmPermission -> getString(Res.string.error_permissions_missing_alarm)
+            !notificationPermission -> getString(Res.string.error_permissions_missing_notification)
+            else -> null
+        }
+
+        if (errorMessage != null) {
+            onError(errorMessage)
+            return false
+        }
+
+        return true
     }
 
     @OptIn(ExperimentalTime::class)
@@ -133,6 +145,9 @@ object AlarmService {
         val prefs = StorageService.USER_PREFERENCES.getOrDefault()
         val alarmOffsetMillis = prefs.alarmOffsetMin * 60_000L
         if (prefs.autoSetAlarms){
+            if (newDuties.isNotEmpty() && !ensurePermissions(onError ?: {})) {
+                return
+            }
             newDuties.forEach {
                 val alarm = alarms?.firstOrNull { alarm -> alarm.guid == it.guid}
                 if (it.begin.toEpochMilliseconds() - alarmOffsetMillis < Clock.System.now().toEpochMilliseconds())
@@ -148,6 +163,9 @@ object AlarmService {
 
             oldDutyGuids.forEach { removeAlarm(it) }
         } else {
+            if (!alarms.isNullOrEmpty() && !ensurePermissions(onError ?: {})) {
+                return
+            }
             alarms?.forEach { oldAlarm ->
                 if (!oldAlarm.active)
                     return@forEach
