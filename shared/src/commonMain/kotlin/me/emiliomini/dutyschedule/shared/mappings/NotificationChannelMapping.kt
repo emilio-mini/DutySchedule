@@ -13,3 +13,8 @@ object NotificationChannelMapping {
         "info", "Duty Infos", "Channel for duty infos", MultiplatformNotificationPriority.LOW
     )
 }
+
+object NotificationIds {
+    const val PERMANENT_INFO = 37
+    const val DUTY_UPDATE = 38
+}

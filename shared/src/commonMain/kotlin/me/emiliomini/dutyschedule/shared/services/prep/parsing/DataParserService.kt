@@ -75,7 +75,6 @@ object DataParserService {
                 val type = it.o.value(DutyDefinitionMapping.TYPE)
                 if (type != Type.TIMESLOT.value) {
                     it.skip()
-                    null
                 }
 
                 DutyDefinition(
@@ -98,7 +97,6 @@ object DataParserService {
                 val type = it.o.value(DutyDefinitionMapping.TYPE)
                 if (type != Type.TIMESLOT_GROUP.value) {
                     it.skip()
-                    null
                 }
 
                 DutyGroup(
@@ -111,7 +109,7 @@ object DataParserService {
         // Assign slots
         data.forEachElement {
             val type = it.o.value(DutyDefinitionMapping.TYPE)
-            if (type == Type.TIMESLOT.value) {
+            if (type == Type.TIMESLOT.value || type == Type.TIMESLOT_GROUP.value) {
                 return@forEachElement
             }
 
