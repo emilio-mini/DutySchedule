@@ -56,7 +56,8 @@ object DemoService : DutyScheduleServiceBase {
     override var self by mutableStateOf<Employee?>(null)
 
     private val zone = TimeZone.currentSystemDefault()
-    private const val GENERATION_WINDOW_DAYS = 90
+    private const val PAST_WINDOW_DAYS = 3 * 365
+    private const val FUTURE_WINDOW_DAYS = 90
 
     val org = Org(
         guid = "demo-org-musterstadt",
@@ -348,10 +349,10 @@ object DemoService : DutyScheduleServiceBase {
 
     private fun generate() {
         val today = Clock.System.now().toLocalDateTime(zone).date
-        val selfAssignedOffsets = (-GENERATION_WINDOW_DAYS..30 step 5).toSet()
+        val selfAssignedOffsets = (-PAST_WINDOW_DAYS..30 step 5).toSet()
         val openOffsets = setOf(1, 2, 4, 7, 10, 14).filterNot { selfAssignedOffsets.contains(it) }.toSet()
 
-        for (offset in -GENERATION_WINDOW_DAYS..GENERATION_WINDOW_DAYS) {
+        for (offset in -PAST_WINDOW_DAYS..FUTURE_WINDOW_DAYS) {
             val date = today.plus(offset, DateTimeUnit.DAY)
             val rnd = Random(offset * 7919 + 13)
             val assignSelf = selfAssignedOffsets.contains(offset)
