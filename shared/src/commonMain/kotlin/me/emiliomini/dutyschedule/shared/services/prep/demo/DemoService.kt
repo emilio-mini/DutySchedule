@@ -186,6 +186,7 @@ object DemoService : DutyScheduleServiceBase {
         self = null
         isLoggedIn = false
         StorageService.clear()
+        StorageService.USER_PREFERENCES.update { it.copy(isDemoMode = false) }
         DutyScheduleService = PrepService
     }
 
