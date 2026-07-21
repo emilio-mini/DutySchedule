@@ -58,7 +58,6 @@ private fun darkSurfaceContainers(surface: Color, onSurface: Color) = SurfaceCon
 
 private val Red = Color(0xFFD32F2F)
 
-private val DutyScheduleLightSurfaces = lightSurfaceContainers(Color(0xFFFFFBFF), Color(0xFF201A19))
 val DutyScheduleLightColorScheme = lightColorScheme(
     primary = Red,
     onPrimary = Color.White,
@@ -82,17 +81,9 @@ val DutyScheduleLightColorScheme = lightColorScheme(
     onSurface = Color(0xFF201A19),
     surfaceVariant = Color(0xFFE9E9E9),
     onSurfaceVariant = Color(0xFF534341),
-    outline = Color(0xFF857370),
-    surfaceDim = DutyScheduleLightSurfaces.dim,
-    surfaceBright = DutyScheduleLightSurfaces.bright,
-    surfaceContainerLowest = DutyScheduleLightSurfaces.containerLowest,
-    surfaceContainerLow = DutyScheduleLightSurfaces.containerLow,
-    surfaceContainer = DutyScheduleLightSurfaces.container,
-    surfaceContainerHigh = DutyScheduleLightSurfaces.containerHigh,
-    surfaceContainerHighest = DutyScheduleLightSurfaces.containerHighest
+    outline = Color(0xFF857370)
 )
 
-private val DutyScheduleDarkSurfaces = darkSurfaceContainers(Color(0xFF201A19), Color(0xFFEDE0DE))
 val DutyScheduleDarkColorScheme = darkColorScheme(
     primary = Color(0xFFFFB4A8),
     onPrimary = Color(0xFF690000),
@@ -116,14 +107,7 @@ val DutyScheduleDarkColorScheme = darkColorScheme(
     onSurface = Color(0xFFEDE0DE),
     surfaceVariant = Color(0xFF2C2C2C),
     onSurfaceVariant = Color(0xFFD8C2BF),
-    outline = Color(0xFFA08C8A),
-    surfaceDim = DutyScheduleDarkSurfaces.dim,
-    surfaceBright = DutyScheduleDarkSurfaces.bright,
-    surfaceContainerLowest = DutyScheduleDarkSurfaces.containerLowest,
-    surfaceContainerLow = DutyScheduleDarkSurfaces.containerLow,
-    surfaceContainer = DutyScheduleDarkSurfaces.container,
-    surfaceContainerHigh = DutyScheduleDarkSurfaces.containerHigh,
-    surfaceContainerHighest = DutyScheduleDarkSurfaces.containerHighest
+    outline = Color(0xFFA08C8A)
 )
 
 private val BlueLightSurfaces = lightSurfaceContainers(Color(0xFFFDFCFF), Color(0xFF1A1C1E))
