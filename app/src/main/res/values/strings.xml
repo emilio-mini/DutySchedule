@@ -144,4 +144,6 @@
     <string name="widget_next_duty_title">Next Duty</string>
     <string name="widget_next_duty_empty">No upcoming duty</string>
     <string name="widget_next_duty_description">Shows your next upcoming duty</string>
+    <string name="widget_duty_calendar_title">Duty Calendar</string>
+    <string name="widget_duty_calendar_description">Shows a month view of your duty schedule</string>
 </resources>

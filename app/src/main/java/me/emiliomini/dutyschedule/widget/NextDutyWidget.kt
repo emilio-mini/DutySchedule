@@ -15,6 +15,7 @@ import androidx.glance.ImageProvider
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
 import androidx.glance.layout.Alignment
@@ -32,12 +33,14 @@ import androidx.glance.layout.width
 import androidx.glance.material3.ColorProviders
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
+import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.shared.api.APPLICATION_CONTEXT
 import me.emiliomini.dutyschedule.shared.datastores.DutyType
 import me.emiliomini.dutyschedule.shared.datastores.Employee
 import me.emiliomini.dutyschedule.shared.datastores.MinimalDutyDefinition
+import me.emiliomini.dutyschedule.shared.datastores.Timestamp
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.theme.DutyScheduleDarkColorScheme
 import me.emiliomini.dutyschedule.shared.ui.theme.DutyScheduleLightColorScheme
@@ -49,6 +52,8 @@ private val WidgetColors = ColorProviders(
     light = DutyScheduleLightColorScheme,
     dark = DutyScheduleDarkColorScheme,
 )
+
+private val WidgetCornerRadius = 20.dp
 
 class NextDutyWidget : GlanceAppWidget() {
 
@@ -87,115 +92,151 @@ private fun NextDutyWidgetContent(
     Box(
         modifier = GlanceModifier
             .fillMaxSize()
+            .cornerRadius(WidgetCornerRadius)
             .background(GlanceTheme.colors.widgetBackground)
             .clickable(openAppAction),
-        contentAlignment = Alignment.TopStart
+        contentAlignment = Alignment.Center
     ) {
         if (nextDuty == null) {
-            Text(
-                text = context.getString(R.string.widget_next_duty_empty),
-                modifier = GlanceModifier.padding(16.dp),
-                style = TextStyle(color = GlanceTheme.colors.onSurface)
-            )
+            EmptyState(context)
         } else {
-            Box {
-                Row(modifier = GlanceModifier.fillMaxSize()) {
-                    // Left time column with vertical divider
-                    Column(
-                        modifier = GlanceModifier
-                            .fillMaxHeight()
-                            .padding(start = 16.dp, top = 16.dp, bottom = 16.dp),
-                        horizontalAlignment = Alignment.Horizontal.CenterHorizontally,
-                    ) {
-                        Text(
-                            text = nextDuty.begin.format("HH:mm"),
-                            style = TextStyle(
-                                color = GlanceTheme.colors.outline,
-                                fontSize = 12.sp,
-                            )
+            // fillMaxSize (not fillMaxWidth): home-screen widgets resize in coarse grid-cell
+            // increments, so leftover vertical space is unavoidable at some sizes. Rather than
+            // fighting it, the divider spans the full available height and the info column below
+            // centers its content within that height, turning any extra space into even
+            // breathing room above/below instead of a dead gap under the staff list.
+            Row(modifier = GlanceModifier.fillMaxSize().padding(16.dp)) {
+                // Left time column with vertical divider
+                Column(
+                    modifier = GlanceModifier.fillMaxHeight(),
+                    horizontalAlignment = Alignment.Horizontal.CenterHorizontally,
+                ) {
+                    Text(
+                        text = nextDuty.begin.format("HH:mm"),
+                        style = TextStyle(
+                            color = GlanceTheme.colors.outline,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 12.sp,
                         )
-                        Spacer(modifier = GlanceModifier.height(4.dp))
-                        Box(
-                            modifier = GlanceModifier
-                                .defaultWeight()
-                                .width(1.dp)
-                                .background(GlanceTheme.colors.outline)
-                        ) { }
-                        Spacer(modifier = GlanceModifier.height(4.dp))
-                        Text(
-                            text = nextDuty.end.format("HH:mm"),
-                            style = TextStyle(
-                                color = GlanceTheme.colors.outline,
-                                fontSize = 12.sp,
-                            )
-                        )
-                    }
-
-                    // Right info column: vehicle/type row + staff rows
-                    Column(
+                    )
+                    Spacer(modifier = GlanceModifier.height(6.dp))
+                    Box(
                         modifier = GlanceModifier
                             .defaultWeight()
-                            .padding(start = 12.dp, top = 16.dp, end = 16.dp, bottom = 16.dp),
+                            .width(1.dp)
+                            .background(GlanceTheme.colors.outline)
+                    ) { }
+                    Spacer(modifier = GlanceModifier.height(6.dp))
+                    Text(
+                        text = nextDuty.end.format("HH:mm"),
+                        style = TextStyle(
+                            color = GlanceTheme.colors.outline,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 12.sp,
+                        )
+                    )
+                }
+
+                Spacer(modifier = GlanceModifier.width(14.dp))
+
+                // Right info column: header row (type/vehicle + date) + staff rows, centered
+                // vertically so it settles in the middle of the card rather than clinging to top.
+                Column(
+                    modifier = GlanceModifier.defaultWeight().fillMaxHeight(),
+                    verticalAlignment = Alignment.Vertical.CenterVertically,
+                ) {
+                    val typeLabel = nextDuty.typeString.stripTypeBrackets()
+                        .ifBlank { context.getString(nextDuty.type.toStringRes()) }
+
+                    val vehicleName = nextDuty.vehicle
+                        ?: context.getString(nextDuty.type.toStringRes())
+
+                    Row(
+                        modifier = GlanceModifier.fillMaxWidth(),
                         verticalAlignment = Alignment.Vertical.CenterVertically,
                     ) {
-                        val typeLabel = nextDuty.typeString.stripTypeBrackets()
-                            .ifBlank { context.getString(nextDuty.type.toStringRes()) }
-
-                        val vehicleName = nextDuty.vehicle
-                            ?: context.getString(nextDuty.type.toStringRes())
-
                         DutyInfoRow(
+                            modifier = GlanceModifier.defaultWeight(),
                             iconRes = nextDuty.type.toWidgetIconRes(),
                             label = typeLabel,
                             name = vehicleName,
                             state = StaffState.TYPE_HEADER,
                         )
-
-
-                        for (name in nextDuty.staff) {
-                            Spacer(modifier = GlanceModifier.height(8.dp))
-                            val isDriver = name == nextDuty.driverName
-                            val isSelf = name == selfName
-                            DutyInfoRow(
-                                iconRes = if (isDriver) R.drawable.ic_widget_steering_wheel else R.drawable.ic_widget_person,
-                                label = "",
-                                name = name,
-                                state = when {
-                                    isSelf -> StaffState.SELF
-                                    else -> StaffState.DEFAULT
-                                },
-                            )
-                        }
+                        Spacer(modifier = GlanceModifier.width(8.dp))
+                        DateBadge(nextDuty.begin)
                     }
-                }
 
-                Row(
-                    modifier = GlanceModifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp, end = 16.dp),
-                    horizontalAlignment = Alignment.Horizontal.End,
-                    verticalAlignment = Alignment.Vertical.Bottom
-                ) {
-                    Text(
-                        text = nextDuty.begin.format("d"),
-                        style = TextStyle(
-                            fontSize = 32.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = GlanceTheme.colors.primary
+                    for (name in nextDuty.staff) {
+                        Spacer(modifier = GlanceModifier.height(10.dp))
+                        val isDriver = name == nextDuty.driverName
+                        val isSelf = name == selfName
+                        DutyInfoRow(
+                            iconRes = if (isDriver) R.drawable.ic_widget_steering_wheel else R.drawable.ic_widget_person,
+                            label = "",
+                            name = name,
+                            state = when {
+                                isSelf -> StaffState.SELF
+                                else -> StaffState.DEFAULT
+                            },
                         )
-                    )
-                    Spacer(GlanceModifier.width(4.dp))
-                    Text(
-                        nextDuty.begin.format("MMMM"),
-                        style = TextStyle(
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Normal,
-                            color = GlanceTheme.colors.onBackground
-                        )
-                    )
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun EmptyState(context: Context) {
+    Column(
+        modifier = GlanceModifier.fillMaxSize().padding(16.dp),
+        horizontalAlignment = Alignment.Horizontal.CenterHorizontally,
+        verticalAlignment = Alignment.Vertical.CenterVertically,
+    ) {
+        Image(
+            provider = ImageProvider(R.drawable.ic_widget_calendar),
+            contentDescription = null,
+            modifier = GlanceModifier.size(28.dp),
+            colorFilter = ColorFilter.tint(GlanceTheme.colors.outline)
+        )
+        Spacer(modifier = GlanceModifier.height(8.dp))
+        Text(
+            text = context.getString(R.string.widget_next_duty_empty),
+            style = TextStyle(
+                color = GlanceTheme.colors.onSurfaceVariant,
+                fontSize = 13.sp,
+                textAlign = TextAlign.Center,
+            )
+        )
+    }
+}
+
+@Composable
+private fun DateBadge(begin: Timestamp) {
+    Row(
+        modifier = GlanceModifier
+            .background(GlanceTheme.colors.primaryContainer)
+            .cornerRadius(10.dp)
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.Vertical.CenterVertically,
+    ) {
+        Text(
+            text = begin.format("d"),
+            style = TextStyle(
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = GlanceTheme.colors.onPrimaryContainer,
+            )
+        )
+        Spacer(modifier = GlanceModifier.width(4.dp))
+        Text(
+            text = begin.format("MMM"),
+            style = TextStyle(
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium,
+                color = GlanceTheme.colors.onPrimaryContainer,
+            )
+        )
     }
 }
 
@@ -203,25 +244,26 @@ private enum class StaffState { TYPE_HEADER, SELF, DEFAULT }
 
 @Composable
 private fun DutyInfoRow(
+    modifier: GlanceModifier = GlanceModifier,
     iconRes: Int,
     label: String,
     name: String,
     state: StaffState,
 ) {
-    Row(verticalAlignment = Alignment.Vertical.CenterVertically) {
+    Row(modifier = modifier, verticalAlignment = Alignment.Vertical.CenterVertically) {
         Image(
             provider = ImageProvider(iconRes),
             contentDescription = null,
-            modifier = GlanceModifier.size(24.dp),
+            modifier = GlanceModifier.size(22.dp),
             colorFilter = ColorFilter.tint(
                 when (state) {
                     StaffState.TYPE_HEADER -> GlanceTheme.colors.primary
                     StaffState.SELF -> GlanceTheme.colors.primary
-                    StaffState.DEFAULT -> GlanceTheme.colors.onSurface
+                    StaffState.DEFAULT -> GlanceTheme.colors.onSurfaceVariant
                 }
             )
         )
-        Spacer(modifier = GlanceModifier.width(12.dp))
+        Spacer(modifier = GlanceModifier.width(10.dp))
         Column {
             if (label.isNotBlank()) {
                 Text(
@@ -238,6 +280,11 @@ private fun DutyInfoRow(
                     color = when (state) {
                         StaffState.SELF -> GlanceTheme.colors.primary
                         StaffState.TYPE_HEADER, StaffState.DEFAULT -> GlanceTheme.colors.onSurface
+                    },
+                    fontWeight = when (state) {
+                        StaffState.SELF -> FontWeight.Bold
+                        StaffState.TYPE_HEADER -> FontWeight.Medium
+                        StaffState.DEFAULT -> FontWeight.Normal
                     },
                     fontSize = 14.sp,
                 )
@@ -269,4 +316,3 @@ private fun DutyType.toStringRes(): Int = when (this) {
 
 private fun String.stripTypeBrackets(): String =
     this.replace(Regex("^\\[\\s*|\\s*]$"), "").trim()
-
