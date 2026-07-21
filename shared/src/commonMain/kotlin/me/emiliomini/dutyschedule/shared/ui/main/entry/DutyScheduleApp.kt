@@ -9,14 +9,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.currentStateAsState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.shared.api.getPlatformTaskSchedulerApi
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformTask
+import me.emiliomini.dutyschedule.shared.services.AlarmService
 import me.emiliomini.dutyschedule.shared.services.network.NetworkService
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
 import me.emiliomini.dutyschedule.shared.services.prep.demo.DemoService
 import me.emiliomini.dutyschedule.shared.services.prep.live.PrepService
+import me.emiliomini.dutyschedule.shared.services.scaffold.ScaffoldService
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.main.screens.LoadingScreen
 import me.emiliomini.dutyschedule.shared.ui.theme.ColorPreset
@@ -59,6 +64,21 @@ fun DutyScheduleApp(composableLoadActions: @Composable () -> Unit) {
             getPlatformTaskSchedulerApi().scheduleTask(MultiplatformTask.UpdateAlarms)
         } else {
             getPlatformTaskSchedulerApi().cancelTask(MultiplatformTask.UpdateAlarms)
+        }
+    }
+
+    // Requesting the exact-alarm permission opens a system settings screen and can't report the
+    // outcome synchronously (see AndroidAlarmApi.requestPermission). Re-attempt setting alarms
+    // whenever the app resumes and auto-set is on, so returning from that settings screen (or
+    // from the notification permission prompt) actually finishes the job instead of leaving the
+    // toggle on with nothing scheduled.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(lifecycleOwner.lifecycle.currentStateAsState().value) {
+        if (lifecycleOwner.lifecycle.currentState == Lifecycle.State.RESUMED &&
+            DutyScheduleService.isLoggedIn &&
+            StorageService.USER_PREFERENCES.getOrDefault().autoSetAlarms
+        ) {
+            AlarmService.setAllAlarms { ScaffoldService.snackbarHostState?.showSnackbar(it) }
         }
     }
 
