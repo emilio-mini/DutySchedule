@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Moon Stars icon – Material Symbols (Apache 2.0)
+  Derived from shared/src/commonMain/kotlin/.../icons/Moon.kt
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M483,880 q-84,0,-157.5,-32 t-128,-86.5 Q143,707,111,633.5 T79,476 q0,-124,68.5,-225 T331,103 q14,-5,29,-3.5 t25,9.5 q8,7,12.5,19.5 T402,161 q2,79,32,150.5 T520,439 q56,56,128,86 t151,32 q21,0,32,3.5 t18,11.5 q8,10,10.5,26 t-2.5,29 q-46,115,-148,184 T483,880 Z m0,-80 q88,0,163,-44 t118,-121 q-86,-8,-163,-43.5 T463,495 q-61,-61,-97,-138 t-43,-163 q-77,43,-120.5,118.5 T159,476 q0,135,94.5,229.5 T483,800 Z m-20,-305 Z m109,-203 l-64,-64 q-12,-12,-12,-28 t12,-28 l64,-64 q12,-12,28,-12 t28,12 l64,64 q12,12,12,28 t-12,28 l-64,64 q-12,12,-28,12 t-28,-12 Z m200,120 l-24,-24 q-12,-12,-12,-28 t12,-28 l24,-24 q12,-12,28,-12 t28,12 l24,24 q12,12,12,28 t-12,28 l-24,24 q-12,12,-28,12 t-28,-12 Z" />
+</vector>

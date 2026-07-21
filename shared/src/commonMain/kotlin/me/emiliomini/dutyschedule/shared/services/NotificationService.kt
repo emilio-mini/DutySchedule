@@ -10,6 +10,7 @@ import me.emiliomini.dutyschedule.shared.api.getPlatformNotificationApi
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotification
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotificationPriority
 import me.emiliomini.dutyschedule.shared.mappings.NotificationChannelMapping
+import me.emiliomini.dutyschedule.shared.mappings.NotificationIds
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.util.format
 import me.emiliomini.dutyschedule.shared.util.toInstant
@@ -20,6 +21,9 @@ import kotlin.time.ExperimentalTime
 object NotificationService {
     @OptIn(ExperimentalTime::class)
     suspend fun sendInfoNotification() {
+        val prefs = StorageService.USER_PREFERENCES.getOrDefault()
+        if (!prefs.permanentNotification) return
+
         val upcomingDuties =
             StorageService.UPCOMING_DUTIES.get()?.minimalDutyDefinitions ?: emptyList()
         val notificationApi = getPlatformNotificationApi()
@@ -46,7 +50,7 @@ object NotificationService {
         }
 
         val notification = MultiplatformNotification(
-            37,
+            NotificationIds.PERMANENT_INFO,
             NotificationChannelMapping.PERMANENT_INFO,
             MultiplatformNotificationPriority.LOW,
             "Duty Info",
@@ -55,5 +59,16 @@ object NotificationService {
             )
         notificationApi.send(notification)
 
+    }
+
+    fun cancelInfoNotification() {
+        val notification = MultiplatformNotification(
+            37,
+            NotificationChannelMapping.PERMANENT_INFO,
+            MultiplatformNotificationPriority.LOW,
+            "",
+            ""
+        )
+        getPlatformNotificationApi().dismiss(notification)
     }
 }

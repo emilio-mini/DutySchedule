@@ -21,6 +21,14 @@ class AndroidStorageApi() : PlatformStorageApi {
 
     override suspend fun initialize(stores: List<MultiplatformDataStore<out MultiplatformDataModel>>) {
         for (store in stores) {
+            // AndroidX DataStore throws if a second instance is created for the same file while
+            // the first is still active, and initialize() is called again on every logout (or
+            // any other loaded=false -> true cycle within the same process), so this must be
+            // idempotent per store id rather than always recreating the DataStore.
+            if (dataStores.containsKey(store.id)) {
+                continue
+            }
+
             val serializer = ProtoAdapter(store.serializer as KSerializer<MultiplatformDataModel>)
             val dataStore = DataStoreFactory.create(
                 serializer = serializer,

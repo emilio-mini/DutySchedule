@@ -39,9 +39,11 @@ import androidx.compose.ui.unit.dp
 import dutyschedule.shared.generated.resources.Res
 import dutyschedule.shared.generated.resources.main_dashboard_hours
 import dutyschedule.shared.generated.resources.main_dashboard_section_upcoming_title
+import dutyschedule.shared.generated.resources.nav_settings
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.shared.debug.DebugFlags
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
+import me.emiliomini.dutyschedule.shared.services.prep.demo.DemoService
 import me.emiliomini.dutyschedule.shared.services.prep.live.PrepService
 import me.emiliomini.dutyschedule.shared.services.scaffold.Action
 import me.emiliomini.dutyschedule.shared.services.scaffold.ScaffoldService
@@ -52,6 +54,7 @@ import me.emiliomini.dutyschedule.shared.ui.components.EmployeeAvatar
 import me.emiliomini.dutyschedule.shared.ui.components.LazyCardColumn
 import me.emiliomini.dutyschedule.shared.ui.components.MinimalDutyCard
 import me.emiliomini.dutyschedule.shared.ui.icons.DeleteSweep
+import me.emiliomini.dutyschedule.shared.ui.icons.Settings
 import me.emiliomini.dutyschedule.shared.ui.main.entry.NavItemId
 import me.emiliomini.dutyschedule.shared.util.format
 import me.emiliomini.dutyschedule.shared.util.withinLast
@@ -69,7 +72,8 @@ fun DashboardScreen(
     modifier: Modifier = Modifier,
     paddingValues: PaddingValues,
     onRestart: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onShowSettings: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
 
@@ -93,6 +97,11 @@ fun DashboardScreen(
                     onRestart()
                 }
             }, visible = DebugFlags.SHOW_DEBUG_ACTIONS.active()),
+            Action(element = { run ->
+                IconButton(onClick = { run() }) {
+                    Icon(Settings, contentDescription = stringResource(Res.string.nav_settings))
+                }
+            }, callback = onShowSettings),
             Action({ EmployeeAvatar(employee = DutyScheduleService.self, onLogout = onLogout) }),
             Action({ Spacer(Modifier.width(16.dp)) })
         )
@@ -203,6 +212,7 @@ fun DashboardScreen(
                     key = { _, duty -> duty.guid }) { index, duty ->
                     MinimalDutyCard(
                         duty = duty,
+                        demo = DutyScheduleService === DemoService,
                         type = if (index == 0 && upcomingDuties.minimalDutyDefinitions.size == 1) CardListItemType.SINGLE else if (index == 0) CardListItemType.TOP else if (index == upcomingDuties.minimalDutyDefinitions.size - 1) CardListItemType.BOTTOM else CardListItemType.DEFAULT,
                         snackbarHostState = snackbarHostState
                     )

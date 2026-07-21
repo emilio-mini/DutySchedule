@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Badge (person with ID card) icon – Material Symbols (Apache 2.0)
+  Derived from shared/src/commonMain/kotlin/.../icons/Badge.kt
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M240,720 h240 v-18 q0,-17,-9.5,-31.5 T444,648 q-20,-9,-40.5,-13.5 T360,630 q-23,0,-43.5,4.5 T276,648 q-17,8,-26.5,22.5 T240,702 v18 Z m350,-60 h100 q13,0,21.5,-8.5 T720,630 q0,-13,-8.5,-21.5 T690,600 H590 q-13,0,-21.5,8.5 T560,630 q0,13,8.5,21.5 T590,660 Z m-230,-60 q25,0,42.5,-17.5 T420,540 q0,-25,-17.5,-42.5 T360,480 q-25,0,-42.5,17.5 T300,540 q0,25,17.5,42.5 T360,600 Z m230,-60 h100 q13,0,21.5,-8.5 T720,510 q0,-13,-8.5,-21.5 T690,480 H590 q-13,0,-21.5,8.5 T560,510 q0,13,8.5,21.5 T590,540 Z M160,880 q-33,0,-56.5,-23.5 T80,800 v-440 q0,-33,23.5,-56.5 T160,280 h200 v-120 q0,-33,23.5,-56.5 T440,80 h80 q33,0,56.5,23.5 T600,160 v120 h200 q33,0,56.5,23.5 T880,360 v440 q0,33,-23.5,56.5 T800,880 H160 Z m0,-80 h640 v-440 H600 q0,33,-23.5,56.5 T520,440 h-80 q-33,0,-56.5,-23.5 T360,360 H160 v440 Z m280,-440 h80 v-200 h-80 v200 Z" />
+</vector>
