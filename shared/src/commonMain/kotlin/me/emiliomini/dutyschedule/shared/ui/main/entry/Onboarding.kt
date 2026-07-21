@@ -89,6 +89,7 @@ import dutyschedule.shared.generated.resources.onboarding_notifications_title
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.shared.api.getPlatformAlarmApi
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
+import me.emiliomini.dutyschedule.shared.services.prep.demo.DemoService
 import me.emiliomini.dutyschedule.shared.ui.icons.Check
 import me.emiliomini.dutyschedule.shared.ui.icons.ChevronRight
 import me.emiliomini.dutyschedule.shared.ui.icons.Fingerprint
@@ -101,7 +102,7 @@ private data class Page(val content: @Composable () -> Unit)
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalPermissionsApi::class)
 @Composable
-fun Onboarding() {
+fun Onboarding(onDemoActivated: () -> Unit = {}) {
     val scope = rememberCoroutineScope()
     var blockContinue by remember { mutableStateOf(false) }
     var email by remember { mutableStateOf("") }
@@ -366,15 +367,11 @@ fun Onboarding() {
                                 }
 
                                 blockContinue = true
-                                // DutyScheduleService = DemoService FIXME
                                 scope.launch {
-                                    val result = DutyScheduleService.login(
-                                        email, password
-                                    )
-                                    if (result) {
-                                    }
-
+                                    DutyScheduleService = DemoService
+                                    DemoService.login(email, password)
                                     blockContinue = false
+                                    onDemoActivated()
                                 }
                             } else {
                                 pageIndex = pages.lastIndex
