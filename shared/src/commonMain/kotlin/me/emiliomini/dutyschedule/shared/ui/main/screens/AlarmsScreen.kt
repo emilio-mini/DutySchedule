@@ -43,6 +43,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dutyschedule.shared.generated.resources.Res
+import dutyschedule.shared.generated.resources.main_alarms_auto_set_title
 import dutyschedule.shared.generated.resources.main_alarms_none
 import dutyschedule.shared.generated.resources.main_alarms_upcoming
 import dutyschedule.shared.generated.resources.main_settings_section_alarms
@@ -110,12 +111,15 @@ fun AlarmsScreen(
                         blocked = true
                         autoSetAll = !autoSetAll
                         scope.launch {
-                            if (autoSetAll){
-                                AlarmService.setAllAlarms(onError)
-                            } else {
-                                AlarmService.cancelAllUneditedAlarms()
+                            try {
+                                if (autoSetAll){
+                                    AlarmService.setAllAlarms(onError)
+                                } else {
+                                    AlarmService.cancelAllUneditedAlarms()
+                                }
+                            } finally {
+                                blocked = false
                             }
-                            blocked = false
                         }
                     }.background(
                         color = MaterialTheme.colorScheme.surfaceContainerHighest,
@@ -128,7 +132,7 @@ fun AlarmsScreen(
                     ),
                     headlineContent = {
                         Text(
-                            "Automatisch Alarme setzen",
+                            stringResource(Res.string.main_alarms_auto_set_title),
                         )
                     },
                     trailingContent = {
@@ -233,8 +237,11 @@ fun AlarmsScreen(
                                     onDismiss = {
                                         scope.launch {
                                             blocked = true
-                                            AlarmService.removeAlarm(alarm.guid)
-                                            blocked = false
+                                            try {
+                                                AlarmService.removeAlarm(alarm.guid)
+                                            } finally {
+                                                blocked = false
+                                            }
                                         }
                                     }) {
                                     ListItem(
@@ -257,8 +264,11 @@ fun AlarmsScreen(
                                                 active = !active
 
                                                 scope.launch {
-                                                    AlarmService.updateAlarm(alarm, active, onError)
-                                                    blocked = false
+                                                    try {
+                                                        AlarmService.updateAlarm(alarm, active, onError)
+                                                    } finally {
+                                                        blocked = false
+                                                    }
                                                 }
                                             }), colors = ListItemDefaults.colors(
                                             containerColor = Color.Transparent
@@ -292,8 +302,11 @@ fun AlarmsScreen(
                                                 active = !active
 
                                                 scope.launch {
-                                                    AlarmService.updateAlarm(alarm, active, onError)
-                                                    blocked = false
+                                                    try {
+                                                        AlarmService.updateAlarm(alarm, active, onError)
+                                                    } finally {
+                                                        blocked = false
+                                                    }
                                                 }
                                             })
                                         })

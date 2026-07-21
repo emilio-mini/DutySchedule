@@ -30,6 +30,9 @@ object AlarmService {
                 getPlatformAlarmApi().cancelAlarm(alarm.guid)
                 StorageService.ALARM_ITEMS.update {
                     val index = it.alarms.indexOfFirst { it.guid == alarm.guid }
+                    if (index == -1) {
+                        return@update it
+                    }
                     val oldAlarm = it.alarms[index]
                     val newDuties = it.alarms.toMutableList()
                     newDuties[index] = oldAlarm.copy(edited = true)
@@ -103,9 +106,7 @@ object AlarmService {
 
         alarms.update {
             it.copy(
-                alarms = it.alarms.filter {
-                    return@filter it.edited
-                }
+                alarms = it.alarms.filter { alarm -> alarm.edited }
             )
         }
         NotificationService.sendInfoNotification()

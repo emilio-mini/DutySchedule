@@ -41,28 +41,33 @@ fun AlarmToggle(modifier: Modifier = Modifier, dutyBegin: Instant, guid: String,
                 alarmBlocked = true
                 if (alarmSet) {
                     scope.launch {
-                        getPlatformAlarmApi().cancelAlarm(guid)
-
-                        alarmSet = false
-                        alarmBlocked = false
+                        try {
+                            getPlatformAlarmApi().cancelAlarm(guid)
+                            alarmSet = false
+                        } finally {
+                            alarmBlocked = false
+                        }
                     }
                 } else {
                     scope.launch {
-                        val alarmOffset =
-                            StorageService.USER_PREFERENCES.getOrDefault().alarmOffsetMin
-                        val alarmOffsetMillis = alarmOffset * 60_000L
+                        try {
+                            val alarmOffset =
+                                StorageService.USER_PREFERENCES.getOrDefault().alarmOffsetMin
+                            val alarmOffsetMillis = alarmOffset * 60_000L
 
-                        val timestamp = dutyBeginMillis - alarmOffsetMillis
-                        AlarmService.setAlarm(
-                            guid,
-                            Instant.fromEpochMilliseconds(timestamp),
-                            onError = {
-                                snackbarHostState.showSnackbar(it)
-                            },
-                            edited = true
-                        )
-                        alarmBlocked = false
-                        alarmSet = true
+                            val timestamp = dutyBeginMillis - alarmOffsetMillis
+                            AlarmService.setAlarm(
+                                guid,
+                                Instant.fromEpochMilliseconds(timestamp),
+                                onError = {
+                                    snackbarHostState.showSnackbar(it)
+                                },
+                                edited = true
+                            )
+                            alarmSet = true
+                        } finally {
+                            alarmBlocked = false
+                        }
                     }
                 }
             }, enabled = !alarmBlocked

@@ -35,6 +35,7 @@ import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.shared.datastores.MinimalDutyDefinition
 import me.emiliomini.dutyschedule.shared.datastores.YearlyDutyItems
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
+import me.emiliomini.dutyschedule.shared.services.prep.demo.DemoService
 import me.emiliomini.dutyschedule.shared.services.scaffold.Action
 import me.emiliomini.dutyschedule.shared.services.scaffold.ScaffoldService
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
@@ -153,6 +154,7 @@ fun ArchiveScreen(
                     items = duties, key = { _, duty -> duty.guid }) { index, duty ->
                     MinimalDutyCard(
                         duty = duty,
+                        demo = DutyScheduleService === DemoService,
                         type = if (index == 0 && duties.size == 1) CardListItemType.SINGLE else if (index == 0) CardListItemType.TOP else if (index == duties.size - 1) CardListItemType.BOTTOM else CardListItemType.DEFAULT,
                         snackbarHostState = null
                     )

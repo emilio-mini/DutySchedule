@@ -24,12 +24,20 @@ import platform.Foundation.create
 import platform.Foundation.dataWithContentsOfFile
 import platform.Foundation.writeToFile
 
+/**
+ * Must match the App Group entitlement on both the host app and the widget extension targets
+ * (see `dutyscheduleIOS.entitlements`). Data is stored here rather than in the app's private
+ * Documents directory so the WidgetKit extension process can read it too.
+ */
+private const val APP_GROUP_ID = "group.me.emiliomini.dutyscheduleIOS"
+
 class IosStorageApi : PlatformStorageApi {
+    private val logger = getPlatformLogger("IosStorageApi")
     private val fileManager = NSFileManager.defaultManager
 
     @OptIn(ExperimentalForeignApi::class)
     override suspend fun initialize(stores: List<MultiplatformDataStore<out MultiplatformDataModel>>) {
-        val directory = getDocumentsDirectoryPath()
+        val directory = getStorageDirectoryPath()
         if (!fileManager.fileExistsAtPath(directory)) {
             fileManager.createDirectoryAtPath(
                 directory,
@@ -66,7 +74,20 @@ class IosStorageApi : PlatformStorageApi {
     }
 
     private fun getFilePath(store: MultiplatformDataStore<*>): String {
-        return "${getDocumentsDirectoryPath()}/${store.id}.dat"
+        return "${getStorageDirectoryPath()}/${store.id}.dat"
+    }
+
+    private fun getStorageDirectoryPath(): String {
+        val containerUrl = fileManager.containerURLForSecurityApplicationGroupIdentifier(APP_GROUP_ID)
+        val containerPath = containerUrl?.path
+        if (containerPath == null) {
+            logger.warn(
+                "App Group '$APP_GROUP_ID' container unavailable (missing entitlement?); " +
+                    "falling back to app-private storage. Widgets will not see this data."
+            )
+            return getDocumentsDirectoryPath()
+        }
+        return "$containerPath/Data"
     }
 
     private fun getDocumentsDirectoryPath(): String {

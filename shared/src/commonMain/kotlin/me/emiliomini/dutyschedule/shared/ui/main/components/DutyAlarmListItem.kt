@@ -41,7 +41,10 @@ import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DutyAlarmListItem(modifier: Modifier = Modifier) {
+fun DutyAlarmListItem(
+    modifier: Modifier = Modifier,
+    type: CardListItemType = CardListItemType.SINGLE
+) {
     var showDialog by remember { mutableStateOf(false) }
     var selectedDurationMin by remember { mutableLongStateOf(90L) }
     val scope = rememberCoroutineScope()
@@ -75,7 +78,7 @@ fun DutyAlarmListItem(modifier: Modifier = Modifier) {
                 tint = MaterialTheme.colorScheme.primary
             )
         },
-        type = CardListItemType.SINGLE
+        type = type
     )
 
     if (showDialog) {

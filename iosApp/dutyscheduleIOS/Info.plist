@@ -4,9 +4,23 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
-    <key>CFBundleShortVersionString</key>
-    <string>0.0.0</string>
-    <key>CFBundleVersion</key>
-    <string>0</string>
+	<!-- Only "whatsapp" needs declaring here: canOpenURL() for built-in schemes like tel/sms/mailto
+	     doesn't require an LSApplicationQueriesSchemes entry, only third-party ones do. -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>whatsapp</string>
+	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>processing</string>
+	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>me.emiliomini.dutyscheduleIOS.refresh</string>
+	</array>
+	<!-- All network traffic is standard HTTPS via Ktor/NSURLSession; no proprietary encryption. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

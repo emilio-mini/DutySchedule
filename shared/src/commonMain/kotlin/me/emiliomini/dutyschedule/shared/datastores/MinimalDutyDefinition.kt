@@ -22,7 +22,9 @@ data class MinimalDutyDefinition(
     @ProtoNumber(7)
     val duration: Int = 0,
     @ProtoNumber(8)
-    val typeString: String = ""
+    val typeString: String = "",
+    @ProtoNumber(9)
+    val driverName: String? = null
 ) : MultiplatformDataModel
 
 fun MinimalDutyDefinition.isDefault(): Boolean {
