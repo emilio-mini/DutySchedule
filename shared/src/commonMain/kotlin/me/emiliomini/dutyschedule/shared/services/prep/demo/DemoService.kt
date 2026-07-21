@@ -384,10 +384,11 @@ object DemoService : DutyScheduleServiceBase {
         alarmTestDuty.definition.slots.forEach { dutyGuidBySlotGuid[it.guid] = alarmTestDuty.definition.guid }
     }
 
-    // Starts shortly after the default 90 minute alarm offset, so toggling its alarm (or enabling
-    // "Automatisch Alarme setzen") fires within minutes instead of requiring a real duty hours out.
+    // Starts 1 minute past the default 90 minute alarm offset, so toggling its alarm (or enabling
+    // "Automatisch Alarme setzen") fires about a minute later instead of requiring a real duty
+    // hours out. Enable it promptly - the trigger time is fixed at generation time.
     private fun buildAlarmTestDuty(now: Instant): GeneratedDuty {
-        val begin = now.plus(100, DateTimeUnit.MINUTE)
+        val begin = now.plus(91, DateTimeUnit.MINUTE)
         val end = begin.plus(12, DateTimeUnit.HOUR)
         val dutyGuid = "demo-duty-alarm-test"
         val vehicleCallSign = "RTB Musterstadt 1"
