@@ -30,7 +30,6 @@ import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
-import androidx.glance.material3.ColorProviders
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
@@ -41,17 +40,11 @@ import me.emiliomini.dutyschedule.shared.datastores.DutyType
 import me.emiliomini.dutyschedule.shared.datastores.Employee
 import me.emiliomini.dutyschedule.shared.datastores.MinimalDutyDefinition
 import me.emiliomini.dutyschedule.shared.datastores.Timestamp
+import me.emiliomini.dutyschedule.shared.datastores.UserPreferences
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
-import me.emiliomini.dutyschedule.shared.ui.theme.DutyScheduleDarkColorScheme
-import me.emiliomini.dutyschedule.shared.ui.theme.DutyScheduleLightColorScheme
 import me.emiliomini.dutyschedule.shared.util.format
 import me.emiliomini.dutyschedule.ui.main.activity.MainActivity
 import kotlin.time.ExperimentalTime
-
-private val WidgetColors = ColorProviders(
-    light = DutyScheduleLightColorScheme,
-    dark = DutyScheduleDarkColorScheme,
-)
 
 private val WidgetCornerRadius = 20.dp
 
@@ -62,16 +55,18 @@ class NextDutyWidget : GlanceAppWidget() {
 
         var nextDuty: MinimalDutyDefinition? = null
         var self: Employee? = null
+        var prefs = UserPreferences()
         try {
             StorageService.initialize()
             nextDuty =
                 StorageService.UPCOMING_DUTIES.getOrDefault().minimalDutyDefinitions.firstOrNull()
             self = StorageService.SELF.getOrDefault().takeIf { it.name.isNotBlank() }
+            prefs = StorageService.USER_PREFERENCES.getOrDefault()
         } catch (e: Exception) {
         }
 
         provideContent {
-            GlanceTheme(colors = WidgetColors) {
+            GlanceTheme(colors = widgetColorProviders(context, prefs)) {
                 NextDutyWidgetContent(
                     context = context,
                     nextDuty = nextDuty,

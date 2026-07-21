@@ -26,7 +26,7 @@ data class UserPreferences(
     @ProtoNumber(9)
     val themeMode: Int = 0, // 0 = system, 1 = light, 2 = dark
     @ProtoNumber(10)
-    val dynamicColor: Boolean = true
+    val colorPreset: Int = 0 // 0 = default, 1 = dynamic, 2 = blue, 3 = green, 4 = purple; see ColorPreset
 ) : MultiplatformDataModel
 
 fun UserPreferences.isDefault(): Boolean {

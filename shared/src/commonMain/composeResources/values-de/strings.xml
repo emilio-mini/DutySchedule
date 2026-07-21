@@ -157,8 +157,12 @@
     <string name="main_settings_appearance_theme_system">System</string>
     <string name="main_settings_appearance_theme_light">Hell</string>
     <string name="main_settings_appearance_theme_dark">Dunkel</string>
-    <string name="main_settings_appearance_dynamic_color_title">Dynamische Farben</string>
-    <string name="main_settings_appearance_dynamic_color_content">Farben deines Hintergrundbilds verwenden</string>
+    <string name="main_settings_appearance_color_preset_title">Farbthema</string>
+    <string name="main_settings_appearance_color_preset_default">Standard</string>
+    <string name="main_settings_appearance_color_preset_dynamic">Dynamisch (Material You)</string>
+    <string name="main_settings_appearance_color_preset_blue">Blau</string>
+    <string name="main_settings_appearance_color_preset_green">Grün</string>
+    <string name="main_settings_appearance_color_preset_purple">Lila</string>
     <plurals name="updated_duties">
         <item quantity="one">Aktualisierte einen Dienst</item>
         <item quantity="other">Aktualisierte %1$s Dienste</item>

@@ -40,11 +40,12 @@ import me.emiliomini.dutyschedule.shared.ui.main.screens.ArchiveScreen
 import me.emiliomini.dutyschedule.shared.ui.main.screens.DashboardScreen
 import me.emiliomini.dutyschedule.shared.ui.main.screens.ScheduleScreen
 import me.emiliomini.dutyschedule.shared.ui.main.screens.SettingsScreen
+import me.emiliomini.dutyschedule.shared.ui.theme.ColorPreset
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Main(modifier: Modifier = Modifier, onThemeModeChange: (Int) -> Unit, onDynamicColorChange: (Boolean) -> Unit, onLogout: () -> Unit, onRestart: () -> Unit) {
+fun Main(modifier: Modifier = Modifier, onThemeModeChange: (Int) -> Unit, onColorPresetChange: (ColorPreset) -> Unit, onLogout: () -> Unit, onRestart: () -> Unit) {
     val snackbarHostState = remember { SnackbarHostState() }
     ScaffoldService.registerSnackbar(snackbarHostState)
     var selectedNavIndex by remember { mutableIntStateOf(0) }
@@ -129,7 +130,7 @@ fun Main(modifier: Modifier = Modifier, onThemeModeChange: (Int) -> Unit, onDyna
         ) {
             SettingsScreen(
                 onThemeModeChange = onThemeModeChange,
-                onDynamicColorChange = onDynamicColorChange
+                onColorPresetChange = onColorPresetChange
             )
         }
     }

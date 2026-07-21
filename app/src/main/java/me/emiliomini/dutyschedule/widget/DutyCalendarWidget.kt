@@ -29,7 +29,6 @@ import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
-import androidx.glance.material3.ColorProviders
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
@@ -38,19 +37,13 @@ import me.emiliomini.dutyschedule.R
 import me.emiliomini.dutyschedule.shared.api.APPLICATION_CONTEXT
 import me.emiliomini.dutyschedule.shared.datastores.Employee
 import me.emiliomini.dutyschedule.shared.datastores.MinimalDutyDefinition
+import me.emiliomini.dutyschedule.shared.datastores.UserPreferences
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
-import me.emiliomini.dutyschedule.shared.ui.theme.DutyScheduleDarkColorScheme
-import me.emiliomini.dutyschedule.shared.ui.theme.DutyScheduleLightColorScheme
 import me.emiliomini.dutyschedule.shared.util.CalendarDay
 import me.emiliomini.dutyschedule.shared.util.CalendarMonth
 import me.emiliomini.dutyschedule.shared.util.buildCalendarMonth
 import me.emiliomini.dutyschedule.ui.main.activity.MainActivity
 import kotlin.time.ExperimentalTime
-
-private val WidgetColors = ColorProviders(
-    light = DutyScheduleLightColorScheme,
-    dark = DutyScheduleDarkColorScheme,
-)
 
 private val WidgetCornerRadius = 20.dp
 
@@ -61,6 +54,7 @@ class DutyCalendarWidget : GlanceAppWidget() {
 
         var duties: List<MinimalDutyDefinition> = emptyList()
         var self: Employee? = null
+        var prefs = UserPreferences()
         try {
             StorageService.initialize()
             val upcoming = StorageService.UPCOMING_DUTIES.getOrDefault().minimalDutyDefinitions
@@ -68,13 +62,14 @@ class DutyCalendarWidget : GlanceAppWidget() {
                 .flatMap { it.minimalDutyDefinitions }
             duties = upcoming + past
             self = StorageService.SELF.getOrDefault().takeIf { it.name.isNotBlank() }
+            prefs = StorageService.USER_PREFERENCES.getOrDefault()
         } catch (e: Exception) {
         }
 
         val month = buildCalendarMonth(duties = duties, selfName = self?.name)
 
         provideContent {
-            GlanceTheme(colors = WidgetColors) {
+            GlanceTheme(colors = widgetColorProviders(context, prefs)) {
                 DutyCalendarWidgetContent(month = month)
             }
         }

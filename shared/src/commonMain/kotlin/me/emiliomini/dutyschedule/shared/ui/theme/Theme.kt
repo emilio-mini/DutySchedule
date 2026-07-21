@@ -8,7 +8,7 @@ import androidx.compose.runtime.Composable
 @Composable
 fun DutyScheduleTheme(
     themeMode: Int = 0,
-    dynamicColor: Boolean = true,
+    colorPreset: ColorPreset = ColorPreset.DEFAULT,
     content: @Composable () -> Unit
 ) {
     val systemDark = isSystemInDarkTheme()
@@ -17,7 +17,7 @@ fun DutyScheduleTheme(
         2 -> true
         else -> systemDark
     }
-    val colorScheme = platformColorScheme(darkTheme, dynamicColor)
+    val colorScheme = platformColorScheme(darkTheme, colorPreset)
 
     MaterialTheme(
         colorScheme = colorScheme,

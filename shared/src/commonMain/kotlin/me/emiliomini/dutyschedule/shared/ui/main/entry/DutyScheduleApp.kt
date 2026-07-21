@@ -18,6 +18,7 @@ import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
 import me.emiliomini.dutyschedule.shared.services.prep.live.PrepService
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.main.screens.LoadingScreen
+import me.emiliomini.dutyschedule.shared.ui.theme.ColorPreset
 import me.emiliomini.dutyschedule.shared.ui.theme.DutyScheduleTheme
 
 @Composable
@@ -26,7 +27,7 @@ fun DutyScheduleApp(composableLoadActions: @Composable () -> Unit) {
     var loaded by remember { mutableStateOf(false) }
     var previouslyLoggedIn by remember { mutableStateOf(false) }
     var themeMode by remember { mutableIntStateOf(0) }
-    var dynamicColor by remember { mutableStateOf(true) }
+    var colorPreset by remember { mutableStateOf(ColorPreset.DEFAULT) }
 
     LaunchedEffect(loaded) {
         if (!loaded) {
@@ -34,7 +35,7 @@ fun DutyScheduleApp(composableLoadActions: @Composable () -> Unit) {
             previouslyLoggedIn = DutyScheduleService.previouslyLoggedIn()
             val prefs = StorageService.USER_PREFERENCES.getOrDefault()
             themeMode = prefs.themeMode
-            dynamicColor = prefs.dynamicColor
+            colorPreset = ColorPreset.fromId(prefs.colorPreset)
             loaded = true
         }
     }
@@ -67,7 +68,7 @@ fun DutyScheduleApp(composableLoadActions: @Composable () -> Unit) {
     } else {
 
         if (!DutyScheduleService.isLoggedIn && !previouslyLoggedIn) {
-            DutyScheduleTheme(themeMode = themeMode, dynamicColor = dynamicColor) {
+            DutyScheduleTheme(themeMode = themeMode, colorPreset = colorPreset) {
                 Onboarding(onDemoActivated = { loaded = false })
             }
         } else {
@@ -77,10 +78,10 @@ fun DutyScheduleApp(composableLoadActions: @Composable () -> Unit) {
                 }
             }
 
-            DutyScheduleTheme(themeMode = themeMode, dynamicColor = dynamicColor) {
+            DutyScheduleTheme(themeMode = themeMode, colorPreset = colorPreset) {
                 Main(
                     onThemeModeChange = { newMode -> themeMode = newMode },
-                    onDynamicColorChange = { enabled -> dynamicColor = enabled },
+                    onColorPresetChange = { preset -> colorPreset = preset },
                     onLogout = {
                         scope.launch {
                             DutyScheduleService.logout()

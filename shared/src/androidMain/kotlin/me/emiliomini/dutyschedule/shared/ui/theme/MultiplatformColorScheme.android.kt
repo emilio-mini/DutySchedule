@@ -8,10 +8,10 @@ import me.emiliomini.dutyschedule.shared.api.APPLICATION_CONTEXT
 
 actual fun isDynamicColorSupported(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
-actual fun platformColorScheme(darkTheme: Boolean, dynamicColor: Boolean): ColorScheme {
-    if (dynamicColor && isDynamicColorSupported()) {
+actual fun platformColorScheme(darkTheme: Boolean, colorPreset: ColorPreset): ColorScheme {
+    if (colorPreset == ColorPreset.DYNAMIC && isDynamicColorSupported()) {
         return if (darkTheme) dynamicDarkColorScheme(APPLICATION_CONTEXT)
         else dynamicLightColorScheme(APPLICATION_CONTEXT)
     }
-    return if (darkTheme) DutyScheduleDarkColorScheme else DutyScheduleLightColorScheme
+    return staticColorScheme(darkTheme, colorPreset)
 }

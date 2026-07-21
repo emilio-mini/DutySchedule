@@ -156,8 +156,12 @@
     <string name="main_settings_appearance_theme_system">System</string>
     <string name="main_settings_appearance_theme_light">Light</string>
     <string name="main_settings_appearance_theme_dark">Dark</string>
-    <string name="main_settings_appearance_dynamic_color_title">Dynamic Color</string>
-    <string name="main_settings_appearance_dynamic_color_content">Use your wallpaper colors</string>
+    <string name="main_settings_appearance_color_preset_title">Color Theme</string>
+    <string name="main_settings_appearance_color_preset_default">Default</string>
+    <string name="main_settings_appearance_color_preset_dynamic">Dynamic (Material You)</string>
+    <string name="main_settings_appearance_color_preset_blue">Blue</string>
+    <string name="main_settings_appearance_color_preset_green">Green</string>
+    <string name="main_settings_appearance_color_preset_purple">Purple</string>
     <plurals name="updated_duties">
         <item quantity="one">Updated %1$s duty</item>
         <item quantity="other">Updated %1$s duties</item>

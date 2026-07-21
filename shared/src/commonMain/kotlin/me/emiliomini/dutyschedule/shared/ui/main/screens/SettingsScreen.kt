@@ -8,9 +8,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -29,8 +34,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import dutyschedule.shared.generated.resources.Res
 import dutyschedule.shared.generated.resources.main_alarms_auto_set_title
-import dutyschedule.shared.generated.resources.main_settings_appearance_dynamic_color_content
-import dutyschedule.shared.generated.resources.main_settings_appearance_dynamic_color_title
+import dutyschedule.shared.generated.resources.main_settings_appearance_color_preset_blue
+import dutyschedule.shared.generated.resources.main_settings_appearance_color_preset_default
+import dutyschedule.shared.generated.resources.main_settings_appearance_color_preset_dynamic
+import dutyschedule.shared.generated.resources.main_settings_appearance_color_preset_green
+import dutyschedule.shared.generated.resources.main_settings_appearance_color_preset_purple
+import dutyschedule.shared.generated.resources.main_settings_appearance_color_preset_title
 import dutyschedule.shared.generated.resources.main_settings_appearance_theme_dark
 import dutyschedule.shared.generated.resources.main_settings_appearance_theme_light
 import dutyschedule.shared.generated.resources.main_settings_appearance_theme_system
@@ -56,6 +65,7 @@ import me.emiliomini.dutyschedule.shared.ui.components.CardListItemType
 import me.emiliomini.dutyschedule.shared.ui.icons.AlarmOff
 import me.emiliomini.dutyschedule.shared.ui.icons.AlarmOn
 import me.emiliomini.dutyschedule.shared.ui.main.components.DutyAlarmListItem
+import me.emiliomini.dutyschedule.shared.ui.theme.ColorPreset
 import me.emiliomini.dutyschedule.shared.ui.theme.isDynamicColorSupported
 import org.jetbrains.compose.resources.stringResource
 
@@ -65,7 +75,7 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
     paddingValues: PaddingValues = PaddingValues(0.dp),
     onThemeModeChange: (Int) -> Unit,
-    onDynamicColorChange: (Boolean) -> Unit
+    onColorPresetChange: (ColorPreset) -> Unit
 ) {
     val scope = rememberCoroutineScope()
 
@@ -73,7 +83,7 @@ fun SettingsScreen(
     var backgroundUpdaterEnabled by remember { mutableStateOf(true) }
     var autoSetAlarms by remember { mutableStateOf(false) }
     var themeMode by remember { mutableIntStateOf(0) }
-    var dynamicColor by remember { mutableStateOf(true) }
+    var colorPreset by remember { mutableStateOf(ColorPreset.DEFAULT) }
     var alarmActionBlocked by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -82,7 +92,7 @@ fun SettingsScreen(
         backgroundUpdaterEnabled = prefs.backgroundUpdaterEnabled
         autoSetAlarms = prefs.autoSetAlarms
         themeMode = prefs.themeMode
-        dynamicColor = prefs.dynamicColor
+        colorPreset = ColorPreset.fromId(prefs.colorPreset)
     }
 
     Screen(modifier = modifier, paddingValues = paddingValues) { innerPadding ->
@@ -220,31 +230,72 @@ fun SettingsScreen(
                 color = MaterialTheme.colorScheme.primary
             )
             CardColumn {
-                if (isDynamicColorSupported()) {
-                    CardListItem(
-                        headlineContent = {
-                            Text(stringResource(Res.string.main_settings_appearance_dynamic_color_title))
-                        },
-                        supportingContent = {
-                            Text(stringResource(Res.string.main_settings_appearance_dynamic_color_content))
-                        },
-                        trailingContent = {
-                            Switch(
-                                checked = dynamicColor,
-                                onCheckedChange = { checked ->
-                                    dynamicColor = checked
-                                    onDynamicColorChange(checked)
-                                    scope.launch {
-                                        StorageService.USER_PREFERENCES.update {
-                                            it.copy(dynamicColor = checked)
-                                        }
-                                    }
+                CardListItem(
+                    headlineContent = {
+                        Text(stringResource(Res.string.main_settings_appearance_color_preset_title))
+                    },
+                    supportingContent = {
+                        val availablePresets = remember(isDynamicColorSupported()) {
+                            if (isDynamicColorSupported()) {
+                                listOf(
+                                    ColorPreset.DEFAULT,
+                                    ColorPreset.DYNAMIC,
+                                    ColorPreset.BLUE,
+                                    ColorPreset.GREEN,
+                                    ColorPreset.PURPLE
+                                )
+                            } else {
+                                listOf(ColorPreset.DEFAULT, ColorPreset.BLUE, ColorPreset.GREEN, ColorPreset.PURPLE)
+                            }
+                        }
+                        val presetLabels = mapOf(
+                            ColorPreset.DEFAULT to stringResource(Res.string.main_settings_appearance_color_preset_default),
+                            ColorPreset.DYNAMIC to stringResource(Res.string.main_settings_appearance_color_preset_dynamic),
+                            ColorPreset.BLUE to stringResource(Res.string.main_settings_appearance_color_preset_blue),
+                            ColorPreset.GREEN to stringResource(Res.string.main_settings_appearance_color_preset_green),
+                            ColorPreset.PURPLE to stringResource(Res.string.main_settings_appearance_color_preset_purple)
+                        )
+                        var expanded by remember { mutableStateOf(false) }
+
+                        ExposedDropdownMenuBox(
+                            expanded = expanded,
+                            onExpandedChange = { expanded = it }
+                        ) {
+                            OutlinedTextField(
+                                modifier = Modifier
+                                    .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                                    .fillMaxWidth(),
+                                readOnly = true,
+                                value = presetLabels[colorPreset] ?: "",
+                                onValueChange = {},
+                                trailingIcon = {
+                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                                 }
                             )
-                        },
-                        type = CardListItemType.TOP
-                    )
-                }
+                            ExposedDropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = { expanded = false }
+                            ) {
+                                availablePresets.forEach { preset ->
+                                    DropdownMenuItem(
+                                        text = { Text(presetLabels[preset] ?: "") },
+                                        onClick = {
+                                            colorPreset = preset
+                                            onColorPresetChange(preset)
+                                            expanded = false
+                                            scope.launch {
+                                                StorageService.USER_PREFERENCES.update {
+                                                    it.copy(colorPreset = preset.id)
+                                                }
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    },
+                    type = CardListItemType.TOP
+                )
                 CardListItem(
                     headlineContent = {
                         Text(stringResource(Res.string.main_settings_appearance_theme_title))
@@ -278,7 +329,7 @@ fun SettingsScreen(
                             }
                         }
                     },
-                    type = if (isDynamicColorSupported()) CardListItemType.BOTTOM else CardListItemType.SINGLE
+                    type = CardListItemType.BOTTOM
                 )
             }
         }
