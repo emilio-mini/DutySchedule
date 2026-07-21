@@ -6,11 +6,7 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotification
-import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotificationPriority
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformTask
-import me.emiliomini.dutyschedule.shared.mappings.NotificationChannelMapping
-import me.emiliomini.dutyschedule.shared.util.toInstant
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
@@ -20,7 +16,7 @@ class AndroidTaskSchedulerApi() : PlatformTaskSchedulerApi {
 
     override fun scheduleTask(task: MultiplatformTask) {
 
-        val workManager = WorkManager.getInstance(APPLICATION_CONTEXT);
+        val workManager = WorkManager.getInstance(APPLICATION_CONTEXT)
 
         val data = Data.Builder()
             .putString("task", task.name)

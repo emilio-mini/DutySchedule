@@ -19,6 +19,7 @@ import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotificationPri
 import me.emiliomini.dutyschedule.shared.api.notifications.NotificationActionReceiver
 import me.emiliomini.dutyschedule.shared.api.notifications.NotificationActionRegistry
 import me.emiliomini.dutyschedule.shared.mappings.NotificationChannelMapping
+import kotlin.time.Duration.Companion.days
 import kotlin.time.ExperimentalTime
 
 
@@ -63,7 +64,7 @@ class AndroidNotificationApi : PlatformNotificationApi {
 
             val nextAlarm = getPlatformAlarmApi().getNextAlarm()?.toEpochMilliseconds()
 
-            if (nextAlarm != null) {
+            if (nextAlarm != null && nextAlarm <= System.currentTimeMillis() + 1.days.inWholeMilliseconds) {
                 notificationBuilder
                     .setUsesChronometer(true)
                     .setChronometerCountDown(true)

@@ -42,6 +42,7 @@ import dutyschedule.shared.generated.resources.main_dashboard_section_upcoming_t
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.shared.debug.DebugFlags
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
+import me.emiliomini.dutyschedule.shared.services.prep.demo.DemoService
 import me.emiliomini.dutyschedule.shared.services.prep.live.PrepService
 import me.emiliomini.dutyschedule.shared.services.scaffold.Action
 import me.emiliomini.dutyschedule.shared.services.scaffold.ScaffoldService
@@ -203,6 +204,7 @@ fun DashboardScreen(
                     key = { _, duty -> duty.guid }) { index, duty ->
                     MinimalDutyCard(
                         duty = duty,
+                        demo = DutyScheduleService === DemoService,
                         type = if (index == 0 && upcomingDuties.minimalDutyDefinitions.size == 1) CardListItemType.SINGLE else if (index == 0) CardListItemType.TOP else if (index == upcomingDuties.minimalDutyDefinitions.size - 1) CardListItemType.BOTTOM else CardListItemType.DEFAULT,
                         snackbarHostState = snackbarHostState
                     )
