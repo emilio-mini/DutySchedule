@@ -7,7 +7,7 @@ import androidx.compose.ui.graphics.Color
 
 private val Red = Color(0xFFD32F2F)
 
-internal val LightColorScheme = lightColorScheme(
+val DutyScheduleLightColorScheme = lightColorScheme(
     primary = Red,
     onPrimary = Color.White,
     primaryContainer = Color(0xFFFFDAD4),
@@ -33,7 +33,7 @@ internal val LightColorScheme = lightColorScheme(
     outline = Color(0xFF857370)
 )
 
-internal val DarkColorScheme = darkColorScheme(
+val DutyScheduleDarkColorScheme = darkColorScheme(
     primary = Color(0xFFFFB4A8),
     onPrimary = Color(0xFF690000),
     primaryContainer = Color(0xFF930000),

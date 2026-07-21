@@ -15,6 +15,7 @@ import me.emiliomini.dutyschedule.shared.api.getPlatformTaskSchedulerApi
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformTask
 import me.emiliomini.dutyschedule.shared.services.network.NetworkService
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
+import me.emiliomini.dutyschedule.shared.services.prep.live.PrepService
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.main.screens.LoadingScreen
 import me.emiliomini.dutyschedule.shared.ui.theme.DutyScheduleTheme
@@ -41,7 +42,7 @@ fun DutyScheduleApp(composableLoadActions: @Composable () -> Unit) {
     LaunchedEffect(Unit) {
         while (true) {
             delay(300_000L)
-            if (DutyScheduleService.isLoggedIn) {
+            if (DutyScheduleService.isLoggedIn && DutyScheduleService === PrepService) {
                 NetworkService.keepAlive()
             }
         }
@@ -67,7 +68,7 @@ fun DutyScheduleApp(composableLoadActions: @Composable () -> Unit) {
 
         if (!DutyScheduleService.isLoggedIn && !previouslyLoggedIn) {
             DutyScheduleTheme(themeMode = themeMode, dynamicColor = dynamicColor) {
-                Onboarding()
+                Onboarding(onDemoActivated = { loaded = false })
             }
         } else {
             if (!DutyScheduleService.isLoggedIn) {

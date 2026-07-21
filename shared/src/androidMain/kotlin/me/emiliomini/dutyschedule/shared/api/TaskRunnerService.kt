@@ -7,7 +7,9 @@ import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotification
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotificationPriority
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformTask
 import me.emiliomini.dutyschedule.shared.mappings.NotificationChannelMapping
+import me.emiliomini.dutyschedule.shared.mappings.NotificationIds
 import me.emiliomini.dutyschedule.shared.services.AlarmService
+import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import java.util.Calendar
 
 class TaskRunnerService(ctx: Context, params: WorkerParameters): CoroutineWorker(ctx, params) {
@@ -17,9 +19,10 @@ class TaskRunnerService(ctx: Context, params: WorkerParameters): CoroutineWorker
         when(task){
             MultiplatformTask.UpdateAlarms -> {
                 APPLICATION_CONTEXT = this.applicationContext;
+                StorageService.initialize()
                 AlarmService.fetchAlarms()
 
-                val notification = MultiplatformNotification(37, NotificationChannelMapping.ALARMS,
+                val notification = MultiplatformNotification(NotificationIds.DUTY_UPDATE, NotificationChannelMapping.ALARMS,
                     MultiplatformNotificationPriority.NORMAL, "Duty Update", "Updated Duties at ${Calendar.getInstance().time}") // TODO Internationalize
                 val notificationApi = getPlatformNotificationApi() as AndroidNotificationApi
                 notificationApi.send(notification)

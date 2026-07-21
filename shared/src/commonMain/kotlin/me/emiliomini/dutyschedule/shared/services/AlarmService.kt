@@ -1,6 +1,5 @@
 package me.emiliomini.dutyschedule.shared.services
 
-import com.mohamedrejeb.calf.permissions.Permission
 import dutyschedule.shared.generated.resources.Res
 import dutyschedule.shared.generated.resources.error_permissions_missing_alarm
 import dutyschedule.shared.generated.resources.error_permissions_missing_alarm_and_notification
@@ -31,6 +30,9 @@ object AlarmService {
                 getPlatformAlarmApi().cancelAlarm(alarm.guid)
                 StorageService.ALARM_ITEMS.update {
                     val index = it.alarms.indexOfFirst { it.guid == alarm.guid }
+                    if (index == -1) {
+                        return@update it
+                    }
                     val oldAlarm = it.alarms[index]
                     val newDuties = it.alarms.toMutableList()
                     newDuties[index] = oldAlarm.copy(edited = true)
@@ -88,7 +90,6 @@ object AlarmService {
     }
 
     suspend fun cancelAllUneditedAlarms() {
-
         StorageService.USER_PREFERENCES.update {
             it.copy(autoSetAlarms = false)
         }
@@ -105,13 +106,10 @@ object AlarmService {
 
         alarms.update {
             it.copy(
-                alarms = it.alarms.filter {
-                    return@filter it.edited
-                }
+                alarms = it.alarms.filter { alarm -> alarm.edited }
             )
         }
         NotificationService.sendInfoNotification()
-        
     }
 
     suspend fun removeAlarm(guid: String) {
@@ -124,14 +122,8 @@ object AlarmService {
     }
 
     suspend fun fetchAlarms() {
-        // val oldDuties = StorageService.UPCOMING_DUTIES.get()?.minimalDutyDefinitions
-
+        DutyScheduleService.restoreLogin()
         DutyScheduleService.loadUpcoming()
-
-        // val updatedDuties = StorageService.UPCOMING_DUTIES.get()?.minimalDutyDefinitions
-
-
-
     }
 
     @OptIn(ExperimentalTime::class)
@@ -157,9 +149,12 @@ object AlarmService {
             oldDutyGuids.forEach { removeAlarm(it) }
         } else {
             alarms?.forEach { oldAlarm ->
+                if (!oldAlarm.active)
+                    return@forEach
+
                 val new = newDuties.firstOrNull{it.guid == oldAlarm.guid} ?: return@forEach
 
-                if (new.begin.toInstant() < Clock.System.now() || (oldAlarm.edited && !oldAlarm.active))
+                if (new.begin.toEpochMilliseconds() - alarmOffsetMillis < Clock.System.now().toEpochMilliseconds() || (oldAlarm.edited && !oldAlarm.active))
                     return@forEach
 
                 setAlarm(new, onError ?: { })

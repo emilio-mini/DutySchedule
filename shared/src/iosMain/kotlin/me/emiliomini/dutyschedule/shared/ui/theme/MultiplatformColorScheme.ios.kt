@@ -5,5 +5,5 @@ import androidx.compose.material3.ColorScheme
 actual fun isDynamicColorSupported(): Boolean = false
 
 actual fun platformColorScheme(darkTheme: Boolean, dynamicColor: Boolean): ColorScheme {
-    return if (darkTheme) DarkColorScheme else LightColorScheme
+    return if (darkTheme) DutyScheduleDarkColorScheme else DutyScheduleLightColorScheme
 }

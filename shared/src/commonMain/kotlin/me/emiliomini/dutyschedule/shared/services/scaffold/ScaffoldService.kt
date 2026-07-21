@@ -23,11 +23,7 @@ object ScaffoldService {
     }
 
     fun setActionsForScreen(id: NavItemId, actions: List<Action>) {
-        if (!this.actionRegistry.containsKey(id)) {
-            this.actionRegistry[id] = actions
-        } else {
-            return
-        }
+        this.actionRegistry[id] = actions
 
         if (this.currentScreen == id) {
             this.actions = actions

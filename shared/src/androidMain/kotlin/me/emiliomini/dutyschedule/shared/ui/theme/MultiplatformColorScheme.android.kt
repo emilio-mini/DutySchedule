@@ -13,5 +13,5 @@ actual fun platformColorScheme(darkTheme: Boolean, dynamicColor: Boolean): Color
         return if (darkTheme) dynamicDarkColorScheme(APPLICATION_CONTEXT)
         else dynamicLightColorScheme(APPLICATION_CONTEXT)
     }
-    return if (darkTheme) DarkColorScheme else LightColorScheme
+    return if (darkTheme) DutyScheduleDarkColorScheme else DutyScheduleLightColorScheme
 }

@@ -19,6 +19,7 @@ import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotificationPri
 import me.emiliomini.dutyschedule.shared.api.notifications.NotificationActionReceiver
 import me.emiliomini.dutyschedule.shared.api.notifications.NotificationActionRegistry
 import me.emiliomini.dutyschedule.shared.mappings.NotificationChannelMapping
+import kotlin.time.Duration.Companion.days
 import kotlin.time.ExperimentalTime
 
 
@@ -26,17 +27,10 @@ class AndroidNotificationApi : PlatformNotificationApi {
     private var manager: NotificationManager? = null
     private val logger = getPlatformLogger("AndroidAlarmApi")
     override fun requestPermission(): Boolean {
-//        if (!isPermissionGranted()){
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-//                ActivityCompat.requestPermissions(
-//                    null,
-//                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-//                    0
-//                )
-//            }
-//            return isPermissionGranted()
-//        } else return true
-        return true // TODO: Find a way to request the POST_NOTIFICATIONS permission
+        // The actual system permission prompt is requested through the Compose-level
+        // onboarding flow (which has an Activity to prompt from); this Context-scoped API
+        // can only report the current state, not request it.
+        return isPermissionGranted()
     }
 
     override fun isPermissionGranted(): Boolean {
@@ -63,7 +57,7 @@ class AndroidNotificationApi : PlatformNotificationApi {
 
             val nextAlarm = getPlatformAlarmApi().getNextAlarm()?.toEpochMilliseconds()
 
-            if (nextAlarm != null) {
+            if (nextAlarm != null && nextAlarm <= System.currentTimeMillis() + 1.days.inWholeMilliseconds) {
                 notificationBuilder
                     .setUsesChronometer(true)
                     .setChronometerCountDown(true)

@@ -22,6 +22,8 @@ kotlin {
         experimentalProperties["android.experimental.kmp.enableAndroidResources"] = true
 
         withHostTestBuilder {
+        }.configure {
+            isReturnDefaultValues = true
         }
 
         withDeviceTestBuilder {
