@@ -31,6 +31,7 @@ import me.emiliomini.dutyschedule.shared.datastores.Requirement
 import me.emiliomini.dutyschedule.shared.datastores.Slot
 import me.emiliomini.dutyschedule.shared.datastores.Statistics
 import me.emiliomini.dutyschedule.shared.datastores.UpcomingDutyItems
+import me.emiliomini.dutyschedule.shared.datastores.YearlyDutyItems
 import me.emiliomini.dutyschedule.shared.mappings.MappedSkills
 import me.emiliomini.dutyschedule.shared.mappings.RequirementMapping
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
@@ -250,25 +251,36 @@ object DemoService : DutyScheduleServiceBase {
         ensureGenerated()
         val intYear = year.toIntOrNull() ?: return emptyList()
         val now = Clock.System.now()
-        return selfDuties()
+        val duties = selfDuties()
             .filter { it.definition.begin.toInstant() < now }
             .filter { it.definition.begin.toInstant().toLocalDateTime(zone).year == intYear }
             .sortedByDescending { it.definition.begin.toInstant() }
             .map { it.toMinimal() }
+
+        StorageService.PAST_DUTIES.update {
+            it.copy(years = it.years + (intYear to YearlyDutyItems(duties, intYear)))
+        }
+
+        return duties
     }
 
     override suspend fun loadHoursOfService(year: String): Float {
         val minutesServed = loadPast(year).sumOf { it.duration }
+        StorageService.STATISTICS.update { Statistics(minutesServed = minutesServed) }
         return minutesServed / 60f
     }
 
     override suspend fun loadUpcoming(): List<MinimalDutyDefinition> {
         ensureGenerated()
         val now = Clock.System.now()
-        return selfDuties()
+        val upcoming = selfDuties()
             .filter { it.definition.begin.toInstant() >= now }
             .sortedBy { it.definition.begin.toInstant() }
             .map { it.toMinimal() }
+
+        StorageService.UPCOMING_DUTIES.update { UpcomingDutyItems(minimalDutyDefinitions = upcoming) }
+
+        return upcoming
     }
 
     override suspend fun loadMessages(
@@ -366,6 +378,65 @@ object DemoService : DutyScheduleServiceBase {
             dutiesByGuid[generatedDuty.definition.guid] = generatedDuty
             generatedDuty.definition.slots.forEach { dutyGuidBySlotGuid[it.guid] = generatedDuty.definition.guid }
         }
+
+        val alarmTestDuty = buildAlarmTestDuty(Clock.System.now())
+        dutiesByGuid[alarmTestDuty.definition.guid] = alarmTestDuty
+        alarmTestDuty.definition.slots.forEach { dutyGuidBySlotGuid[it.guid] = alarmTestDuty.definition.guid }
+    }
+
+    // Starts shortly after the default 90 minute alarm offset, so toggling its alarm (or enabling
+    // "Automatisch Alarme setzen") fires within minutes instead of requiring a real duty hours out.
+    private fun buildAlarmTestDuty(now: Instant): GeneratedDuty {
+        val begin = now.plus(100, DateTimeUnit.MINUTE)
+        val end = begin.plus(12, DateTimeUnit.HOUR)
+        val dutyGuid = "demo-duty-alarm-test"
+        val vehicleCallSign = "RTB Musterstadt 1"
+        val driver = colleagues[0]
+        val teammate = colleagues[2]
+
+        val slots = listOf(
+            Slot(
+                guid = "$dutyGuid-vehicle",
+                employeeGuid = vehicleCallSign,
+                requirement = Requirement(RequirementMapping.RTW.value),
+                begin = begin.toTimestamp(),
+                end = end.toTimestamp(),
+                inlineEmployee = Employee(guid = vehicleCallSign, name = vehicleCallSign)
+            ),
+            Slot(
+                guid = "$dutyGuid-driver",
+                employeeGuid = driver.guid,
+                requirement = Requirement(RequirementMapping.EL.value),
+                begin = begin.toTimestamp(),
+                end = end.toTimestamp(),
+                inlineEmployee = driver
+            ),
+            Slot(
+                guid = "$dutyGuid-passenger",
+                employeeGuid = selfEmployee.guid,
+                requirement = Requirement(RequirementMapping.RTW_NFS.value),
+                begin = begin.toTimestamp(),
+                end = end.toTimestamp(),
+                inlineEmployee = selfEmployee
+            ),
+            Slot(
+                guid = "$dutyGuid-teammate",
+                employeeGuid = teammate.guid,
+                requirement = Requirement(RequirementMapping.RTW_RS.value),
+                begin = begin.toTimestamp(),
+                end = end.toTimestamp(),
+                inlineEmployee = teammate
+            )
+        )
+
+        val definition = DutyDefinition(
+            guid = dutyGuid,
+            begin = begin.toTimestamp(),
+            end = end.toTimestamp(),
+            slots = slots
+        )
+
+        return GeneratedDuty(definition, DutyType.EMS, "[ RTW ]")
     }
 
     private fun buildEmsDuty(
@@ -511,11 +582,8 @@ object DemoService : DutyScheduleServiceBase {
         }
         StorageService.EMPLOYEES.update { EmployeeItems(employees = employeesByGuid) }
 
-        val upcoming = loadUpcoming()
-        StorageService.UPCOMING_DUTIES.update { UpcomingDutyItems(minimalDutyDefinitions = upcoming) }
-
+        loadUpcoming()
         val currentYear = Clock.System.now().toLocalDateTime(zone).year.toString()
-        val minutesServed = loadPast(currentYear).sumOf { it.duration }
-        StorageService.STATISTICS.update { Statistics(minutesServed = minutesServed) }
+        loadHoursOfService(currentYear)
     }
 }
