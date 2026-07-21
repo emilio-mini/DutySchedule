@@ -54,6 +54,7 @@ import dutyschedule.shared.generated.resources.main_settings_section_background
 import dutyschedule.shared.generated.resources.main_settings_section_notifications
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.shared.api.getPlatformTaskSchedulerApi
+import me.emiliomini.dutyschedule.shared.api.getPlatformWidgetApi
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformTask
 import me.emiliomini.dutyschedule.shared.services.AlarmService
 import me.emiliomini.dutyschedule.shared.services.NotificationService
@@ -287,6 +288,7 @@ fun SettingsScreen(
                                                 StorageService.USER_PREFERENCES.update {
                                                     it.copy(colorPreset = preset.id)
                                                 }
+                                                getPlatformWidgetApi().refreshWidgets()
                                             }
                                         }
                                     )
@@ -317,6 +319,7 @@ fun SettingsScreen(
                                             StorageService.USER_PREFERENCES.update {
                                                 it.copy(themeMode = index)
                                             }
+                                            getPlatformWidgetApi().refreshWidgets()
                                         }
                                     },
                                     shape = SegmentedButtonDefaults.itemShape(
