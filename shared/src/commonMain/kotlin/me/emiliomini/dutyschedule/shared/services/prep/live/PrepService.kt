@@ -70,7 +70,7 @@ object PrepService : DutyScheduleServiceBase {
 
     init {
         getPlatformConnectivityApi().isConnected.onEach { status ->
-            if (status && !isRestoringLogin) {
+            if (status && !isRestoringLogin && !isLoggedIn) {
                 this.restoreLogin()
             }
         }.launchIn(scope)
@@ -147,7 +147,7 @@ object PrepService : DutyScheduleServiceBase {
             } else {
                 logger.w("Could not load allowed orgs")
             }
-        } catch (e: Error) {
+        } catch (e: Exception) {
             logger.e("${e.message}")
         }
 
@@ -223,6 +223,7 @@ object PrepService : DutyScheduleServiceBase {
     override suspend fun logout() {
         this.incode = null
         this.self = null
+        this.isLoggedIn = false
         StorageService.clear()
     }
 
@@ -322,8 +323,9 @@ object PrepService : DutyScheduleServiceBase {
         if (!this.isLoggedIn) {
             return Pair(emptyList(), emptyMap())
         }
+        val code = incode ?: return Pair(emptyList(), emptyMap())
 
-        val planBody = NetworkService.loadPlan(incode!!, orgUnitDataGuid, from, to)?.bodyAsText()
+        val planBody = NetworkService.loadPlan(code, orgUnitDataGuid, from, to)?.bodyAsText()
         if (planBody.isNullOrBlank()) {
             return Pair(emptyList(), emptyMap())
         }
@@ -347,8 +349,9 @@ object PrepService : DutyScheduleServiceBase {
         if (!this.isLoggedIn) {
             return emptyList()
         }
+        val code = incode ?: return emptyList()
 
-        val staffBody = NetworkService.getStaff(incode!!, orgUnitDataGuid, staffDataGuid, from, to)
+        val staffBody = NetworkService.getStaff(code, orgUnitDataGuid, staffDataGuid, from, to)
             ?.bodyAsText()
         if (staffBody.isNullOrBlank()) {
             return emptyList()
@@ -453,13 +456,14 @@ object PrepService : DutyScheduleServiceBase {
     }
 
     override suspend fun loadPast(year: String): List<MinimalDutyDefinition> {
-        val intYear = year.toInt()
+        val intYear = year.toIntOrNull() ?: return emptyList()
         val localPast = StorageService.PAST_DUTIES.get()
         if (localPast != null && localPast.years.containsKey(intYear) && !isLoggedIn) {
             return localPast.years[intYear]!!.minimalDutyDefinitions
         }
+        val code = incode ?: return emptyList()
 
-        val pastResponse = NetworkService.loadPast(incode!!, year)?.bodyAsText()
+        val pastResponse = NetworkService.loadPast(code, year)?.bodyAsText()
         if (pastResponse.isNullOrBlank()) {
             return emptyList()
         }
@@ -542,9 +546,10 @@ object PrepService : DutyScheduleServiceBase {
         if (!isLoggedIn) {
             return emptyList()
         }
+        val code = incode ?: return emptyList()
 
         val messagesResponse =
-            NetworkService.getMessages(incode!!, orgUnitDataGuid, from, to)?.bodyAsText()
+            NetworkService.getMessages(code, orgUnitDataGuid, from, to)?.bodyAsText()
         if (messagesResponse.isNullOrBlank()) {
             return emptyList()
         }
