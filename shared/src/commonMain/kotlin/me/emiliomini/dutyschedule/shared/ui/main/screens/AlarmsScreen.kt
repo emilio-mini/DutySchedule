@@ -111,15 +111,12 @@ fun AlarmsScreen(
                         blocked = true
                         autoSetAll = !autoSetAll
                         scope.launch {
-                            try {
-                                if (autoSetAll){
-                                    AlarmService.setAllAlarms(onError)
-                                } else {
-                                    AlarmService.cancelAllUneditedAlarms()
-                                }
-                            } finally {
-                                blocked = false
+                            if (autoSetAll){
+                                AlarmService.setAllAlarms(onError)
+                            } else {
+                                AlarmService.cancelAllUneditedAlarms()
                             }
+                            blocked = false
                         }
                     }.background(
                         color = MaterialTheme.colorScheme.surfaceContainerHighest,
@@ -237,11 +234,8 @@ fun AlarmsScreen(
                                     onDismiss = {
                                         scope.launch {
                                             blocked = true
-                                            try {
-                                                AlarmService.removeAlarm(alarm.guid)
-                                            } finally {
-                                                blocked = false
-                                            }
+                                            AlarmService.removeAlarm(alarm.guid)
+                                            blocked = false
                                         }
                                     }) {
                                     ListItem(
@@ -264,11 +258,8 @@ fun AlarmsScreen(
                                                 active = !active
 
                                                 scope.launch {
-                                                    try {
-                                                        AlarmService.updateAlarm(alarm, active, onError)
-                                                    } finally {
-                                                        blocked = false
-                                                    }
+                                                    AlarmService.updateAlarm(alarm, active, onError)
+                                                    blocked = false
                                                 }
                                             }), colors = ListItemDefaults.colors(
                                             containerColor = Color.Transparent
@@ -302,11 +293,8 @@ fun AlarmsScreen(
                                                 active = !active
 
                                                 scope.launch {
-                                                    try {
-                                                        AlarmService.updateAlarm(alarm, active, onError)
-                                                    } finally {
-                                                        blocked = false
-                                                    }
+                                                    AlarmService.updateAlarm(alarm, active, onError)
+                                                    blocked = false
                                                 }
                                             })
                                         })

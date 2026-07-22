@@ -108,7 +108,7 @@ object PrepService : DutyScheduleServiceBase {
         }
 
         val incode = DataExtractorService.extractIncode(responseBody)
-        logger.d("Extracted incode ${incode?.token}:****${incode?.value?.takeLast(4)} from response")
+        logger.d("Extracted incode ${incode?.token}:${incode?.value?.dropLast(4)}**** from response")
 
         if (incode != null) {
             this.incode = incode
@@ -420,32 +420,38 @@ object PrepService : DutyScheduleServiceBase {
             logger.w("HÄND-Augmentierung fehlgeschlagen: ${e.message}")
         }
 
-        val dayShiftsByDate = mutableMapOf<String, MutableList<DutyDefinition>>()
-        val nightShiftsByDate = mutableMapOf<String, MutableList<DutyDefinition>>()
-        val firstDutyByDate = mutableMapOf<String, DutyDefinition>()
+        val days = mutableMapOf<String, OrgDay>()
         for (duty in duties) {
             val date = duty.begin.format("yyyy-MM-dd")
-            firstDutyByDate.getOrPut(date) { duty }
+            val day = days.getOrElse(date) {
+                OrgDay(orgUnitDataGuid, duty.begin)
+            }
 
             if (duty.isNightShift()) {
-                nightShiftsByDate.getOrPut(date) { mutableListOf() }.add(duty)
+                days[date] = day.copy(
+                    groups = listOf(*day.groups.toTypedArray(), *groups.values.toTypedArray()),
+                    nightShifts = listOf(*day.nightShifts.toTypedArray(), duty)
+                )
             } else {
-                dayShiftsByDate.getOrPut(date) { mutableListOf() }.add(duty)
+                days[date] = day.copy(
+                    groups = listOf(*day.groups.toTypedArray(), *groups.values.toTypedArray()),
+                    dayShifts = listOf(*day.dayShifts.toTypedArray(), duty)
+                )
             }
         }
 
-        val groupsList = groups.values.toList()
-        val daysList = firstDutyByDate.map { (date, firstDuty) ->
-            OrgDay(
-                orgUnitDataGuid,
-                firstDuty.begin,
-                groups = groupsList,
-                dayShifts = dayShiftsByDate[date].orEmpty().sortedWith(DutyDefinitionComparator),
-                nightShifts = nightShiftsByDate[date].orEmpty().sortedWith(DutyDefinitionComparator)
+        var daysList = days.values.toList()
+        daysList = daysList.map {
+            val dayShifts = it.dayShifts.sortedWith(DutyDefinitionComparator)
+            val nightShifts = it.nightShifts.sortedWith(DutyDefinitionComparator)
+
+            it.copy(
+                dayShifts = dayShifts,
+                nightShifts = nightShifts
             )
         }
 
-        logger.d("Loaded ${daysList.size} days on the timeline")
+        logger.d("Loaded ${days.size} days on the timeline")
         return daysList
     }
 
@@ -637,8 +643,8 @@ object PrepService : DutyScheduleServiceBase {
                     identifier = "Dr."
                 )
 
-                mutableDuties[i] = mutableDuties[i].copy(
-                    slots = mutableDuties[i].slots.toMutableList().let {
+                mutableDuties[i] = duty.copy(
+                    slots = duty.slots.toMutableList().let {
                         it.add(
                             min(2, it.size - 1),
                             Slot(

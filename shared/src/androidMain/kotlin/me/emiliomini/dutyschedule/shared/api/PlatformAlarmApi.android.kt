@@ -98,7 +98,7 @@ class AndroidAlarmApi : PlatformAlarmApi {
         val alarmManager =
             APPLICATION_CONTEXT.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val alarmIntent = Intent(APPLICATION_CONTEXT, AlarmReceiver::class.java)
-        alarmIntent.putExtra("guid", guid)
+        alarmIntent.extras?.putString("guid", guid)
         val pendingAlarmIntent = PendingIntent.getBroadcast(
             APPLICATION_CONTEXT,
             id,

@@ -215,7 +215,7 @@ object NetworkService {
         to: Instant
     ): HttpResponse? {
         if (incode.isInvalid()) {
-            logger.error("getStaff: Invalid incode")
+            logger.error("loadPast: Invalid incode")
             return null
         }
 
@@ -263,7 +263,7 @@ object NetworkService {
         planDataGuid: String
     ): HttpResponse? {
         if (incode.isInvalid()) {
-            logger.error("createAndAllocateDuty: Invalid incode")
+            logger.error("loadPast: Invalid incode")
             return null
         }
 

@@ -64,6 +64,7 @@ class MultiplatformDataStore<T : MultiplatformDataModel>(
 
     suspend fun clear() {
         dataFlow.update { defaultValue }
+        lastUpdated = null
         onUpdate(this, null)
     }
 
