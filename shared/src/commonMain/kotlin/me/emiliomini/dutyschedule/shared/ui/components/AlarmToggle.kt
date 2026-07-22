@@ -41,33 +41,28 @@ fun AlarmToggle(modifier: Modifier = Modifier, dutyBegin: Instant, guid: String,
                 alarmBlocked = true
                 if (alarmSet) {
                     scope.launch {
-                        try {
-                            getPlatformAlarmApi().cancelAlarm(guid)
-                            alarmSet = false
-                        } finally {
-                            alarmBlocked = false
-                        }
+                        getPlatformAlarmApi().cancelAlarm(guid)
+
+                        alarmSet = false
+                        alarmBlocked = false
                     }
                 } else {
                     scope.launch {
-                        try {
-                            val alarmOffset =
-                                StorageService.USER_PREFERENCES.getOrDefault().alarmOffsetMin
-                            val alarmOffsetMillis = alarmOffset * 60_000L
+                        val alarmOffset =
+                            StorageService.USER_PREFERENCES.getOrDefault().alarmOffsetMin
+                        val alarmOffsetMillis = alarmOffset * 60_000L
 
-                            val timestamp = dutyBeginMillis - alarmOffsetMillis
-                            AlarmService.setAlarm(
-                                guid,
-                                Instant.fromEpochMilliseconds(timestamp),
-                                onError = {
-                                    snackbarHostState.showSnackbar(it)
-                                },
-                                edited = true
-                            )
-                            alarmSet = true
-                        } finally {
-                            alarmBlocked = false
-                        }
+                        val timestamp = dutyBeginMillis - alarmOffsetMillis
+                        AlarmService.setAlarm(
+                            guid,
+                            Instant.fromEpochMilliseconds(timestamp),
+                            onError = {
+                                snackbarHostState.showSnackbar(it)
+                            },
+                            edited = true
+                        )
+                        alarmBlocked = false
+                        alarmSet = true
                     }
                 }
             }, enabled = !alarmBlocked

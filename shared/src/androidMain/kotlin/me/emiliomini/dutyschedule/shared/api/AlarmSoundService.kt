@@ -30,7 +30,7 @@ class AlarmSoundService : Service() {
 
     private val serviceJob = SupervisorJob()
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
-    private var ringtonePlayer: Ringtone? = null
+    private lateinit var ringtonePlayer: Ringtone
 
     companion object {
         const val ACTION_STOP_SOUND = "me.emiliomini.dutyschedule.services.alarm.ACTION_STOP_SOUND"
@@ -45,9 +45,9 @@ class AlarmSoundService : Service() {
         APPLICATION_CONTEXT = this.applicationContext
 
         val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-        ringtonePlayer = alarmUri?.let { RingtoneManager.getRingtone(this, it) }
+        ringtonePlayer = RingtoneManager.getRingtone(this, alarmUri)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            ringtonePlayer?.isLooping = true
+            ringtonePlayer.isLooping = true
         }
     }
 
@@ -63,10 +63,10 @@ class AlarmSoundService : Service() {
 
         val notification = createNotification()
         startForeground(1, notification)
-        ringtonePlayer?.audioAttributes = AudioAttributes.Builder()
+        ringtonePlayer.audioAttributes = AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_ALARM)
             .build()
-        ringtonePlayer?.play()
+        ringtonePlayer.play()
         serviceScope.launch {
             PrepService.loadUpcoming()
         }
@@ -76,9 +76,9 @@ class AlarmSoundService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        ringtonePlayer?.let {
-            if (it.isPlaying) {
-                it.stop()
+        if (::ringtonePlayer.isInitialized) {
+            if (ringtonePlayer.isPlaying) {
+                ringtonePlayer.stop()
             }
         }
         serviceScope.cancel()

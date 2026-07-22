@@ -10,7 +10,6 @@ import me.emiliomini.dutyschedule.shared.api.getPlatformNotificationApi
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotification
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotificationPriority
 import me.emiliomini.dutyschedule.shared.mappings.NotificationChannelMapping
-import me.emiliomini.dutyschedule.shared.mappings.NotificationIds
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.util.format
 import me.emiliomini.dutyschedule.shared.util.toInstant
@@ -50,7 +49,7 @@ object NotificationService {
         }
 
         val notification = MultiplatformNotification(
-            NotificationIds.PERMANENT_INFO,
+            37,
             NotificationChannelMapping.PERMANENT_INFO,
             MultiplatformNotificationPriority.LOW,
             "Duty Info",

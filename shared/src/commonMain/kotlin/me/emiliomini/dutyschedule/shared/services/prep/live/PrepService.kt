@@ -70,7 +70,7 @@ object PrepService : DutyScheduleServiceBase {
 
     init {
         getPlatformConnectivityApi().isConnected.onEach { status ->
-            if (status && !isRestoringLogin && !isLoggedIn) {
+            if (status && !isRestoringLogin) {
                 this.restoreLogin()
             }
         }.launchIn(scope)
@@ -108,7 +108,7 @@ object PrepService : DutyScheduleServiceBase {
         }
 
         val incode = DataExtractorService.extractIncode(responseBody)
-        logger.d("Extracted incode ${incode?.token}:****${incode?.value?.takeLast(4)} from response")
+        logger.d("Extracted incode ${incode?.token}:${incode?.value?.dropLast(4)}**** from response")
 
         if (incode != null) {
             this.incode = incode
@@ -147,7 +147,7 @@ object PrepService : DutyScheduleServiceBase {
             } else {
                 logger.w("Could not load allowed orgs")
             }
-        } catch (e: Exception) {
+        } catch (e: Error) {
             logger.e("${e.message}")
         }
 
@@ -223,7 +223,6 @@ object PrepService : DutyScheduleServiceBase {
     override suspend fun logout() {
         this.incode = null
         this.self = null
-        this.isLoggedIn = false
         StorageService.clear()
     }
 
@@ -323,9 +322,8 @@ object PrepService : DutyScheduleServiceBase {
         if (!this.isLoggedIn) {
             return Pair(emptyList(), emptyMap())
         }
-        val code = incode ?: return Pair(emptyList(), emptyMap())
 
-        val planBody = NetworkService.loadPlan(code, orgUnitDataGuid, from, to)?.bodyAsText()
+        val planBody = NetworkService.loadPlan(incode!!, orgUnitDataGuid, from, to)?.bodyAsText()
         if (planBody.isNullOrBlank()) {
             return Pair(emptyList(), emptyMap())
         }
@@ -349,9 +347,8 @@ object PrepService : DutyScheduleServiceBase {
         if (!this.isLoggedIn) {
             return emptyList()
         }
-        val code = incode ?: return emptyList()
 
-        val staffBody = NetworkService.getStaff(code, orgUnitDataGuid, staffDataGuid, from, to)
+        val staffBody = NetworkService.getStaff(incode!!, orgUnitDataGuid, staffDataGuid, from, to)
             ?.bodyAsText()
         if (staffBody.isNullOrBlank()) {
             return emptyList()
@@ -420,44 +417,49 @@ object PrepService : DutyScheduleServiceBase {
             logger.w("HÄND-Augmentierung fehlgeschlagen: ${e.message}")
         }
 
-        val dayShiftsByDate = mutableMapOf<String, MutableList<DutyDefinition>>()
-        val nightShiftsByDate = mutableMapOf<String, MutableList<DutyDefinition>>()
-        val firstDutyByDate = mutableMapOf<String, DutyDefinition>()
+        val days = mutableMapOf<String, OrgDay>()
         for (duty in duties) {
             val date = duty.begin.format("yyyy-MM-dd")
-            firstDutyByDate.getOrPut(date) { duty }
+            val day = days.getOrElse(date) {
+                OrgDay(orgUnitDataGuid, duty.begin)
+            }
 
             if (duty.isNightShift()) {
-                nightShiftsByDate.getOrPut(date) { mutableListOf() }.add(duty)
+                days[date] = day.copy(
+                    groups = listOf(*day.groups.toTypedArray(), *groups.values.toTypedArray()),
+                    nightShifts = listOf(*day.nightShifts.toTypedArray(), duty)
+                )
             } else {
-                dayShiftsByDate.getOrPut(date) { mutableListOf() }.add(duty)
+                days[date] = day.copy(
+                    groups = listOf(*day.groups.toTypedArray(), *groups.values.toTypedArray()),
+                    dayShifts = listOf(*day.dayShifts.toTypedArray(), duty)
+                )
             }
         }
 
-        val groupsList = groups.values.toList()
-        val daysList = firstDutyByDate.map { (date, firstDuty) ->
-            OrgDay(
-                orgUnitDataGuid,
-                firstDuty.begin,
-                groups = groupsList,
-                dayShifts = dayShiftsByDate[date].orEmpty().sortedWith(DutyDefinitionComparator),
-                nightShifts = nightShiftsByDate[date].orEmpty().sortedWith(DutyDefinitionComparator)
+        var daysList = days.values.toList()
+        daysList = daysList.map {
+            val dayShifts = it.dayShifts.sortedWith(DutyDefinitionComparator)
+            val nightShifts = it.nightShifts.sortedWith(DutyDefinitionComparator)
+
+            it.copy(
+                dayShifts = dayShifts,
+                nightShifts = nightShifts
             )
         }
 
-        logger.d("Loaded ${daysList.size} days on the timeline")
+        logger.d("Loaded ${days.size} days on the timeline")
         return daysList
     }
 
     override suspend fun loadPast(year: String): List<MinimalDutyDefinition> {
-        val intYear = year.toIntOrNull() ?: return emptyList()
+        val intYear = year.toInt()
         val localPast = StorageService.PAST_DUTIES.get()
         if (localPast != null && localPast.years.containsKey(intYear) && !isLoggedIn) {
             return localPast.years[intYear]!!.minimalDutyDefinitions
         }
-        val code = incode ?: return emptyList()
 
-        val pastResponse = NetworkService.loadPast(code, year)?.bodyAsText()
+        val pastResponse = NetworkService.loadPast(incode!!, year)?.bodyAsText()
         if (pastResponse.isNullOrBlank()) {
             return emptyList()
         }
@@ -540,10 +542,9 @@ object PrepService : DutyScheduleServiceBase {
         if (!isLoggedIn) {
             return emptyList()
         }
-        val code = incode ?: return emptyList()
 
         val messagesResponse =
-            NetworkService.getMessages(code, orgUnitDataGuid, from, to)?.bodyAsText()
+            NetworkService.getMessages(incode!!, orgUnitDataGuid, from, to)?.bodyAsText()
         if (messagesResponse.isNullOrBlank()) {
             return emptyList()
         }
@@ -637,8 +638,8 @@ object PrepService : DutyScheduleServiceBase {
                     identifier = "Dr."
                 )
 
-                mutableDuties[i] = mutableDuties[i].copy(
-                    slots = mutableDuties[i].slots.toMutableList().let {
+                mutableDuties[i] = duty.copy(
+                    slots = duty.slots.toMutableList().let {
                         it.add(
                             min(2, it.size - 1),
                             Slot(
