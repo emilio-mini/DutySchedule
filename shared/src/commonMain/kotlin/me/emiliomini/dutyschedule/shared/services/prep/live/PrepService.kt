@@ -100,6 +100,8 @@ object PrepService : DutyScheduleServiceBase {
     // without taking the lock; a stale read costs at most one spinner frame.
     private var timelineCache: Map<TimelineKey, CachedTimeline> = emptyMap()
 
+    private var isRecoveringSession = false
+
     private var isRestoringLogin by mutableStateOf(false)
     override var isLoggedIn by mutableStateOf(false)
     override var self by mutableStateOf<Employee?>(null)
@@ -181,34 +183,30 @@ object PrepService : DutyScheduleServiceBase {
         }
         this.isLoggedIn = true
 
-        var orgs: OrgItems?
-        var allowedOrgs: List<String>? = null
         try {
-            orgs = this.loadOrgs()
-            if (orgs != null) {
-                logger.d("Loaded ${orgs.orgs.size} orgs")
-            } else {
-                logger.w("Could not load orgs")
-            }
+            val orgs = this.loadOrgs()
+            logger.d("Loaded ${orgs?.orgs?.size ?: 0} orgs")
+        } catch (e: Exception) {
+            logger.e("Could not load orgs", e)
+        }
 
-            allowedOrgs = this.loadAllowedOrgs()
-            if (allowedOrgs != null) {
-                logger.d("Loaded ${allowedOrgs.size} allowed orgs")
-            } else {
-                logger.w("Could not load allowed orgs")
-            }
-        } catch (e: Error) {
-            logger.e("${e.message}")
+        val allowedOrgs = try {
+            this.loadAllowedOrgs()
+        } catch (e: Exception) {
+            logger.e("Could not load allowed orgs", e)
+            null
         }
 
         val guid = DataExtractorService.extractGUID(responseBody)
         logger.d("Extracted self guid: $guid")
-        if (guid != null && allowedOrgs != null) {
+        if (guid != null && !allowedOrgs.isNullOrEmpty()) {
             this.self = loadSelf(guid, allowedOrgs.first())
             logger.d("Loaded self identity")
         } else {
-            logger.w("Could not find self dataGuid in response body")
+            logger.w("Could not load self identity yet")
         }
+
+        ensureSessionData()
 
         return true
     }
@@ -333,8 +331,18 @@ object PrepService : DutyScheduleServiceBase {
 
             val jsonStart = orgTreeBody.indexOf('{')
             val jsonEnd = orgTreeBody.lastIndexOf('}')
+            if (jsonStart == -1 || jsonEnd <= jsonStart) {
+                logger.e("Failed to load orgs - org tree body is not JSON")
+                return null
+            }
+
             val orgTreeJson = orgTreeBody.substring(jsonStart, jsonEnd + 1)
-            val orgItems = DataParserService.parseOrgTree(Json.parseToJsonElement(orgTreeJson))
+            val orgItems = try {
+                DataParserService.parseOrgTree(Json.parseToJsonElement(orgTreeJson))
+            } catch (e: IllegalArgumentException) {
+                logger.e("Failed to load orgs - invalid org tree JSON", e)
+                return null
+            }
             if (orgItems == null) {
                 logger.e("Failed to load orgs - invalid org tree")
                 return null
@@ -355,7 +363,13 @@ object PrepService : DutyScheduleServiceBase {
             return null
         }
 
-        val allowedOrgs = DataExtractorService.extractAllowedOrgs(dispoBody) ?: return null
+        val allowedOrgs = DataExtractorService.extractAllowedOrgs(dispoBody)
+            ?.filter { it.isNotBlank() }
+        if (allowedOrgs.isNullOrEmpty()) {
+            logger.e("Failed to load allowed orgs - none found in dispo body")
+            return null
+        }
+
         StorageService.USER_PREFERENCES.update {
             it.copy(allowedOrgs = allowedOrgs)
         }
@@ -685,7 +699,7 @@ object PrepService : DutyScheduleServiceBase {
                 minimalDutyDefinitions = upcomingDuties
             )
         }
-        refreshSelfIfStale()
+        ensureSessionData()
 
         return upcomingDuties
     }
@@ -780,28 +794,57 @@ object PrepService : DutyScheduleServiceBase {
     }
 
     /**
-     * Keeps the stored identity current. Own qualifications gate which slots may be self assigned,
-     * so a record frozen at first login keeps handing out the wrong answer
+     * Fills in whatever login did not manage to load, and refreshes the stored identity once it is
+     * stale. Own qualifications gate which slots may be self assigned, so an identity frozen at
+     * first login keeps handing out the wrong answer - and a missing one leaves the avatar and the
+     * station list empty until the app is restarted
      */
-    private fun refreshSelfIfStale() {
-        val current = this.self ?: return
-        if (current.refreshedAt?.toInstant().withinLast(EMPLOYEE_MAX_AGE)) {
-            return
-        }
-
+    private fun ensureSessionData() {
         scope.launch {
-            val org = StorageService.USER_PREFERENCES.get()?.allowedOrgs?.firstOrNull()
-                ?: current.defaultOrg
-                ?: return@launch
+            if (!isLoggedIn || isRecoveringSession) {
+                return@launch
+            }
 
-            val now = Clock.System.now()
-            val refreshed = getStaff(org, listOf(current.guid), now, now)
-                .firstOrNull { it.guid == current.guid } ?: return@launch
+            isRecoveringSession = true
+            try {
+                loadOrgs()
 
-            self = refreshed
-            StorageService.SELF.update { refreshed }
-            logger.d("Refreshed own identity")
+                val stored = StorageService.USER_PREFERENCES.get()?.allowedOrgs.orEmpty()
+                val allowedOrgs = stored.ifEmpty { loadAllowedOrgs().orEmpty() }
+                if (allowedOrgs.isEmpty()) {
+                    logger.w("Session still has no allowed orgs")
+                    return@launch
+                }
+
+                val current = self
+                if (current != null && current.refreshedAt?.toInstant()
+                        .withinLast(EMPLOYEE_MAX_AGE)
+                ) {
+                    return@launch
+                }
+
+                val guid = current?.guid.nullIfBlank() ?: fetchSelfGuid() ?: return@launch
+                val org = current?.defaultOrg?.let { getOrg(it) }?.guid ?: allowedOrgs.first()
+
+                val now = Clock.System.now()
+                val refreshed = getStaff(org, listOf(guid), now, now)
+                    .firstOrNull { it.guid == guid } ?: return@launch
+
+                self = refreshed
+                StorageService.SELF.update { refreshed }
+                logger.d("Own identity is up to date")
+            } catch (e: Exception) {
+                logger.e("Could not complete session data", e)
+            } finally {
+                isRecoveringSession = false
+            }
         }
+    }
+
+    private suspend fun fetchSelfGuid(): String? {
+        val body = NetworkService.getBase()?.bodyAsText() ?: return null
+
+        return DataExtractorService.extractGUID(body)
     }
 
     private fun parseMinimalDuties(body: String): List<MinimalDutyDefinition>? {

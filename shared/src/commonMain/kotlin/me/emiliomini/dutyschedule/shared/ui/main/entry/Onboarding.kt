@@ -75,7 +75,6 @@ import dutyschedule.shared.generated.resources.error_login_failed
 import dutyschedule.shared.generated.resources.mock_notification_1
 import dutyschedule.shared.generated.resources.mock_notification_2
 import dutyschedule.shared.generated.resources.mockup
-import dutyschedule.shared.generated.resources.onboarding_action_demo
 import dutyschedule.shared.generated.resources.onboarding_action_skip
 import dutyschedule.shared.generated.resources.onboarding_alarms_body
 import dutyschedule.shared.generated.resources.onboarding_alarms_title
@@ -369,19 +368,12 @@ fun Onboarding() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                    TextButton(
-                        onClick = {
-                            if (pageIndex == pages.lastIndex) {
-                                // DutyScheduleService = DemoService FIXME
-                                attemptLogin()
-                            } else {
+                    if (pageIndex != pages.lastIndex) {
+                        TextButton(
+                            onClick = {
                                 pageIndex = pages.lastIndex
                             }
-                        }
-                    ) {
-                        if (pageIndex == pages.lastIndex) {
-                            Text(stringResource(Res.string.onboarding_action_demo))
-                        } else {
+                        ) {
                             Text(stringResource(Res.string.onboarding_action_skip))
                         }
                     }
