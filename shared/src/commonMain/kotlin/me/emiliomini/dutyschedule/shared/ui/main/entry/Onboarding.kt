@@ -59,6 +59,7 @@ import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.
 import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -108,10 +109,21 @@ fun Onboarding() {
     var password by remember { mutableStateOf("") }
     var loginFailed by remember { mutableStateOf(false) }
 
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    // Driven off the disabled state rather than the click, so nothing reaches into the focus system
+    // on the tap path and leaves the fields unable to take focus again after a failed attempt.
+    LaunchedEffect(blockContinue) {
+        if (blockContinue) {
+            keyboardController?.hide()
+        }
+    }
+
     val attemptLogin = {
         if (!blockContinue) {
             blockContinue = true
             loginFailed = false
+
             scope.launch {
                 try {
                     loginFailed = !DutyScheduleService.login(email, password)
@@ -228,7 +240,11 @@ fun Onboarding() {
                 Text(stringResource(Res.string.onboarding_notifications_body))
             }
         }), Page({
-            val (usernameFocusRequester, passwordFocusRequester) = FocusRequester.createRefs()
+            // Without remember these are new instances on every keystroke, which swaps the focus
+            // modifier out from under the field while it is being typed into.
+            val (usernameFocusRequester, passwordFocusRequester) = remember {
+                FocusRequester.createRefs()
+            }
 
             Column(
                 modifier = Modifier
@@ -250,6 +266,7 @@ fun Onboarding() {
                         .focusRequester(usernameFocusRequester),
                     value = email,
                     onValueChange = { email = it; loginFailed = false },
+                    enabled = !blockContinue,
                     isError = loginFailed,
                     label = {
                         Text(stringResource(Res.string.onboarding_login_email))
@@ -273,6 +290,7 @@ fun Onboarding() {
                         .focusRequester(passwordFocusRequester),
                     value = password,
                     onValueChange = { password = it; loginFailed = false },
+                    enabled = !blockContinue,
                     label = { Text(stringResource(Res.string.onboarding_login_password)) },
                     leadingIcon = { Icon(Fingerprint, contentDescription = null) },
                     visualTransformation = PasswordVisualTransformation(),
