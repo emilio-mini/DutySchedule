@@ -8,6 +8,7 @@ object DutyTypeMapping {
             "[ SEW ]" -> DutyType.EMS
             "[ SEW-Hintergrund ]" -> DutyType.EMS
             "[ RTW ]" -> DutyType.EMS
+            "[ SEW-N ]" -> DutyType.EMS
             "[ Schulung ]" -> DutyType.TRAINING
             "[ Besprechung ]" -> DutyType.MEET
             "[ Übung ]" -> DutyType.DRILL
