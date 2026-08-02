@@ -24,7 +24,9 @@ data class Employee(
     @ProtoNumber(8)
     val resourceTypeGuid: String = "",
     @ProtoNumber(9)
-    val skills: List<Skill> = emptyList()
+    val skills: List<Skill> = emptyList(),
+    @ProtoNumber(10)
+    val refreshedAt: Timestamp? = null
 ) : MultiplatformDataModel {
     companion object {
         val KFZ_NAME = "KFZ"

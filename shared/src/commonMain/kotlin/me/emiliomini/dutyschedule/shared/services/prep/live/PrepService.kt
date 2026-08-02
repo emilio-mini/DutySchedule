@@ -10,9 +10,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
@@ -55,8 +56,11 @@ import me.emiliomini.dutyschedule.shared.util.isNotNullOrBlank
 import me.emiliomini.dutyschedule.shared.util.midpointInstant
 import me.emiliomini.dutyschedule.shared.util.nullIfBlank
 import me.emiliomini.dutyschedule.shared.util.toInstant
+import me.emiliomini.dutyschedule.shared.util.toTimestamp
+import me.emiliomini.dutyschedule.shared.util.withinLast
 import kotlin.math.min
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -64,10 +68,19 @@ import kotlin.time.Instant
 object PrepService : DutyScheduleServiceBase {
     private val CONNECTIVITY_SETTLE = 2.seconds
 
+    /**
+     * How long a stored employee stays usable before it is pulled again. Qualifications and contact
+     * details change rarely, so this refresh runs in the background behind the already drawn roster
+     */
+    private val EMPLOYEE_MAX_AGE = 7.days
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val logger = getPlatformLogger("PrepService")
     private var incode: Incode? = null
     private val messages = mutableMapOf<String, List<Message>>()
+
+    private val employeeRefreshMutex = Mutex()
+    private val refreshingEmployees = mutableSetOf<String>()
 
     private var isRestoringLogin by mutableStateOf(false)
     override var isLoggedIn by mutableStateOf(false)
@@ -378,10 +391,13 @@ object PrepService : DutyScheduleServiceBase {
         }
 
         try {
+            val refreshedAt = Clock.System.now().toTimestamp()
             val staff = DataParserService.parseGetStaff(Json.parseToJsonElement(staffBody))
-            StorageService.EMPLOYEES.update {
-                it.copy(
-                    employees = it.employees + staff.associateBy { it.guid }
+                .map { it.copy(refreshedAt = refreshedAt) }
+
+            StorageService.EMPLOYEES.update { items ->
+                items.copy(
+                    employees = items.employees + staff.associateBy { it.guid }
                 )
             }
             return staff
@@ -415,21 +431,22 @@ object PrepService : DutyScheduleServiceBase {
         val missingEmployeeGuids = employeeGuids.filter {
             !localEmployees.employees.containsKey(it)
         }
-        logger.d("Local employee guids: ${localEmployees.employees.keys.joinToString(";")}")
+        val staleEmployeeGuids = employeeGuids.filter { guid ->
+            val stored = localEmployees.employees[guid] ?: return@filter false
+            !stored.refreshedAt?.toInstant().withinLast(EMPLOYEE_MAX_AGE)
+        }
         logger.d("Missing employee guids: ${missingEmployeeGuids.joinToString(";")}")
+        logger.d("Stale employee guids: ${staleEmployeeGuids.joinToString(";")}")
+
         if (missingEmployeeGuids.isNotEmpty()) {
-            coroutineScope {
-                launch {
-                    logger.d("Loading ${missingEmployeeGuids.size} missing employees")
-                    val staff = getStaff(orgUnitDataGuid, missingEmployeeGuids, from, to)
-                    if (staff.isEmpty()) {
-                        logger.e("Failed to load missing staff $missingEmployeeGuids")
-                    } else {
-                        logger.d("Loaded ${staff.size} staff elements")
-                    }
-                }
+            val staff = getStaff(orgUnitDataGuid, missingEmployeeGuids, from, to)
+            if (staff.isEmpty()) {
+                logger.e("Failed to load missing staff $missingEmployeeGuids")
+            } else {
+                logger.d("Loaded ${staff.size} staff elements")
             }
         }
+        refreshEmployees(orgUnitDataGuid, staleEmployeeGuids, from, to)
 
         try {
             duties = augmentHaendWithDocScedTf(
@@ -568,6 +585,7 @@ object PrepService : DutyScheduleServiceBase {
                 minimalDutyDefinitions = upcomingDuties
             )
         }
+        refreshSelfIfStale()
 
         return upcomingDuties
     }
@@ -626,6 +644,64 @@ object PrepService : DutyScheduleServiceBase {
         }
 
         return parsed
+    }
+
+    /**
+     * Pulls employees again without blocking the caller. Guids already being refreshed are skipped,
+     * so paging back and forth through the schedule cannot pile up requests for the same people
+     */
+    private fun refreshEmployees(
+        orgUnitDataGuid: String,
+        guids: List<String>,
+        from: Instant,
+        to: Instant
+    ) {
+        if (guids.isEmpty()) {
+            return
+        }
+
+        scope.launch {
+            val pending = employeeRefreshMutex.withLock {
+                val new = guids.filterNot { refreshingEmployees.contains(it) }
+                refreshingEmployees.addAll(new)
+                new
+            }
+            if (pending.isEmpty()) {
+                return@launch
+            }
+
+            try {
+                logger.d("Refreshing ${pending.size} stale employees")
+                getStaff(orgUnitDataGuid, pending, from, to)
+            } finally {
+                employeeRefreshMutex.withLock { refreshingEmployees.removeAll(pending.toSet()) }
+            }
+        }
+    }
+
+    /**
+     * Keeps the stored identity current. Own qualifications gate which slots may be self assigned,
+     * so a record frozen at first login keeps handing out the wrong answer
+     */
+    private fun refreshSelfIfStale() {
+        val current = this.self ?: return
+        if (current.refreshedAt?.toInstant().withinLast(EMPLOYEE_MAX_AGE)) {
+            return
+        }
+
+        scope.launch {
+            val org = StorageService.USER_PREFERENCES.get()?.allowedOrgs?.firstOrNull()
+                ?: current.defaultOrg
+                ?: return@launch
+
+            val now = Clock.System.now()
+            val refreshed = getStaff(org, listOf(current.guid), now, now)
+                .firstOrNull { it.guid == current.guid } ?: return@launch
+
+            self = refreshed
+            StorageService.SELF.update { refreshed }
+            logger.d("Refreshed own identity")
+        }
     }
 
     private fun parseMinimalDuties(body: String): List<MinimalDutyDefinition>? {
