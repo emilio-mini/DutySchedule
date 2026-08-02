@@ -40,6 +40,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import dutyschedule.shared.generated.resources.Res
+import dutyschedule.shared.generated.resources.debug_employee_guid_title
+import dutyschedule.shared.generated.resources.debug_employee_source_inline
+import dutyschedule.shared.generated.resources.debug_employee_source_server
+import dutyschedule.shared.generated.resources.debug_employee_source_title
+import dutyschedule.shared.generated.resources.debug_requirement_guid_title
 import dutyschedule.shared.generated.resources.main_schedule_infobox_actions_call
 import dutyschedule.shared.generated.resources.main_schedule_infobox_actions_mail
 import dutyschedule.shared.generated.resources.main_schedule_infobox_actions_sms
@@ -79,6 +84,7 @@ import me.emiliomini.dutyschedule.shared.util.isNotNullOrBlank
 import me.emiliomini.dutyschedule.shared.util.nullIfBlank
 import me.emiliomini.dutyschedule.shared.util.resourceString
 import me.emiliomini.dutyschedule.shared.util.title
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -98,7 +104,7 @@ fun EmployeeDetailSheet(
         if (slot != null) {
             val local = employeeItems.employees[slot.employeeGuid]
             employee = if (local != null) {
-                source = "Loaded from server"
+                source = getString(Res.string.debug_employee_source_server)
                 local
             } else {
                 logger.d(
@@ -108,7 +114,7 @@ fun EmployeeDetailSheet(
                         )
                     }"
                 )
-                source = "Inline"
+                source = getString(Res.string.debug_employee_source_inline)
                 slot.inlineEmployee
             }
         }
@@ -162,7 +168,9 @@ fun EmployeeDetailSheet(
                     CardColumn {
                         CardListItem(
                             headlineContent = { Text(source) },
-                            supportingContent = { Text("Data source") },
+                            supportingContent = {
+                                Text(stringResource(Res.string.debug_employee_source_title))
+                            },
                             leadingContent = {
                                 Icon(
                                     BugReport, contentDescription = null
@@ -179,7 +187,9 @@ fun EmployeeDetailSheet(
                                 }
                             }),
                             headlineContent = { Text(slot.employeeGuid ?: "<null>") },
-                            supportingContent = { Text("Employee GUID") },
+                            supportingContent = {
+                                Text(stringResource(Res.string.debug_employee_guid_title))
+                            },
                             leadingContent = {
                                 Icon(
                                     BugReport, contentDescription = null
@@ -196,7 +206,9 @@ fun EmployeeDetailSheet(
                                 Text(
                                     slot.requirement.guid.nullIfBlank() ?: "<null>"
                                 )
-                            }, supportingContent = { Text("Requirement GUID") }, leadingContent = {
+                            }, supportingContent = {
+                                Text(stringResource(Res.string.debug_requirement_guid_title))
+                            }, leadingContent = {
                                 Icon(
                                     BugReport, contentDescription = null
                                 )

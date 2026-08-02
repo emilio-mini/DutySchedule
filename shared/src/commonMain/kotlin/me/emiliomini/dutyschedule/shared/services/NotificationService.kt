@@ -5,6 +5,7 @@ import dutyschedule.shared.generated.resources.alarm_set_for
 import dutyschedule.shared.generated.resources.next_duty
 import dutyschedule.shared.generated.resources.no_alarm_set
 import dutyschedule.shared.generated.resources.no_upcoming_duties
+import dutyschedule.shared.generated.resources.notifications_info_title
 import me.emiliomini.dutyschedule.shared.api.getPlatformAlarmApi
 import me.emiliomini.dutyschedule.shared.api.getPlatformNotificationApi
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotification
@@ -50,7 +51,7 @@ object NotificationService {
             NotificationIds.PERMANENT_INFO,
             NotificationChannelMapping.PERMANENT_INFO,
             MultiplatformNotificationPriority.LOW,
-            "Duty Info",
+            getString(Res.string.notifications_info_title),
             notificationText,
 
             )

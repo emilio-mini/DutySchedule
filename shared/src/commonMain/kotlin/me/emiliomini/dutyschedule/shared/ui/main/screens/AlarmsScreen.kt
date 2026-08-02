@@ -43,6 +43,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dutyschedule.shared.generated.resources.Res
+import dutyschedule.shared.generated.resources.main_alarms_auto_set_title
 import dutyschedule.shared.generated.resources.main_alarms_none
 import dutyschedule.shared.generated.resources.main_alarms_upcoming
 import dutyschedule.shared.generated.resources.main_settings_section_alarms
@@ -127,9 +128,7 @@ fun AlarmsScreen(
                         )
                     ),
                     headlineContent = {
-                        Text(
-                            "Automatisch Alarme setzen",
-                        )
+                        Text(stringResource(Res.string.main_alarms_auto_set_title))
                     },
                     trailingContent = {
                         Switch(

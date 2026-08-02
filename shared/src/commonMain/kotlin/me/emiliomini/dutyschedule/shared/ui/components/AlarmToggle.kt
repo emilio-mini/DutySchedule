@@ -12,12 +12,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import dutyschedule.shared.generated.resources.Res
+import dutyschedule.shared.generated.resources.base_dutycard_accessibility_alarm_add
+import dutyschedule.shared.generated.resources.base_dutycard_accessibility_alarm_set
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.shared.api.getPlatformAlarmApi
 import me.emiliomini.dutyschedule.shared.services.AlarmService
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.icons.AlarmAdd
 import me.emiliomini.dutyschedule.shared.ui.icons.AlarmOn
+import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -69,9 +73,15 @@ fun AlarmToggle(modifier: Modifier = Modifier, dutyBegin: Instant, guid: String,
             }, enabled = !alarmBlocked
         ) {
             if (alarmSet) {
-                Icon(AlarmOn, contentDescription = "Reminder set")
+                Icon(
+                    AlarmOn,
+                    contentDescription = stringResource(Res.string.base_dutycard_accessibility_alarm_set)
+                )
             } else {
-                Icon(AlarmAdd, contentDescription = "Set Reminder")
+                Icon(
+                    AlarmAdd,
+                    contentDescription = stringResource(Res.string.base_dutycard_accessibility_alarm_add)
+                )
             }
         }
     }

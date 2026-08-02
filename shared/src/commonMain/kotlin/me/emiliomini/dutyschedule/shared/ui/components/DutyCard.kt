@@ -29,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dutyschedule.shared.generated.resources.Res
 import dutyschedule.shared.generated.resources.base_dutycard_accessibility_requirements_issue
+import dutyschedule.shared.generated.resources.base_dutycard_clipboard_slot
 import dutyschedule.shared.generated.resources.base_dutycard_no_staff
 import dutyschedule.shared.generated.resources.base_dutycard_no_vehicle
 import kotlinx.coroutines.launch
@@ -64,6 +65,7 @@ fun AppDutyCard(
     val scope = rememberCoroutineScope()
     val emptyCar = Employee(name = stringResource(Res.string.base_dutycard_no_vehicle))
     val emptySeat = Employee(name = stringResource(Res.string.base_dutycard_no_staff))
+    val clipboardLabel = stringResource(Res.string.base_dutycard_clipboard_slot)
 
     val requirementsMetError = duty.allRequirementsMet()
     val requirementsMetWarn = duty.staffRequirementsMet()
@@ -132,7 +134,7 @@ fun AppDutyCard(
                             scope.launch {
                                 getPlatformClipboardApi().copyToClipboard(
                                     Json.encodeToString(slot),
-                                    "Slot data"
+                                    clipboardLabel
                                 )
                             }
                         }),

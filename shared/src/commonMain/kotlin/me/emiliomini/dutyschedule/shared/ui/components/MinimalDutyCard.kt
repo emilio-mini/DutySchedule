@@ -21,6 +21,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import dutyschedule.shared.generated.resources.Res
+import dutyschedule.shared.generated.resources.base_dutycard_clipboard_duty
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import me.emiliomini.dutyschedule.shared.api.getPlatformClipboardApi
@@ -55,10 +57,11 @@ fun MinimalDutyCard(
     val scope = rememberCoroutineScope()
     val timeFormatter = "HH:mm"
     val dateFormatter = "dd.MM.yyyy"
+    val clipboardLabel = stringResource(Res.string.base_dutycard_clipboard_duty)
 
     Box(modifier = modifier.wrapContentSize().combinedClickable(onClick = {}, onLongClick = {
         scope.launch {
-            getPlatformClipboardApi().copyToClipboard(Json.encodeToString(duty), "Duty data")
+            getPlatformClipboardApi().copyToClipboard(Json.encodeToString(duty), clipboardLabel)
         }
     }), contentAlignment = Alignment.TopEnd) {
         CardListItem(

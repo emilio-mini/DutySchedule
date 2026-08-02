@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import dutyschedule.shared.generated.resources.Res
 import dutyschedule.shared.generated.resources.base_avatar_dialog_action_bugreport
+import dutyschedule.shared.generated.resources.base_avatar_clipboard_version
 import dutyschedule.shared.generated.resources.base_avatar_dialog_action_logout
 import dutyschedule.shared.generated.resources.base_avatar_dialog_birthdate
 import dutyschedule.shared.generated.resources.base_avatar_dialog_mail
@@ -33,6 +34,7 @@ import dutyschedule.shared.generated.resources.base_avatar_dialog_phone
 import dutyschedule.shared.generated.resources.base_avatar_dialog_primary
 import dutyschedule.shared.generated.resources.base_avatar_dialog_title
 import dutyschedule.shared.generated.resources.base_avatar_dialog_version
+import dutyschedule.shared.generated.resources.base_avatar_dialog_version_format
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.shared.api.getPlatformClipboardApi
 import me.emiliomini.dutyschedule.shared.api.getPlatformRedirectApi
@@ -189,12 +191,14 @@ fun EmployeeAvatar(
                                 val versionCode = versionCode()
                                 val versionName = versionName()
                                 val platform = platform()
+                                val versionClipboardLabel =
+                                    stringResource(Res.string.base_avatar_clipboard_version)
                                 CardListItem(
                                     modifier = Modifier.clickable(true, onClick = {
                                         scope.launch {
                                             getPlatformClipboardApi().copyToClipboard(
                                                 "$versionName-$versionCode-$platform",
-                                                "app-version"
+                                                versionClipboardLabel
                                             )
                                         }
                                     }),
@@ -206,7 +210,13 @@ fun EmployeeAvatar(
                                         )
                                     },
                                     headlineContent = {
-                                        Text("$versionName (build-$versionCode)")
+                                        Text(
+                                            stringResource(
+                                                Res.string.base_avatar_dialog_version_format,
+                                                versionName,
+                                                versionCode
+                                            )
+                                        )
                                     },
                                     supportingContent = {
                                         Text(stringResource(Res.string.base_avatar_dialog_version))
@@ -218,7 +228,7 @@ fun EmployeeAvatar(
                                         scope.launch {
                                             getPlatformClipboardApi().copyToClipboard(
                                                 "$versionName-$versionCode-$platform",
-                                                "app-version"
+                                                versionClipboardLabel
                                             )
                                             getPlatformRedirectApi().sendEmail("support@emilio-mini.me")
                                         }

@@ -11,6 +11,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import kotlinx.coroutines.runBlocking
 import me.emiliomini.dutyschedule.shared.R
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotification
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotificationAction
@@ -19,6 +20,7 @@ import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotificationPri
 import me.emiliomini.dutyschedule.shared.api.notifications.NotificationActionReceiver
 import me.emiliomini.dutyschedule.shared.api.notifications.NotificationActionRegistry
 import me.emiliomini.dutyschedule.shared.mappings.NotificationChannelMapping
+import org.jetbrains.compose.resources.getString
 import kotlin.time.Duration.Companion.days
 import kotlin.time.ExperimentalTime
 
@@ -160,9 +162,10 @@ class AndroidNotificationApi : PlatformNotificationApi {
             return
         }
 
+        val title = runBlocking { getString(channel.title) }
         val androidChannel =
-            NotificationChannel(channel.id, channel.title, channel.priority.android()).apply {
-                description = channel.description
+            NotificationChannel(channel.id, title, channel.priority.android()).apply {
+                description = runBlocking { getString(channel.description) }
             }
         getNotificationManager().createNotificationChannel(androidChannel)
     }

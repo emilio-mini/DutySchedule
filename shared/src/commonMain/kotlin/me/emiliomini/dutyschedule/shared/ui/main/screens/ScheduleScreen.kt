@@ -48,7 +48,12 @@ import androidx.compose.ui.unit.dp
 import dutyschedule.shared.generated.resources.Res
 import dutyschedule.shared.generated.resources.error_load_failed
 import dutyschedule.shared.generated.resources.error_load_retry
+import dutyschedule.shared.generated.resources.error_network
+import dutyschedule.shared.generated.resources.error_unknown
 import dutyschedule.shared.generated.resources.main_schedule_accessibility_datepicker
+import dutyschedule.shared.generated.resources.main_schedule_assign_success_confirm
+import dutyschedule.shared.generated.resources.main_schedule_assign_success_content
+import dutyschedule.shared.generated.resources.main_schedule_assign_success_title
 import dutyschedule.shared.generated.resources.main_schedule_datepicker_confirm
 import dutyschedule.shared.generated.resources.main_schedule_datepicker_dismiss
 import kotlinx.coroutines.launch
@@ -119,6 +124,8 @@ fun ScheduleScreen(
     var requirement by remember { mutableStateOf<Requirement?>(null) }
     var creating by remember { mutableStateOf(false) }
     var createError by remember { mutableStateOf<String?>(null) }
+    val networkErrorMessage = stringResource(Res.string.error_network)
+    val unknownErrorMessage = stringResource(Res.string.error_unknown)
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(userPreferences) {
@@ -396,12 +403,12 @@ fun ScheduleScreen(
                     showThanks = true
                 } else {
                     createError = if (resp == null) {
-                        "Network error"
+                        networkErrorMessage
                     } else {
                         listOfNotNull(
                             resp.alertMessage,
                             resp.errorMessages.joinToString().ifBlank { null }).joinToString(" – ")
-                            .ifBlank { "Unbekannter Fehler" }
+                            .ifBlank { unknownErrorMessage }
                     }
                 }
             }
@@ -410,10 +417,12 @@ fun ScheduleScreen(
     if (showThanks) {
         AlertDialog(
             onDismissRequest = { showThanks = false },
-            title = { Text("Danke") },
-            text = { Text("Dienst wurde eingetragen.") },
+            title = { Text(stringResource(Res.string.main_schedule_assign_success_title)) },
+            text = { Text(stringResource(Res.string.main_schedule_assign_success_content)) },
             confirmButton = {
-                TextButton(onClick = { showThanks = false }) { Text("OK") }
+                TextButton(onClick = { showThanks = false }) {
+                    Text(stringResource(Res.string.main_schedule_assign_success_confirm))
+                }
             })
     }
 }

@@ -1,5 +1,7 @@
 package me.emiliomini.dutyschedule.shared.api.models
 
+import org.jetbrains.compose.resources.StringResource
+
 data class MultiplatformNotification(
     val id: Int,
     val channel: MultiplatformNotificationChannel,
@@ -18,8 +20,8 @@ data class MultiplatformNotificationAction(
 
 data class MultiplatformNotificationChannel(
     val id: String,
-    val title: String,
-    val description: String,
+    val title: StringResource,
+    val description: StringResource,
     val priority: MultiplatformNotificationPriority
 )
 
