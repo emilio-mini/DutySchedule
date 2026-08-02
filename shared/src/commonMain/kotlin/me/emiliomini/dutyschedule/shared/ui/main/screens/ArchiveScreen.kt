@@ -36,7 +36,7 @@ import me.emiliomini.dutyschedule.shared.datastores.MinimalDutyDefinition
 import me.emiliomini.dutyschedule.shared.datastores.YearlyDutyItems
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
 import me.emiliomini.dutyschedule.shared.services.scaffold.Action
-import me.emiliomini.dutyschedule.shared.services.scaffold.ScaffoldService
+import me.emiliomini.dutyschedule.shared.services.scaffold.ScreenActions
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.components.CardListItemType
 import me.emiliomini.dutyschedule.shared.ui.components.LazyCardColumn
@@ -71,13 +71,16 @@ fun ArchiveScreen(
             return@LaunchedEffect
         }
 
-        loaded = false
         if (!DutyScheduleService.isLoggedIn) {
             return@LaunchedEffect
         }
 
-        DutyScheduleService.loadPast(selectedYear)
-        loaded = true
+        loaded = false
+        try {
+            DutyScheduleService.loadPast(selectedYear)
+        } finally {
+            loaded = true
+        }
     }
 
     LaunchedEffect(past, selectedYear) {
@@ -86,8 +89,8 @@ fun ArchiveScreen(
         ) { YearlyDutyItems() }.minimalDutyDefinitions
     }
 
-    ScaffoldService.setActionsForScreen(
-        NavItemId.ARCHIVE, listOf(
+    ScreenActions(NavItemId.ARCHIVE) {
+        listOf(
             Action({ run ->
                 IconButton(
                     onClick = {
@@ -112,7 +115,7 @@ fun ArchiveScreen(
                 selectedYear = (selectedYear.toInt() + 1).toString()
             })
         )
-    )
+    }
 
     Screen(
         paddingValues = paddingValues,
@@ -120,8 +123,11 @@ fun ArchiveScreen(
             isRefreshing = !loaded, onRefresh = {
                 loaded = false
                 scope.launch {
-                    DutyScheduleService.loadPast(selectedYear)
-                    loaded = true
+                    try {
+                        DutyScheduleService.loadPast(selectedYear)
+                    } finally {
+                        loaded = true
+                    }
                 }
             })
     ) { innerPadding ->

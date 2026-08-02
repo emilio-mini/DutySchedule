@@ -18,6 +18,7 @@ import me.emiliomini.dutyschedule.shared.util.toEpochMilliseconds
 import me.emiliomini.dutyschedule.shared.util.toInstant
 import org.jetbrains.compose.resources.getString
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -29,46 +30,71 @@ object AlarmService {
             } else {
                 getPlatformAlarmApi().cancelAlarm(alarm.guid)
                 StorageService.ALARM_ITEMS.update {
-                    val index = it.alarms.indexOfFirst { it.guid == alarm.guid }
-                    val oldAlarm = it.alarms[index]
+                    val index = it.alarms.indexOfFirst { existing -> existing.guid == alarm.guid }
+                    if (index == -1) {
+                        return@update it
+                    }
+
                     val newDuties = it.alarms.toMutableList()
-                    newDuties[index] = oldAlarm.copy(edited = true)
+                    newDuties[index] = it.alarms[index].copy(edited = true)
                     AlarmItems(newDuties)
                 }
             }
     }
-    @OptIn(ExperimentalTime::class)
-    suspend fun setAlarm(guid: String, time: Instant, zone: TimeZone = TimeZone.currentSystemDefault(), onError: suspend (String) -> Unit, edited: Boolean){
-        with(getPlatformAlarmApi()){
 
-            val alarmPermission = requestPermission()
-            val notificationPermission = getPlatformNotificationApi().requestPermission()
+    /**
+     * Reports the missing permissions through [onError] and returns whether an alarm may be set.
+     * Only requests them when [onError] is given; requesting opens a settings screen, which must
+     * not happen while running headless in [me.emiliomini.dutyschedule.shared.api.TaskRunnerService]
+     */
+    private suspend fun hasAlarmPermissions(onError: (suspend (String) -> Unit)?): Boolean {
+        val mayRequest = onError != null
+        val alarmApi = getPlatformAlarmApi()
+        val notificationApi = getPlatformNotificationApi()
 
-            val errorMessage = when {
-                !alarmPermission && !notificationPermission -> getString(Res.string.error_permissions_missing_alarm_and_notification)
-                !alarmPermission -> getString(Res.string.error_permissions_missing_alarm)
-                !notificationPermission -> getString(Res.string.error_permissions_missing_notification)
-                else -> null
-            }
-
-            if (errorMessage != null) {
-                onError(errorMessage)
-                return
-            }
-
-            setAlarm(guid, time, zone, edited)
+        val alarmPermission = when {
+            alarmApi.isPermissionGranted() -> true
+            mayRequest -> alarmApi.requestPermission()
+            else -> false
         }
+        val notificationPermission = when {
+            notificationApi.isPermissionGranted() -> true
+            mayRequest -> notificationApi.requestPermission()
+            else -> false
+        }
+
+        val errorMessage = when {
+            !alarmPermission && !notificationPermission -> Res.string.error_permissions_missing_alarm_and_notification
+            !alarmPermission -> Res.string.error_permissions_missing_alarm
+            !notificationPermission -> Res.string.error_permissions_missing_notification
+            else -> return true
+        }
+
+        onError?.invoke(getString(errorMessage))
+        return false
+    }
+
+    /**
+     * Returns whether the alarm is set afterwards; false when a permission is missing or the
+     * platform refused to schedule it
+     */
+    @OptIn(ExperimentalTime::class)
+    suspend fun setAlarm(guid: String, time: Instant, zone: TimeZone = TimeZone.currentSystemDefault(), onError: suspend (String) -> Unit, edited: Boolean): Boolean {
+        if (!hasAlarmPermissions(onError)) {
+            return false
+        }
+
+        val alarmApi = getPlatformAlarmApi()
+        alarmApi.setAlarm(guid, time, zone, edited)
+
+        return alarmApi.isAlarmSet(guid)
     }
 
     @OptIn(ExperimentalTime::class)
-    suspend fun setAlarm(duty: MinimalDutyDefinition, onError: suspend (String) -> Unit){
-        val alarmOffset =
-            StorageService.USER_PREFERENCES.getOrDefault().alarmOffsetMin
-        val alarmOffsetMillis = alarmOffset * 60_000L
+    private suspend fun alarmTimeFor(duty: MinimalDutyDefinition): Instant {
+        val alarmOffset = StorageService.USER_PREFERENCES.getOrDefault().alarmOffsetMin
 
-        val timestamp = duty.begin.toEpochMilliseconds() - alarmOffsetMillis
-
-        setAlarm(duty.guid, Instant.fromEpochMilliseconds(timestamp), onError = onError, edited = false)
+        return duty.begin.toInstant() - alarmOffset.minutes
     }
 
     @OptIn(ExperimentalTime::class)
@@ -120,45 +146,66 @@ object AlarmService {
         }
     }
 
-    suspend fun fetchAlarms() {
+    /** Returns whether the duties could be refreshed */
+    suspend fun fetchAlarms(): Boolean {
         DutyScheduleService.restoreLogin()
-        DutyScheduleService.loadUpcoming()
+        return DutyScheduleService.loadUpcoming() != null
     }
 
+    /**
+     * Permissions are resolved once for the whole batch; asking per duty opens the settings screen
+     * once per upcoming duty
+     */
     @OptIn(ExperimentalTime::class)
     suspend fun updateAlarms(oldDuties: List<MinimalDutyDefinition>, newDuties: List<MinimalDutyDefinition>, onError: (suspend (String) -> Unit)? = null) {
         val alarms = StorageService.ALARM_ITEMS.get()?.alarms
         val oldDutyGuids = oldDuties.map { it.guid }.toMutableList()
         val prefs = StorageService.USER_PREFERENCES.getOrDefault()
         val alarmOffsetMillis = prefs.alarmOffsetMin * 60_000L
-        if (prefs.autoSetAlarms){
-            newDuties.forEach {
-                val alarm = alarms?.firstOrNull { alarm -> alarm.guid == it.guid}
-                if (it.begin.toEpochMilliseconds() - alarmOffsetMillis < Clock.System.now().toEpochMilliseconds())
-                    return@forEach
+        val now = Clock.System.now().toEpochMilliseconds()
 
-                oldDutyGuids.remove(it.guid)
+        val pending = if (prefs.autoSetAlarms) {
+            newDuties.mapNotNull { duty ->
+                if (duty.begin.toEpochMilliseconds() - alarmOffsetMillis < now) {
+                    return@mapNotNull null
+                }
 
-                if (alarm != null && alarm.edited && !alarm.active)
-                    return@forEach
-                
-                setAlarm(it, onError ?: { })
+                oldDutyGuids.remove(duty.guid)
+
+                val alarm = alarms?.firstOrNull { it.guid == duty.guid }
+                if (alarm != null && alarm.edited && !alarm.active) {
+                    return@mapNotNull null
+                }
+
+                PendingAlarm(duty, edited = false)
             }
-
-            oldDutyGuids.forEach { removeAlarm(it) }
         } else {
-            alarms?.forEach { oldAlarm ->
-                if (!oldAlarm.active)
-                    return@forEach
+            alarms.orEmpty().mapNotNull { alarm ->
+                if (!alarm.active) {
+                    return@mapNotNull null
+                }
 
-                val new = newDuties.firstOrNull{it.guid == oldAlarm.guid} ?: return@forEach
+                val duty = newDuties.firstOrNull { it.guid == alarm.guid } ?: return@mapNotNull null
+                if (duty.begin.toEpochMilliseconds() - alarmOffsetMillis < now) {
+                    return@mapNotNull null
+                }
 
-                if (new.begin.toEpochMilliseconds() - alarmOffsetMillis < Clock.System.now().toEpochMilliseconds() || (oldAlarm.edited && !oldAlarm.active))
-                    return@forEach
-
-                setAlarm(new, onError ?: { })
+                PendingAlarm(duty, alarm.edited)
             }
         }
+
+        if (pending.isNotEmpty() && hasAlarmPermissions(onError)) {
+            pending.forEach {
+                getPlatformAlarmApi().setAlarm(it.duty.guid, alarmTimeFor(it.duty), edited = it.edited)
+            }
+        }
+
+        if (prefs.autoSetAlarms) {
+            oldDutyGuids.forEach { removeAlarm(it) }
+        }
+
         NotificationService.sendInfoNotification()
     }
+
+    private data class PendingAlarm(val duty: MinimalDutyDefinition, val edited: Boolean)
 }

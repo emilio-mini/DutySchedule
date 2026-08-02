@@ -8,10 +8,10 @@ import androidx.compose.runtime.setValue
 import io.ktor.client.statement.bodyAsText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
@@ -37,6 +37,7 @@ import me.emiliomini.dutyschedule.shared.datastores.YearlyDutyItems
 import me.emiliomini.dutyschedule.shared.mappings.RequirementMapping
 import me.emiliomini.dutyschedule.shared.mappings.docScedConfigFromString
 import me.emiliomini.dutyschedule.shared.services.AlarmService.updateAlarms
+import me.emiliomini.dutyschedule.shared.services.CredentialService
 import me.emiliomini.dutyschedule.shared.services.network.Endpoints
 import me.emiliomini.dutyschedule.shared.services.network.MultiplatformNetworkAdapter
 import me.emiliomini.dutyschedule.shared.services.network.NetworkService
@@ -47,18 +48,22 @@ import me.emiliomini.dutyschedule.shared.services.prep.parsing.DocScedParserServ
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.util.format
 import me.emiliomini.dutyschedule.shared.util.getAllVehicles
+import me.emiliomini.dutyschedule.shared.util.isInvalid
 import me.emiliomini.dutyschedule.shared.util.isNight
 import me.emiliomini.dutyschedule.shared.util.isNightShift
+import me.emiliomini.dutyschedule.shared.util.isNotNullOrBlank
 import me.emiliomini.dutyschedule.shared.util.midpointInstant
 import me.emiliomini.dutyschedule.shared.util.nullIfBlank
-import me.emiliomini.dutyschedule.shared.util.startOfDay
 import me.emiliomini.dutyschedule.shared.util.toInstant
 import kotlin.math.min
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 object PrepService : DutyScheduleServiceBase {
+    private val CONNECTIVITY_SETTLE = 2.seconds
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val logger = getPlatformLogger("PrepService")
     private var incode: Incode? = null
@@ -69,11 +74,27 @@ object PrepService : DutyScheduleServiceBase {
     override var self by mutableStateOf<Employee?>(null)
 
     init {
-        getPlatformConnectivityApi().isConnected.onEach { status ->
-            if (status && !isRestoringLogin) {
-                this.restoreLogin()
+        scope.launch {
+            var wasConnected = false
+            var pendingRestore: Job? = null
+
+            getPlatformConnectivityApi().isConnected.collect { connected ->
+                pendingRestore?.cancel()
+
+                if (!connected) {
+                    wasConnected = false
+                    return@collect
+                }
+
+                pendingRestore = scope.launch {
+                    delay(CONNECTIVITY_SETTLE)
+                    if (!wasConnected) {
+                        wasConnected = true
+                        restoreLogin()
+                    }
+                }
             }
-        }.launchIn(scope)
+        }
     }
 
     override fun getMessages(): Map<String, List<Message>> {
@@ -114,11 +135,9 @@ object PrepService : DutyScheduleServiceBase {
             this.incode = incode
 
             StorageService.USER_PREFERENCES.update {
-                it.copy(
-                    username = username,
-                    password = password
-                )
+                it.copy(username = username)
             }
+            CredentialService.setPassword(password)
 
             StorageService.INCODE.update {
                 this.incode ?: it
@@ -164,12 +183,9 @@ object PrepService : DutyScheduleServiceBase {
     }
 
     override suspend fun previouslyLoggedIn(): Boolean {
-        val localPreferences = StorageService.USER_PREFERENCES.get() ?: return false
+        val username = StorageService.USER_PREFERENCES.get()?.username ?: return false
 
-        val username = localPreferences.username
-        val password = localPreferences.password
-
-        return username.isNotBlank() && password.isNotBlank()
+        return username.isNotBlank() && CredentialService.getPassword().isNotNullOrBlank()
     }
 
     override suspend fun restoreLogin(): Boolean {
@@ -177,53 +193,56 @@ object PrepService : DutyScheduleServiceBase {
             return false
         }
         isRestoringLogin = true
-        logger.d("Trying to restore login...")
-        val localPreferences = StorageService.USER_PREFERENCES.get()
-        val username = localPreferences?.username
-        val password = localPreferences?.password
 
-        if (username.isNullOrBlank() || password.isNullOrBlank()) {
-            logger.d("No username or password found")
-            isRestoringLogin = false
-            return false
-        }
+        try {
+            logger.d("Trying to restore login...")
+            val localPreferences = StorageService.USER_PREFERENCES.get()
+            val username = localPreferences?.username
+            val password = CredentialService.getPassword()
 
-        this.self = this.loadSelf(null, null)
-        if (this.self == null) {
-            val result = this.login(username, password)
-            isRestoringLogin = false
-            return result
-        }
-
-        val result = NetworkService.getBase()
-        val resultBody = result?.bodyAsText()
-        if (!resultBody.isNullOrEmpty()) {
-            val incode = DataExtractorService.extractIncode(resultBody)
-
-            if (incode != null) {
-                this.incode = incode
-
-                StorageService.INCODE.update {
-                    this.incode ?: it
-                }
-                this.isLoggedIn = true
-
-                logger.d("Restored login from previous session ${Json.encodeToString(this.incode)}")
-                isRestoringLogin = false
-                return true
+            if (username.isNullOrBlank() || password.isNullOrBlank()) {
+                logger.d("No username or password found")
+                return false
             }
+
+            this.self = this.loadSelf(null, null)
+            if (this.self == null) {
+                return this.login(username, password)
+            }
+
+            val result = NetworkService.getBase()
+            val resultBody = result?.bodyAsText()
+            if (!resultBody.isNullOrEmpty()) {
+                val incode = DataExtractorService.extractIncode(resultBody)
+
+                if (incode != null) {
+                    this.incode = incode
+
+                    StorageService.INCODE.update {
+                        this.incode ?: it
+                    }
+                    this.isLoggedIn = true
+
+                    logger.d("Restored login from previous session")
+                    return true
+                }
+            }
+
+            logger.d("Restoring by re-running login process")
+            return this.login(username, password)
+        } finally {
+            isRestoringLogin = false
         }
-
-
-        logger.d("Restoring by re-running login process")
-        isRestoringLogin = false
-        return this.login(username, password)
     }
 
     override suspend fun logout() {
+        this.isLoggedIn = false
         this.incode = null
         this.self = null
+        this.messages.clear()
+        CredentialService.clearPassword()
         StorageService.clear()
+        MultiplatformNetworkAdapter.clearCookies()
     }
 
     override suspend fun loadSelf(guid: String?, org: String?): Employee? {
@@ -316,23 +335,26 @@ object PrepService : DutyScheduleServiceBase {
         orgUnitDataGuid: String,
         from: Instant,
         to: Instant
-    ): Pair<List<DutyDefinition>, Map<String, DutyGroup>> {
+    ): Pair<List<DutyDefinition>, Map<String, DutyGroup>>? {
         logger.d("Loading plan...")
 
-        if (!this.isLoggedIn) {
-            return Pair(emptyList(), emptyMap())
+        val code = this.incode
+        if (!this.isLoggedIn || code == null || code.isInvalid()) {
+            logger.w("loadPlan: no usable session")
+            return null
         }
 
-        val planBody = NetworkService.loadPlan(incode!!, orgUnitDataGuid, from, to)?.bodyAsText()
+        val planBody = NetworkService.loadPlan(code, orgUnitDataGuid, from, to)?.bodyAsText()
         if (planBody.isNullOrBlank()) {
-            return Pair(emptyList(), emptyMap())
+            logger.w("loadPlan: empty response")
+            return null
         }
 
         try {
             return DataParserService.parseLoadPlan(Json.parseToJsonElement(planBody))
         } catch (e: IllegalArgumentException) {
             logger.e("Invalid JSON! $planBody", e)
-            return Pair(emptyList(), emptyMap())
+            return null
         }
     }
 
@@ -344,11 +366,12 @@ object PrepService : DutyScheduleServiceBase {
     ): List<Employee> {
         logger.d("Getting staff...")
 
-        if (!this.isLoggedIn) {
+        val code = this.incode
+        if (!this.isLoggedIn || code == null || code.isInvalid()) {
             return emptyList()
         }
 
-        val staffBody = NetworkService.getStaff(incode!!, orgUnitDataGuid, staffDataGuid, from, to)
+        val staffBody = NetworkService.getStaff(code, orgUnitDataGuid, staffDataGuid, from, to)
             ?.bodyAsText()
         if (staffBody.isNullOrBlank()) {
             return emptyList()
@@ -372,13 +395,15 @@ object PrepService : DutyScheduleServiceBase {
         orgUnitDataGuid: String,
         from: Instant,
         to: Instant
-    ): List<OrgDay> {
+    ): List<OrgDay>? {
         // Load plan
-        var (duties, groups) = this.loadPlan(orgUnitDataGuid, from, to)
-        if (duties.isEmpty()) {
+        val plan = this.loadPlan(orgUnitDataGuid, from, to)
+        if (plan == null) {
             logger.e("Failed to load plan")
-            return emptyList()
+            return null
         }
+
+        var (duties, groups) = plan
 
         // Ensure staff is loaded
         val employeeGuids = duties.flatMap {
@@ -452,20 +477,34 @@ object PrepService : DutyScheduleServiceBase {
         return daysList
     }
 
-    override suspend fun loadPast(year: String): List<MinimalDutyDefinition> {
-        val intYear = year.toInt()
-        val localPast = StorageService.PAST_DUTIES.get()
-        if (localPast != null && localPast.years.containsKey(intYear) && !isLoggedIn) {
-            return localPast.years[intYear]!!.minimalDutyDefinitions
+    override suspend fun loadPast(year: String): List<MinimalDutyDefinition>? {
+        val intYear = year.toIntOrNull()
+        if (intYear == null) {
+            logger.e("loadPast: '$year' is not a year")
+            return null
         }
 
-        val pastResponse = NetworkService.loadPast(incode!!, year)?.bodyAsText()
+        val cached = StorageService.PAST_DUTIES.get()?.years?.get(intYear)?.minimalDutyDefinitions
+        if (cached != null && !isLoggedIn) {
+            return cached
+        }
+
+        val code = this.incode
+        if (code == null || code.isInvalid()) {
+            logger.w("loadPast: no usable session, keeping cached data")
+            return cached
+        }
+
+        val pastResponse = NetworkService.loadPast(code, year)?.bodyAsText()
         if (pastResponse.isNullOrBlank()) {
-            return emptyList()
+            logger.w("loadPast: empty response, keeping cached data")
+            return null
         }
 
-        val pastDuties =
-            DataParserService.parseLoadMinimalDutyDefinitions(Json.parseToJsonElement(pastResponse))
+        val pastDuties = parseMinimalDuties(pastResponse)
+        if (pastDuties == null) {
+            return null
+        }
 
         StorageService.PAST_DUTIES.update {
             it.copy(
@@ -475,20 +514,16 @@ object PrepService : DutyScheduleServiceBase {
         return pastDuties
     }
 
-    override suspend fun loadHoursOfService(year: String): Float {
+    override suspend fun loadHoursOfService(year: String): Float? {
         val localStats = StorageService.STATISTICS.get()
         if (localStats != null && !isLoggedIn) {
             return localStats.minutesServed / 60f
         }
 
         val yearData = loadPast(year)
-        if (yearData.isEmpty()) {
-            StorageService.STATISTICS.update {
-                it.copy(
-                    minutesServed = 0
-                )
-            }
-            return 0f
+        if (yearData == null) {
+            logger.w("loadHoursOfService: load failed, keeping the stored quota")
+            return null
         }
 
         val minutesServed = yearData.sumOf { it.duration }
@@ -501,25 +536,28 @@ object PrepService : DutyScheduleServiceBase {
         return minutesServed / 60f
     }
 
-    override suspend fun loadUpcoming(): List<MinimalDutyDefinition> {
+    override suspend fun loadUpcoming(): List<MinimalDutyDefinition>? {
         val localUpcoming = StorageService.UPCOMING_DUTIES.get()?.minimalDutyDefinitions
         if (localUpcoming != null && !isLoggedIn) {
             return localUpcoming
         }
 
-        if (incode == null) {
-            return emptyList()
+        val code = this.incode
+        if (code == null || code.isInvalid()) {
+            logger.w("loadUpcoming: no usable session, keeping cached data")
+            return localUpcoming
         }
 
-        val upcomingResponse = NetworkService.loadUpcoming(incode!!)?.bodyAsText()
+        val upcomingResponse = NetworkService.loadUpcoming(code)?.bodyAsText()
         if (upcomingResponse.isNullOrBlank()) {
-            return emptyList()
+            logger.w("loadUpcoming: empty response, keeping cached data")
+            return null
         }
 
-        val upcomingDuties = DataParserService.parseLoadMinimalDutyDefinitions(
-            Json.parseToJsonElement(upcomingResponse)
-        )
-
+        val upcomingDuties = parseMinimalDuties(upcomingResponse)
+        if (upcomingDuties == null) {
+            return null
+        }
 
         if (localUpcoming != null) {
             updateAlarms(localUpcoming, upcomingDuties)
@@ -539,16 +577,23 @@ object PrepService : DutyScheduleServiceBase {
         from: Instant,
         to: Instant
     ): List<Message> {
-        if (!isLoggedIn) {
+        val code = this.incode
+        if (!isLoggedIn || code == null || code.isInvalid()) {
             return emptyList()
         }
 
         val messagesResponse =
-            NetworkService.getMessages(incode!!, orgUnitDataGuid, from, to)?.bodyAsText()
+            NetworkService.getMessages(code, orgUnitDataGuid, from, to)?.bodyAsText()
         if (messagesResponse.isNullOrBlank()) {
             return emptyList()
         }
-        val messages = DataParserService.parseGetMessages(Json.parseToJsonElement(messagesResponse))
+
+        val messages = try {
+            DataParserService.parseGetMessages(Json.parseToJsonElement(messagesResponse))
+        } catch (e: IllegalArgumentException) {
+            logger.e("Invalid JSON! $messagesResponse", e)
+            null
+        }
         if (messages == null) {
             return emptyList()
         }
@@ -581,6 +626,17 @@ object PrepService : DutyScheduleServiceBase {
         }
 
         return parsed
+    }
+
+    private fun parseMinimalDuties(body: String): List<MinimalDutyDefinition>? {
+        val json = try {
+            Json.parseToJsonElement(body)
+        } catch (e: IllegalArgumentException) {
+            logger.e("Invalid JSON! $body", e)
+            return null
+        }
+
+        return DataParserService.parseLoadMinimalDutyDefinitions(json)
     }
 
     private suspend fun augmentHaendWithDocScedTf(
@@ -616,7 +672,7 @@ object PrepService : DutyScheduleServiceBase {
                     haend.end.toInstant()
                 )
                 val night = mid.isNight()
-                val dsDate = docscedRowDate(mid).startOfDay()
+                val dsDate = docscedRowDate(mid).toLocalDateTime(TimeZone.currentSystemDefault()).date
 
                 val dsDay = byDate[dsDate]
                 if (dsDay == null) {

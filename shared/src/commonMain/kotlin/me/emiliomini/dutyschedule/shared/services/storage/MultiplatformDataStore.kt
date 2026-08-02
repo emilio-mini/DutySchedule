@@ -63,8 +63,11 @@ class MultiplatformDataStore<T : MultiplatformDataModel>(
     }
 
     suspend fun clear() {
-        dataFlow.update { defaultValue }
-        onUpdate(this, null)
+        mutex.withLock {
+            dataFlow.update { defaultValue }
+            lastUpdated = null
+            onUpdate(this, null)
+        }
     }
 
     @Composable

@@ -21,6 +21,10 @@ class AndroidStorageApi() : PlatformStorageApi {
 
     override suspend fun initialize(stores: List<MultiplatformDataStore<out MultiplatformDataModel>>) {
         for (store in stores) {
+            if (dataStores.containsKey(store.id)) {
+                continue
+            }
+
             val serializer = ProtoAdapter(store.serializer as KSerializer<MultiplatformDataModel>)
             val dataStore = DataStoreFactory.create(
                 serializer = serializer,
@@ -45,6 +49,9 @@ class AndroidStorageApi() : PlatformStorageApi {
             return null
         } catch (e: ClassCastException) {
             logger.warn("Type mismatch for given datastore id ${store.id}", throwable = e)
+            return null
+        } catch (e: Exception) {
+            logger.warn("Failed to read datastore with id ${store.id}", throwable = e)
             return null
         }
     }

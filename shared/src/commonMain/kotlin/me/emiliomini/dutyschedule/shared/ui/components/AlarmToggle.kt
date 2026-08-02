@@ -41,10 +41,12 @@ fun AlarmToggle(modifier: Modifier = Modifier, dutyBegin: Instant, guid: String,
                 alarmBlocked = true
                 if (alarmSet) {
                     scope.launch {
-                        getPlatformAlarmApi().cancelAlarm(guid)
-
-                        alarmSet = false
-                        alarmBlocked = false
+                        try {
+                            getPlatformAlarmApi().cancelAlarm(guid)
+                        } finally {
+                            alarmSet = getPlatformAlarmApi().isAlarmSet(guid)
+                            alarmBlocked = false
+                        }
                     }
                 } else {
                     scope.launch {
@@ -53,7 +55,7 @@ fun AlarmToggle(modifier: Modifier = Modifier, dutyBegin: Instant, guid: String,
                         val alarmOffsetMillis = alarmOffset * 60_000L
 
                         val timestamp = dutyBeginMillis - alarmOffsetMillis
-                        AlarmService.setAlarm(
+                        alarmSet = AlarmService.setAlarm(
                             guid,
                             Instant.fromEpochMilliseconds(timestamp),
                             onError = {
@@ -62,7 +64,6 @@ fun AlarmToggle(modifier: Modifier = Modifier, dutyBegin: Instant, guid: String,
                             edited = true
                         )
                         alarmBlocked = false
-                        alarmSet = true
                     }
                 }
             }, enabled = !alarmBlocked

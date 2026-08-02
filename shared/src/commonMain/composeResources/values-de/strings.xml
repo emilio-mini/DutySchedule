@@ -16,6 +16,9 @@
     <string name="error_permissions_missing_alarm_and_notification">Alarme and Benachrichtigungen können nicht gesendet werden</string>
     <string name="error_permissions_missing_alarm">Alarme können nicht gesetzt werden</string>
     <string name="error_permissions_missing_notification">Benachrichtigungen könnte nicht gesendet werden</string>
+    <string name="error_load_failed">Daten konnten nicht geladen werden. Prüfe deine Verbindung und versuche es erneut.</string>
+    <string name="error_load_retry">Erneut versuchen</string>
+    <string name="error_login_failed">Anmeldung fehlgeschlagen. Bitte prüfe Email und Passwort.</string>
     <string name="main_schedule_title">Dienstplan</string>
     <string name="main_schedule_accessibility_datepicker">Klicken um einen neuen Zeitraum auszuwählen</string>
     <string name="main_schedule_datepicker_confirm">OK</string>

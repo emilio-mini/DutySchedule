@@ -32,12 +32,17 @@ interface DutyScheduleServiceBase {
     suspend fun loadSelf(guid: String?, org: String?): Employee?
     suspend fun loadOrgs(): OrgItems?
     suspend fun loadAllowedOrgs(): List<String>?
-    suspend fun loadPlan(orgUnitDataGuid: String, from: Instant, to: Instant): Pair<List<DutyDefinition>, Map<String, DutyGroup>>
+    /**
+     * The nullable load results below are null when the request failed and empty when the server
+     * reported nothing; persisting or rendering a failure as empty wipes the cached data it was
+     * supposed to refresh
+     */
+    suspend fun loadPlan(orgUnitDataGuid: String, from: Instant, to: Instant): Pair<List<DutyDefinition>, Map<String, DutyGroup>>?
     suspend fun getStaff(orgUnitDataGuid: String, staffDataGuid: List<String>, from: Instant, to: Instant): List<Employee>
-    suspend fun loadTimeline(orgUnitDataGuid: String, from: Instant, to: Instant): List<OrgDay>
-    suspend fun loadPast(year: String): List<MinimalDutyDefinition>
-    suspend fun loadHoursOfService(year: String): Float
-    suspend fun loadUpcoming(): List<MinimalDutyDefinition>
+    suspend fun loadTimeline(orgUnitDataGuid: String, from: Instant, to: Instant): List<OrgDay>?
+    suspend fun loadPast(year: String): List<MinimalDutyDefinition>?
+    suspend fun loadHoursOfService(year: String): Float?
+    suspend fun loadUpcoming(): List<MinimalDutyDefinition>?
     suspend fun loadMessages(orgUnitDataGuid: String, from: Instant, to: Instant): List<Message>
     suspend fun createAndAllocateDuty(planDataGuid: String): CreateDutyResponse?
 }

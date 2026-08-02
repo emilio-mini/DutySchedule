@@ -22,7 +22,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -41,10 +40,12 @@ import dutyschedule.shared.generated.resources.main_dashboard_hours
 import dutyschedule.shared.generated.resources.main_dashboard_section_upcoming_title
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.shared.debug.DebugFlags
+import me.emiliomini.dutyschedule.shared.services.CredentialService
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
 import me.emiliomini.dutyschedule.shared.services.prep.live.PrepService
 import me.emiliomini.dutyschedule.shared.services.scaffold.Action
 import me.emiliomini.dutyschedule.shared.services.scaffold.ScaffoldService
+import me.emiliomini.dutyschedule.shared.services.scaffold.ScreenActions
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.components.ArcProgressIndicator
 import me.emiliomini.dutyschedule.shared.ui.components.CardListItemType
@@ -73,8 +74,7 @@ fun DashboardScreen(
 ) {
     val scope = rememberCoroutineScope()
 
-    ScaffoldService.setActionsForScreen(
-        NavItemId.DASHBOARD,
+    ScreenActions(NavItemId.DASHBOARD) {
         listOf(
             Action(element = { run ->
                 IconButton(onClick = { run() }) {
@@ -84,19 +84,19 @@ fun DashboardScreen(
                 }
             }, callback = {
                 scope.launch {
-                    val userPreferences = StorageService.USER_PREFERENCES.getOrDefault()
-                    StorageService.clear()
+                    val username = StorageService.USER_PREFERENCES.getOrDefault().username
+                    val password = CredentialService.getPassword()
                     PrepService.logout()
-                    PrepService.login(
-                        userPreferences.username, userPreferences.password
-                    )
+                    if (password != null) {
+                        PrepService.login(username, password)
+                    }
                     onRestart()
                 }
             }, visible = DebugFlags.SHOW_DEBUG_ACTIONS.active()),
             Action({ EmployeeAvatar(employee = DutyScheduleService.self, onLogout = onLogout) }),
             Action({ Spacer(Modifier.width(16.dp)) })
         )
-    )
+    }
 
     val currentYear = Clock.System.now().format("yyyy")
     val upcomingDuties by StorageService.UPCOMING_DUTIES.collectAsState()
@@ -109,7 +109,8 @@ fun DashboardScreen(
     var upcomingLoaded by remember { mutableStateOf(true) }
 
 
-    val snackbarHostState = remember { SnackbarHostState() }
+    val snackbarHostState = ScaffoldService.snackbarHostState
+
     LaunchedEffect(DutyScheduleService.isLoggedIn) {
         if (!DutyScheduleService.isLoggedIn) {
             return@LaunchedEffect
@@ -117,14 +118,20 @@ fun DashboardScreen(
 
         if (!StorageService.UPCOMING_DUTIES.lastUpdated.withinLast(30.minutes)) {
             upcomingLoaded = false
-            DutyScheduleService.loadUpcoming()
-            upcomingLoaded = true
+            try {
+                DutyScheduleService.loadUpcoming()
+            } finally {
+                upcomingLoaded = true
+            }
         }
 
         if (!StorageService.STATISTICS.lastUpdated.withinLast(30.minutes)) {
             hoursLoaded = false
-            DutyScheduleService.loadHoursOfService(currentYear)
-            hoursLoaded = true
+            try {
+                DutyScheduleService.loadHoursOfService(currentYear)
+            } finally {
+                hoursLoaded = true
+            }
         }
     }
 
@@ -147,11 +154,13 @@ fun DashboardScreen(
                     hoursLoaded = false
                     upcomingLoaded = false
 
-                    DutyScheduleService.loadUpcoming()
-                    DutyScheduleService.loadHoursOfService(currentYear)
-
-                    hoursLoaded = true
-                    upcomingLoaded = true
+                    try {
+                        DutyScheduleService.loadUpcoming()
+                        DutyScheduleService.loadHoursOfService(currentYear)
+                    } finally {
+                        hoursLoaded = true
+                        upcomingLoaded = true
+                    }
                 }
             })
     ) { innerPadding ->
@@ -173,7 +182,7 @@ fun DashboardScreen(
                 ) {
                     Row(verticalAlignment = Alignment.Bottom) {
                         Text(
-                            "${floor(((animatedMinutes / 60.0) * 100) / 100)}",
+                            "${floor((animatedMinutes / 60.0) * 100) / 100}",
                             style = MaterialTheme.typography.titleLarge
                         )
                         Text(

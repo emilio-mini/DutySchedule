@@ -36,13 +36,19 @@ fun DutyScheduleApp(composableLoadActions: @Composable () -> Unit) {
         while (true) {
             delay(300_000L)
             if (DutyScheduleService.isLoggedIn) {
-                NetworkService.keepAlive()
+                runCatching { NetworkService.keepAlive() }
             }
         }
     }
 
     LaunchedEffect(Unit) {
         getPlatformTaskSchedulerApi().scheduleTask(MultiplatformTask.UpdateAlarms)
+    }
+
+    LaunchedEffect(loaded, previouslyLoggedIn, DutyScheduleService.isLoggedIn) {
+        if (loaded && previouslyLoggedIn && !DutyScheduleService.isLoggedIn) {
+            DutyScheduleService.restoreLogin()
+        }
     }
 
     if (!loaded) {
@@ -59,18 +65,12 @@ fun DutyScheduleApp(composableLoadActions: @Composable () -> Unit) {
                 Onboarding()
             }
         } else {
-            if (!DutyScheduleService.isLoggedIn) {
-                scope.launch {
-                    DutyScheduleService.restoreLogin()
-                }
-            }
-
             DutyScheduleTheme {
                 Main(
                     onLogout = {
                         scope.launch {
-                            DutyScheduleService.logout()
                             previouslyLoggedIn = false
+                            DutyScheduleService.logout()
                             loaded = false
                         }
                     },

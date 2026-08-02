@@ -1,5 +1,7 @@
 package me.emiliomini.dutyschedule.shared.services.storage
 
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import me.emiliomini.dutyschedule.shared.api.getPlatformStorageApi
 import me.emiliomini.dutyschedule.shared.datastores.AlarmItems
 import me.emiliomini.dutyschedule.shared.datastores.ClientCookies
@@ -11,6 +13,7 @@ import me.emiliomini.dutyschedule.shared.datastores.PastDutyItems
 import me.emiliomini.dutyschedule.shared.datastores.Statistics
 import me.emiliomini.dutyschedule.shared.datastores.UpcomingDutyItems
 import me.emiliomini.dutyschedule.shared.datastores.UserPreferences
+import me.emiliomini.dutyschedule.shared.services.CredentialService
 
 object StorageService {
     val USER_PREFERENCES = MultiplatformDataStore(
@@ -88,12 +91,27 @@ object StorageService {
     )
 
     private val storageApi = getPlatformStorageApi()
+    private val initMutex = Mutex()
+    private var initialized = false
 
+    /**
+     * Builds the platform stores once per process; the app entry point, a restart and the
+     * background worker all reach this
+     */
     suspend fun initialize() {
-        storageApi.initialize(ALL_STORES)
-        ALL_STORES.forEach {
-            it.ensureLoaded()
+        initMutex.withLock {
+            if (initialized) {
+                return
+            }
+
+            storageApi.initialize(ALL_STORES)
+            ALL_STORES.forEach {
+                it.ensureLoaded()
+            }
+            initialized = true
         }
+
+        CredentialService.migrateLegacyPlaintextPassword()
     }
 
     suspend fun clear() {

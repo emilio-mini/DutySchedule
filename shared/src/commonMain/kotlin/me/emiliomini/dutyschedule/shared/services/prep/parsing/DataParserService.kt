@@ -185,8 +185,17 @@ object DataParserService {
         return Pair(sortedDuties, groups)
     }
 
-    fun parseLoadMinimalDutyDefinitions(root: JsonElement): List<MinimalDutyDefinition> {
-        val data = root.value(PrepResponseMapping.DATA_AS_ARRAY) ?: JsonArray(emptyList())
+    /**
+     * Returns null when the response holds no data array at all, which means the request was
+     * rejected rather than that there are no duties
+     */
+    fun parseLoadMinimalDutyDefinitions(root: JsonElement): List<MinimalDutyDefinition>? {
+        val data = root.value(PrepResponseMapping.DATA_AS_ARRAY)
+        if (data == null) {
+            logger.w("Duty response contained no data array - treating as a failed request")
+            return null
+        }
+
         return data.mapElements {
             val allocations = it.o.value(MinimalDutyDefinitionMapping.ALLOCATION_INFO)
             val typeString =

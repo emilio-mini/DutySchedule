@@ -17,6 +17,9 @@
     <string name="error_permissions_missing_alarm_and_notification">Alarm and notification permissions missing</string>
     <string name="error_permissions_missing_alarm">Alarm permissions missing</string>
     <string name="error_permissions_missing_notification">Notification permissions missing</string>
+    <string name="error_load_failed">Could not load data. Check your connection and try again.</string>
+    <string name="error_load_retry">Retry</string>
+    <string name="error_login_failed">Login failed. Please check your email and password.</string>
     <string name="main_schedule_title">Duty Schedule</string>
     <string name="main_schedule_accessibility_datepicker">Click to pick a date range</string>
     <string name="main_schedule_datepicker_confirm">OK</string>

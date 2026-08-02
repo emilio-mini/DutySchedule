@@ -71,6 +71,7 @@ import com.mohamedrejeb.calf.permissions.Permission
 import com.mohamedrejeb.calf.permissions.isGranted
 import com.mohamedrejeb.calf.permissions.rememberPermissionState
 import dutyschedule.shared.generated.resources.Res
+import dutyschedule.shared.generated.resources.error_login_failed
 import dutyschedule.shared.generated.resources.mock_notification_1
 import dutyschedule.shared.generated.resources.mock_notification_2
 import dutyschedule.shared.generated.resources.mockup
@@ -106,6 +107,22 @@ fun Onboarding() {
     var blockContinue by remember { mutableStateOf(false) }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var loginFailed by remember { mutableStateOf(false) }
+
+    val attemptLogin = {
+        if (!blockContinue) {
+            blockContinue = true
+            loginFailed = false
+            scope.launch {
+                try {
+                    loginFailed = !DutyScheduleService.login(email, password)
+                } finally {
+                    blockContinue = false
+                }
+            }
+        }
+        Unit
+    }
 
     val notificationPermissionCheck = rememberPermissionState(Permission.Notification)
     var alarmPermissionCheck by remember { mutableStateOf(false) }
@@ -233,7 +250,8 @@ fun Onboarding() {
                         .fillMaxWidth()
                         .focusRequester(usernameFocusRequester),
                     value = email,
-                    onValueChange = { email = it },
+                    onValueChange = { email = it; loginFailed = false },
+                    isError = loginFailed,
                     label = {
                         Text(stringResource(Res.string.onboarding_login_email))
                     },
@@ -255,27 +273,20 @@ fun Onboarding() {
                         .fillMaxWidth()
                         .focusRequester(passwordFocusRequester),
                     value = password,
-                    onValueChange = { password = it },
+                    onValueChange = { password = it; loginFailed = false },
                     label = { Text(stringResource(Res.string.onboarding_login_password)) },
                     leadingIcon = { Icon(Fingerprint, contentDescription = null) },
                     visualTransformation = PasswordVisualTransformation(),
+                    isError = loginFailed,
+                    supportingText = if (loginFailed) {
+                        { Text(stringResource(Res.string.error_login_failed)) }
+                    } else {
+                        null
+                    },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password, imeAction = ImeAction.Done
                     ),
-                    keyboardActions = KeyboardActions(onDone = {
-                        if (blockContinue) {
-                            return@KeyboardActions
-                        }
-
-                        blockContinue = true
-                        scope.launch {
-                            val result = DutyScheduleService.login(
-                                email, password
-                            )
-
-                            blockContinue = false
-                        }
-                    }),
+                    keyboardActions = KeyboardActions(onDone = { attemptLogin() }),
                     maxLines = 1
                 )
             }
@@ -361,21 +372,8 @@ fun Onboarding() {
                     TextButton(
                         onClick = {
                             if (pageIndex == pages.lastIndex) {
-                                if (blockContinue) {
-                                    return@TextButton
-                                }
-
-                                blockContinue = true
                                 // DutyScheduleService = DemoService FIXME
-                                scope.launch {
-                                    val result = DutyScheduleService.login(
-                                        email, password
-                                    )
-                                    if (result) {
-                                    }
-
-                                    blockContinue = false
-                                }
+                                attemptLogin()
                             } else {
                                 pageIndex = pages.lastIndex
                             }
@@ -394,18 +392,7 @@ fun Onboarding() {
                         if (pageIndex < pages.lastIndex) {
                             pageIndex++
                         } else {
-                            if (blockContinue) {
-                                return@IconButton
-                            }
-
-                            blockContinue = true
-                            scope.launch {
-                                val result = DutyScheduleService.login(
-                                    email, password
-                                )
-
-                                blockContinue = false
-                            }
+                            attemptLogin()
                         }
                     },
                     colors = IconButtonDefaults.filledTonalIconButtonColors(),

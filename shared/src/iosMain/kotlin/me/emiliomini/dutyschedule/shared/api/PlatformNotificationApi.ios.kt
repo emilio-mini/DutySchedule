@@ -3,6 +3,16 @@ package me.emiliomini.dutyschedule.shared.api
 import me.emiliomini.dutyschedule.shared.api.models.MultiplatformNotification
 
 class IosNotificationApi : PlatformNotificationApi {
+    override fun requestPermission(): Boolean {
+        // TODO: Implement
+        return false
+    }
+
+    override fun isPermissionGranted(): Boolean {
+        // TODO: Implement
+        return false
+    }
+
     override fun send(notification: MultiplatformNotification) {
         // TODO: Implement
     }

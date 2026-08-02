@@ -34,6 +34,7 @@ import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -45,6 +46,8 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dutyschedule.shared.generated.resources.Res
+import dutyschedule.shared.generated.resources.error_load_failed
+import dutyschedule.shared.generated.resources.error_load_retry
 import dutyschedule.shared.generated.resources.main_schedule_accessibility_datepicker
 import dutyschedule.shared.generated.resources.main_schedule_datepicker_confirm
 import dutyschedule.shared.generated.resources.main_schedule_datepicker_dismiss
@@ -59,7 +62,7 @@ import me.emiliomini.dutyschedule.shared.datastores.Slot
 import me.emiliomini.dutyschedule.shared.mappings.ShiftType
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
 import me.emiliomini.dutyschedule.shared.services.scaffold.Action
-import me.emiliomini.dutyschedule.shared.services.scaffold.ScaffoldService
+import me.emiliomini.dutyschedule.shared.services.scaffold.ScreenActions
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.components.AppDateInfo
 import me.emiliomini.dutyschedule.shared.ui.components.AssignConfirmSheet
@@ -103,6 +106,8 @@ fun ScheduleScreen(
     var selectedEndDate by remember { mutableStateOf<Long?>(currentMillis + WEEK_MILLIS) }
 
     var timeline by remember { mutableStateOf<List<OrgDay>?>(null) }
+    var timelineFailed by remember { mutableStateOf(false) }
+    var reloadToken by remember { mutableIntStateOf(0) }
 
     var allowedOrgs by remember { mutableStateOf<List<String>?>(null) }
     var selectedOrg by remember { mutableStateOf<String?>(null) }
@@ -131,7 +136,7 @@ fun ScheduleScreen(
     }
 
     LaunchedEffect(
-        DutyScheduleService.isLoggedIn, selectedStartDate, selectedEndDate, selectedOrg
+        DutyScheduleService.isLoggedIn, selectedStartDate, selectedEndDate, selectedOrg, reloadToken
     ) {
         if (selectedOrg == null || !DutyScheduleService.isLoggedIn) {
             return@LaunchedEffect
@@ -149,11 +154,19 @@ fun ScheduleScreen(
         }
 
         timeline = null
-        timeline = DutyScheduleService.loadTimeline(
+        timelineFailed = false
+
+        val loaded = DutyScheduleService.loadTimeline(
             selectedOrg!!,
             Instant.fromEpochMilliseconds(selectedStartDate!!),
             Instant.fromEpochMilliseconds(selectedEndDate!!)
         )
+
+        if (loaded == null) {
+            timelineFailed = true
+            return@LaunchedEffect
+        }
+        timeline = loaded
 
         DutyScheduleService.loadMessages(
             selectedOrg!!,
@@ -165,8 +178,8 @@ fun ScheduleScreen(
     val stationScrollState = rememberScrollState()
     var detailViewEmployee by remember { mutableStateOf<Slot?>(null) }
 
-    ScaffoldService.setActionsForScreen(
-        NavItemId.SCHEDULE, listOf(
+    ScreenActions(NavItemId.SCHEDULE) {
+        listOf(
             Action({ run ->
                 IconButton(onClick = { run() }) {
                     Icon(
@@ -194,7 +207,7 @@ fun ScheduleScreen(
                 selectedEndDate = selectedStartDate!! + WEEK_MILLIS
             })
         )
-    )
+    }
 
     Screen(
         modifier = modifier, paddingValues = paddingValues
@@ -278,7 +291,17 @@ fun ScheduleScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    LoadingIndicator()
+                    if (timelineFailed) {
+                        Text(
+                            stringResource(Res.string.error_load_failed),
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        TextButton(onClick = { reloadToken++ }) {
+                            Text(stringResource(Res.string.error_load_retry))
+                        }
+                    } else {
+                        LoadingIndicator()
+                    }
                 }
             }
         }

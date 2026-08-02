@@ -21,15 +21,12 @@ class AndroidAlarmApi : PlatformAlarmApi {
     private val logger = getPlatformLogger("AndroidAlarmApi")
 
     override fun requestPermission(): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !isPermissionGranted()) {
-            val intent =
-                Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
-                    data = Uri.fromParts("package", APPLICATION_CONTEXT.packageName, null)
-                }
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            APPLICATION_CONTEXT.startActivity(intent)
-            return isPermissionGranted()
-        } else return true
+        if (isPermissionGranted()) {
+            return true
+        }
+
+        openExactAlarmSettings()
+        return false
     }
 
     override fun isPermissionGranted(): Boolean {
@@ -52,11 +49,7 @@ class AndroidAlarmApi : PlatformAlarmApi {
         val alarmManager =
             APPLICATION_CONTEXT.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
-            val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
-                data = Uri.fromParts("package", APPLICATION_CONTEXT.packageName, null)
-            }
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            APPLICATION_CONTEXT.startActivity(intent)
+            logger.w("Cannot schedule exact alarms - skipping alarm $id")
             return
         }
 
@@ -143,6 +136,17 @@ class AndroidAlarmApi : PlatformAlarmApi {
         return alarmManager.nextAlarmClock?.triggerTime?.let { Instant.fromEpochMilliseconds(it) }
     }
 
+    private fun openExactAlarmSettings() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            return
+        }
+
+        val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+            data = Uri.fromParts("package", APPLICATION_CONTEXT.packageName, null)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        APPLICATION_CONTEXT.startActivity(intent)
+    }
 }
 
 actual fun initializePlatformAlarmApi(): PlatformAlarmApi {

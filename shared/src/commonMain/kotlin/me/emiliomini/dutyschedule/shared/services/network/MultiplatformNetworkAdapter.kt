@@ -14,6 +14,7 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.Parameters
 import io.ktor.http.Url
 import io.ktor.http.takeFrom
+import kotlinx.coroutines.CancellationException
 import me.emiliomini.dutyschedule.shared.api.getPlatformConnectivityApi
 import me.emiliomini.dutyschedule.shared.api.getPlatformLogger
 
@@ -21,6 +22,7 @@ import me.emiliomini.dutyschedule.shared.api.getPlatformLogger
  * Mirrors [HttpClient] API and checks network connectivity before sending requests; Methods return null when no connection is available
  */
 object MultiplatformNetworkAdapter {
+    private val logger = getPlatformLogger("MultiplatformNetworkAdapter")
     private val connectivityApi = getPlatformConnectivityApi()
     private val cookieStorage = PersistentCookieStorage()
     private val HTTP: HttpClient = HttpClient {
@@ -76,7 +78,7 @@ object MultiplatformNetworkAdapter {
             return null
         }
 
-        return HTTP.get(builder)
+        return runRequest { HTTP.get(builder) }
     }
 
     suspend fun submitForm(
@@ -98,9 +100,21 @@ object MultiplatformNetworkAdapter {
             return null
         }
 
-        return HTTP.submitForm(
-            formParameters, encodeInQuery, block
-        )
+        return runRequest { HTTP.submitForm(formParameters, encodeInQuery, block) }
     }
 
+    /**
+     * Ktor throws on transport failures; the installed [Logging] plugin has already logged the
+     * request the failure belongs to
+     */
+    private suspend fun runRequest(request: suspend () -> HttpResponse): HttpResponse? {
+        return try {
+            request()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            logger.w("Request failed", e)
+            null
+        }
+    }
 }

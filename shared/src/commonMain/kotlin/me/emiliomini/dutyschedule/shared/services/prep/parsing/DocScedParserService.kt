@@ -5,16 +5,16 @@ package me.emiliomini.dutyschedule.shared.services.prep.parsing
 import com.fleeksoft.ksoup.Ksoup
 import com.fleeksoft.ksoup.nodes.Document
 import com.fleeksoft.ksoup.nodes.Element
+import kotlinx.datetime.LocalDate
 import kotlinx.io.IOException
 import me.emiliomini.dutyschedule.shared.api.getPlatformLogger
 import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
 
 object DocScedParserService {
     private val logger = getPlatformLogger("DocScedParserService")
 
     data class HaendDay(
-        val date: Instant,
+        val date: LocalDate,
         val day: List<String>,
         val night: List<String>
     )
@@ -36,8 +36,8 @@ object DocScedParserService {
                 if (tds.size <= idxNacht) return@mapNotNull null
 
                 val dateText = tds[idxDate].text().trim()
-                val datePart = dateText.substringBefore(" ").split(".").reversed().joinToString("-") + "T00:00:00+00:00" // "25.08.2025 (Mo)" -> "25.08.2025"
-                val date = runCatching { Instant.parse(datePart) }.getOrElse {
+                val datePart = dateText.substringBefore(" ").split(".").reversed().joinToString("-") // "25.08.2025 (Mo)" -> "2025-08-25"
+                val date = runCatching { LocalDate.parse(datePart) }.getOrElse {
                     logger.w("Überspringe Zeile: ungültiges Datum '$datePart'")
                     return@mapNotNull null
                 }

@@ -72,8 +72,9 @@ fun Instant.startOfWeek(zone: TimeZone = TimeZone.currentSystemDefault()): Insta
     return mondayMidnight.toInstant(zone)
 }
 
-fun Instant.startOfDay(): Instant {
-    return (this.format("yyyy-MM-dd") + "T00:00:00+00:00").toInstant()
+fun Instant.startOfDay(zone: TimeZone = TimeZone.currentSystemDefault()): Instant {
+    val date = this.toLocalDateTime(zone).date
+    return LocalDateTime(date, LocalTime(0, 0, 0, 0)).toInstant(zone)
 }
 
 fun Instant?.withinLast(duration: Duration): Boolean {
