@@ -26,5 +26,7 @@ enum class DutyType {
     @SerialName("9")
     EVENT,
     @SerialName("10")
-    BLOOD_DONATION_SERVICE
+    BLOOD_DONATION_SERVICE,
+    @SerialName("11")
+    DRONE_TEAM
 }

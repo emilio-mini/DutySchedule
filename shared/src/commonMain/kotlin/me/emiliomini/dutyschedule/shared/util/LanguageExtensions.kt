@@ -2,7 +2,9 @@ package me.emiliomini.dutyschedule.shared.util
 
 import dutyschedule.shared.generated.resources.Res
 import dutyschedule.shared.generated.resources.data_dutytype_administrative
+import dutyschedule.shared.generated.resources.data_dutytype_blood_donation_service
 import dutyschedule.shared.generated.resources.data_dutytype_drill
+import dutyschedule.shared.generated.resources.data_dutytype_drone_team
 import dutyschedule.shared.generated.resources.data_dutytype_ems
 import dutyschedule.shared.generated.resources.data_dutytype_event
 import dutyschedule.shared.generated.resources.data_dutytype_haend
@@ -51,7 +53,8 @@ fun DutyType.resourceString(): StringResource {
         DutyType.HAEND -> Res.string.data_dutytype_haend
         DutyType.ADMINISTRATIVE -> Res.string.data_dutytype_administrative
         DutyType.EVENT -> Res.string.data_dutytype_event
-        DutyType.BLOOD_DONATION_SERVICE -> Res.string.data_dutytype_event
+        DutyType.BLOOD_DONATION_SERVICE -> Res.string.data_dutytype_blood_donation_service
+        DutyType.DRONE_TEAM -> Res.string.data_dutytype_drone_team
         else -> Res.string.data_dutytype_unknown
     }
 }

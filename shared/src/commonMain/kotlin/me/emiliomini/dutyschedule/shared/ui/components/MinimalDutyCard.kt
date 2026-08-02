@@ -31,6 +31,7 @@ import me.emiliomini.dutyschedule.shared.datastores.MinimalDutyDefinition
 import me.emiliomini.dutyschedule.shared.debug.DebugFlags
 import me.emiliomini.dutyschedule.shared.ui.icons.Ambulance
 import me.emiliomini.dutyschedule.shared.ui.icons.Coffee
+import me.emiliomini.dutyschedule.shared.ui.icons.Drone
 import me.emiliomini.dutyschedule.shared.ui.icons.EcgHeart
 import me.emiliomini.dutyschedule.shared.ui.icons.EmojiPeople
 import me.emiliomini.dutyschedule.shared.ui.icons.Exercise
@@ -111,6 +112,7 @@ fun MinimalDutyCard(
                             DutyType.ADMINISTRATIVE -> Coffee
                             DutyType.EVENT -> Festival
                             DutyType.BLOOD_DONATION_SERVICE -> VolunteerActivism
+                            DutyType.DRONE_TEAM -> Drone
                             else -> QuestionMark
                         },
                         contentDescription = null,

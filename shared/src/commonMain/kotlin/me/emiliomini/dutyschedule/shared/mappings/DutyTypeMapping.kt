@@ -17,6 +17,7 @@ object DutyTypeMapping {
             "[ Innendienst ]" -> DutyType.ADMINISTRATIVE
             "[ Öffentlichkeitsveranstaltung ]" -> DutyType.EVENT
             "[ TRS Blutspendeaktion ]" -> DutyType.BLOOD_DONATION_SERVICE
+            "[ Drohnen Team ]" -> DutyType.DRONE_TEAM
             else -> DutyType.UNKNOWN
         }
     }
