@@ -77,6 +77,11 @@
     <string name="notifications_channel_alarms_description">Kanal für Dienst-Alarme</string>
     <string name="notifications_channel_info_title">Dienst-Infos</string>
     <string name="notifications_channel_info_description">Kanal für Dienst-Infos</string>
+    <string name="notifications_channel_countdown_title">Wecker-Countdown</string>
+    <string name="notifications_channel_countdown_description">Stiller Countdown bevor ein Dienst-Wecker läutet</string>
+    <string name="notifications_countdown_title">Dienst-Wecker läutet bald</string>
+    <string name="notifications_countdown_content">Läutet um %1$s</string>
+    <string name="notifications_countdown_action_dismiss">Deaktivieren</string>
     <string name="nav_alarms">Wecker</string>
     <string name="main_alarms_title">Wecker</string>
     <string name="main_alarms_none">Keine Wecker gesetzt</string>

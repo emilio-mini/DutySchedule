@@ -18,11 +18,15 @@ import me.emiliomini.dutyschedule.shared.util.toEpochMilliseconds
 import me.emiliomini.dutyschedule.shared.util.toInstant
 import org.jetbrains.compose.resources.getString
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 object AlarmService {
+    /** How far ahead of an alarm the silent countdown notification is shown */
+    val COUNTDOWN_LEAD = 12.hours
+
     @OptIn(ExperimentalTime::class)
     suspend fun updateAlarm(alarm: Alarm, enabled: Boolean, onError: suspend (String) -> Unit) {
             if (enabled) {
@@ -162,6 +166,25 @@ object AlarmService {
         StorageService.ALARM_ITEMS.update { items ->
             items.copy(alarms = items.alarms.filter { it.timestamp > now })
         }
+    }
+
+    /**
+     * Re-registers every stored alarm with the platform. AlarmManager forgets all alarms across a
+     * reboot and an app update, so without this every alarm set before the restart never rings
+     */
+    @OptIn(ExperimentalTime::class)
+    suspend fun rescheduleStoredAlarms() {
+        removePlayedAlarms()
+
+        val alarms = StorageService.ALARM_ITEMS.get()?.alarms.orEmpty().filter { it.active }
+        alarms.forEach {
+            getPlatformAlarmApi().setAlarm(
+                it.guid,
+                Instant.fromEpochMilliseconds(it.timestamp),
+                edited = it.edited
+            )
+        }
+        NotificationService.sendInfoNotification()
     }
 
     /** Returns whether the duties could be refreshed */

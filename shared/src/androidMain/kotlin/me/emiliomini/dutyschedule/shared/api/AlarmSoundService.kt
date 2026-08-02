@@ -4,6 +4,7 @@ import android.app.Notification
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.media.AudioAttributes
 import android.media.Ringtone
 import android.media.RingtoneManager
@@ -22,6 +23,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import me.emiliomini.dutyschedule.shared.R
 import me.emiliomini.dutyschedule.shared.mappings.NotificationChannelMapping
+import me.emiliomini.dutyschedule.shared.mappings.NotificationIds
 import me.emiliomini.dutyschedule.shared.services.AlarmService
 import me.emiliomini.dutyschedule.shared.services.prep.live.PrepService
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
@@ -64,7 +66,16 @@ class AlarmSoundService : Service() {
         )
 
         val notification = createNotification()
-        startForeground(1, notification)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(
+                NotificationIds.ALARM_RINGING,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+            )
+        } else {
+            startForeground(NotificationIds.ALARM_RINGING, notification)
+        }
+
         ringtonePlayer.audioAttributes = AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_ALARM)
             .build()
@@ -110,11 +121,12 @@ class AlarmSoundService : Service() {
             getString(Res.string.notifications_alarms_duty_action_dismiss)
         }
 
-        return NotificationCompat.Builder(this, NotificationChannelMapping.ALARMS.id)
+        val builder = NotificationCompat.Builder(this, NotificationChannelMapping.ALARMS.id)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(content)
             .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setAutoCancel(true)
             .addAction(
                 0,
@@ -123,6 +135,20 @@ class AlarmSoundService : Service() {
             )
             .setSilent(true)
             .setDeleteIntent(stopSoundPendingIntent)
-            .build()
+
+        val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+        if (launchIntent != null) {
+            builder.setFullScreenIntent(
+                PendingIntent.getActivity(
+                    this,
+                    0,
+                    launchIntent,
+                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                ),
+                true
+            )
+        }
+
+        return builder.build()
     }
 }

@@ -12,6 +12,7 @@ import android.provider.Settings
 import kotlinx.datetime.TimeZone
 import me.emiliomini.dutyschedule.shared.datastores.Alarm
 import me.emiliomini.dutyschedule.shared.datastores.AlarmItems
+import me.emiliomini.dutyschedule.shared.services.AlarmService
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -40,8 +41,8 @@ class AndroidAlarmApi : PlatformAlarmApi {
     }
 
     override suspend fun setAlarm(guid: String, time: Instant, zone: TimeZone, edited: Boolean) {
-
-        if (time.toEpochMilliseconds() < Clock.System.now().toEpochMilliseconds()) {
+        val triggerAt = time.toEpochMilliseconds()
+        if (triggerAt < Clock.System.now().toEpochMilliseconds()) {
             return
         }
 
@@ -49,20 +50,13 @@ class AndroidAlarmApi : PlatformAlarmApi {
         val alarmManager =
             APPLICATION_CONTEXT.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
-            logger.w("Cannot schedule exact alarms - skipping alarm $id")
+            logger.warn("Cannot schedule exact alarms - skipping alarm $id")
             return
         }
 
-        val alarmIntent = Intent(APPLICATION_CONTEXT, AlarmReceiver::class.java)
-        val pendingAlarmIntent = PendingIntent.getBroadcast(
-            APPLICATION_CONTEXT,
-            id,
-            alarmIntent,
-            PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val info = AlarmManager.AlarmClockInfo(time.toEpochMilliseconds(), pendingAlarmIntent)
-        alarmManager.setAlarmClock(info, pendingAlarmIntent)
+        val info = AlarmManager.AlarmClockInfo(triggerAt, launchPendingIntent())
+        alarmManager.setAlarmClock(info, alarmPendingIntent(guid))
+        scheduleCountdown(alarmManager, guid, triggerAt)
 
         StorageService.ALARM_ITEMS.update { alarmItems ->
             val alarms = alarmItems.alarms.toMutableList()
@@ -83,23 +77,23 @@ class AndroidAlarmApi : PlatformAlarmApi {
             AlarmItems(alarms)
         }
 
-        logger.d("Alarm $id set")
+        logger.debug("Alarm $id set for $time")
     }
 
     override suspend fun cancelAlarm(guid: String) {
         val id = guid.hashCode()
         val alarmManager =
             APPLICATION_CONTEXT.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val alarmIntent = Intent(APPLICATION_CONTEXT, AlarmReceiver::class.java)
-        alarmIntent.extras?.putString("guid", guid)
-        val pendingAlarmIntent = PendingIntent.getBroadcast(
-            APPLICATION_CONTEXT,
-            id,
-            alarmIntent,
-            PendingIntent.FLAG_IMMUTABLE
-        )
-        alarmManager.cancel(pendingAlarmIntent)
-        pendingAlarmIntent.cancel()
+
+        existingPendingIntent(id, alarmIntent(guid))?.let {
+            alarmManager.cancel(it)
+            it.cancel()
+        }
+        existingPendingIntent("countdown:$guid".hashCode(), countdownIntent(guid, 0L))?.let {
+            alarmManager.cancel(it)
+            it.cancel()
+        }
+        AlarmCountdownReceiver.hide(APPLICATION_CONTEXT, guid)
 
         StorageService.ALARM_ITEMS.update { alarmItems ->
             val alarms = alarmItems.alarms.toMutableList()
@@ -115,15 +109,14 @@ class AndroidAlarmApi : PlatformAlarmApi {
 
             AlarmItems(alarms)
         }
-        logger.d("Alarm $id cancelled")
+        logger.debug("Alarm $id cancelled")
     }
 
     override fun isAlarmSet(guid: String): Boolean {
-        val id = guid.hashCode()
-        val alarmIntent = Intent(APPLICATION_CONTEXT, AlarmReceiver::class.java)
+        val alarmIntent = alarmIntent(guid)
         val pendingIntent = PendingIntent.getBroadcast(
             APPLICATION_CONTEXT,
-            id,
+            guid.hashCode(),
             alarmIntent,
             PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
         )
@@ -134,6 +127,72 @@ class AndroidAlarmApi : PlatformAlarmApi {
         val alarmManager =
             APPLICATION_CONTEXT.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         return alarmManager.nextAlarmClock?.triggerTime?.let { Instant.fromEpochMilliseconds(it) }
+    }
+
+    /**
+     * Posts the countdown notification [AlarmService.COUNTDOWN_LEAD] before the alarm, or straight
+     * away when the alarm is already closer than that. Inexact on purpose - the notification is not
+     * time critical and this keeps it out of the exact alarm budget
+     */
+    private fun scheduleCountdown(alarmManager: AlarmManager, guid: String, alarmAt: Long) {
+        val showAt = alarmAt - AlarmService.COUNTDOWN_LEAD.inWholeMilliseconds
+        if (showAt <= Clock.System.now().toEpochMilliseconds()) {
+            AlarmCountdownReceiver.show(APPLICATION_CONTEXT, guid, alarmAt)
+            return
+        }
+
+        alarmManager.setAndAllowWhileIdle(
+            AlarmManager.RTC_WAKEUP,
+            showAt,
+            countdownPendingIntent(guid, alarmAt)
+        )
+    }
+
+    private fun alarmIntent(guid: String) =
+        Intent(APPLICATION_CONTEXT, AlarmReceiver::class.java).apply {
+            putExtra(AlarmReceiver.EXTRA_GUID, guid)
+        }
+
+    private fun alarmPendingIntent(guid: String): PendingIntent = PendingIntent.getBroadcast(
+        APPLICATION_CONTEXT,
+        guid.hashCode(),
+        alarmIntent(guid),
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+    )
+
+    private fun countdownIntent(guid: String, alarmAt: Long) =
+        Intent(APPLICATION_CONTEXT, AlarmCountdownReceiver::class.java).apply {
+            action = AlarmCountdownReceiver.ACTION_SHOW
+            putExtra(AlarmCountdownReceiver.EXTRA_GUID, guid)
+            putExtra(AlarmCountdownReceiver.EXTRA_ALARM_AT, alarmAt)
+        }
+
+    private fun countdownPendingIntent(guid: String, alarmAt: Long): PendingIntent =
+        PendingIntent.getBroadcast(
+            APPLICATION_CONTEXT,
+            "countdown:$guid".hashCode(),
+            countdownIntent(guid, alarmAt),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+    private fun existingPendingIntent(requestCode: Int, intent: Intent): PendingIntent? =
+        PendingIntent.getBroadcast(
+            APPLICATION_CONTEXT,
+            requestCode,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_NO_CREATE
+        )
+
+    private fun launchPendingIntent(): PendingIntent? {
+        val launchIntent = APPLICATION_CONTEXT.packageManager
+            .getLaunchIntentForPackage(APPLICATION_CONTEXT.packageName) ?: return null
+
+        return PendingIntent.getActivity(
+            APPLICATION_CONTEXT,
+            0,
+            launchIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
     }
 
     private fun openExactAlarmSettings() {

@@ -77,6 +77,11 @@
     <string name="notifications_channel_alarms_description">Channel for duty alarms</string>
     <string name="notifications_channel_info_title">Duty infos</string>
     <string name="notifications_channel_info_description">Channel for duty infos</string>
+    <string name="notifications_channel_countdown_title">Alarm countdown</string>
+    <string name="notifications_channel_countdown_description">Silent countdown shown before a duty alarm rings</string>
+    <string name="notifications_countdown_title">Duty alarm coming up</string>
+    <string name="notifications_countdown_content">Ringing at %1$s</string>
+    <string name="notifications_countdown_action_dismiss">Dismiss</string>
     <string name="nav_alarms">Alarms</string>
     <string name="main_alarms_title">Alarms</string>
     <string name="main_alarms_none">No alarms set</string>
