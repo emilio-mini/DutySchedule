@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#FFFFFF</color>
+    <!-- Transparent so the API 31+ splash draws the icon straight onto the splash colour instead
+         of putting a white disc on it -->
+    <color name="ic_launcher_background">#00000000</color>
 </resources>

@@ -8,9 +8,6 @@
       android:translateX="-3.75"
       android:translateY="-3.75">
     <path
-        android:pathData="M0,0h75v75h-75z"
-        android:fillColor="#ffffff"/>
-    <path
         android:pathData="M43,25L44,24H46L47,31H43V30L43.5,29L43,25Z"
         android:fillColor="#045BC4"/>
     <path
@@ -22,6 +19,9 @@
     <path
         android:pathData="M47,31H43H33H29L28,35.5V37.5H48V35.5L47,31Z"
         android:fillColor="#C0EFFF"/>
+    <path
+        android:pathData="M28,37.5H48L48.5,38.5V42.5L45,43.5H31L27.5,42.5V38.5L28,37.5Z"
+        android:fillColor="#ffffff"/>
     <path
         android:pathData="M48.5,46H44.5H31.5H27.5L28,49H48L48.5,46Z"
         android:fillColor="#212121"/>

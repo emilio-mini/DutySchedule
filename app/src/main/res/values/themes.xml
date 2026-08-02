@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.DutySchedule" parent="android:Theme.Material.Light.NoActionBar" />
+    <!--
+      windowBackground is what the system paints before the first Compose frame, and on API 31+ it
+      also backs the splash screen. Left at the platform default it flashes white on top of a dark
+      app, so it points at the same colour MaterialTheme uses for its background.
+    -->
+    <style name="Theme.DutySchedule.Base" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/app_background</item>
+    </style>
+
+    <style name="Theme.DutySchedule" parent="Theme.DutySchedule.Base" />
 </resources>
