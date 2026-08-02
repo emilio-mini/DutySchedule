@@ -22,7 +22,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import me.emiliomini.dutyschedule.shared.R
 import me.emiliomini.dutyschedule.shared.mappings.NotificationChannelMapping
+import me.emiliomini.dutyschedule.shared.services.AlarmService
 import me.emiliomini.dutyschedule.shared.services.prep.live.PrepService
+import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import org.jetbrains.compose.resources.getString
 
 
@@ -68,6 +70,8 @@ class AlarmSoundService : Service() {
             .build()
         ringtonePlayer.play()
         serviceScope.launch {
+            StorageService.initialize()
+            AlarmService.removePlayedAlarms()
             PrepService.loadUpcoming()
         }
 

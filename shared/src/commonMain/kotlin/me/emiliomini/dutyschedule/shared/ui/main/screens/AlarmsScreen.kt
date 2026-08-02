@@ -73,7 +73,7 @@ fun AlarmsScreen(
     paddingValues: PaddingValues
 ) {
     LaunchedEffect(Unit) {
-        // AlarmService.clean()
+        AlarmService.removePlayedAlarms()
     }
 
     val snackbarHostState = remember { SnackbarHostState() }

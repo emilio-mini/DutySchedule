@@ -146,6 +146,24 @@ object AlarmService {
         }
     }
 
+    /**
+     * Drops alarms whose time has passed. They have either rung or been missed while the device
+     * was off, and either way they no longer belong in the list of upcoming alarms
+     */
+    @OptIn(ExperimentalTime::class)
+    suspend fun removePlayedAlarms() {
+        val now = Clock.System.now().toEpochMilliseconds()
+        val played = StorageService.ALARM_ITEMS.get()?.alarms?.filter { it.timestamp <= now }
+        if (played.isNullOrEmpty()) {
+            return
+        }
+
+        played.forEach { getPlatformAlarmApi().cancelAlarm(it.guid) }
+        StorageService.ALARM_ITEMS.update { items ->
+            items.copy(alarms = items.alarms.filter { it.timestamp > now })
+        }
+    }
+
     /** Returns whether the duties could be refreshed */
     suspend fun fetchAlarms(): Boolean {
         DutyScheduleService.restoreLogin()
@@ -158,6 +176,8 @@ object AlarmService {
      */
     @OptIn(ExperimentalTime::class)
     suspend fun updateAlarms(oldDuties: List<MinimalDutyDefinition>, newDuties: List<MinimalDutyDefinition>, onError: (suspend (String) -> Unit)? = null) {
+        removePlayedAlarms()
+
         val alarms = StorageService.ALARM_ITEMS.get()?.alarms
         val oldDutyGuids = oldDuties.map { it.guid }.toMutableList()
         val prefs = StorageService.USER_PREFERENCES.getOrDefault()
