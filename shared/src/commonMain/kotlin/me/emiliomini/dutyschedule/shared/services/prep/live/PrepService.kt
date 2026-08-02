@@ -85,6 +85,9 @@ object PrepService : DutyScheduleServiceBase {
      */
     private val TIMELINE_MAX_AGE = 15.minutes
 
+    /** Employees requested per getStaff call; a week's roster is split across several */
+    private const val STAFF_REQUEST_CHUNK = 40
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val logger = getPlatformLogger("PrepService")
     private var incode: Incode? = null
@@ -410,16 +413,29 @@ object PrepService : DutyScheduleServiceBase {
         from: Instant,
         to: Instant
     ): List<Employee> {
-        logger.d("Getting staff...")
-
         val code = this.incode
-        if (!this.isLoggedIn || code == null || code.isInvalid()) {
+        if (!this.isLoggedIn || code == null || code.isInvalid() || staffDataGuid.isEmpty()) {
             return emptyList()
         }
+
+        return staffDataGuid.distinct().chunked(STAFF_REQUEST_CHUNK).flatMap { chunk ->
+            getStaffChunk(code, orgUnitDataGuid, chunk, from, to)
+        }
+    }
+
+    private suspend fun getStaffChunk(
+        code: Incode,
+        orgUnitDataGuid: String,
+        staffDataGuid: List<String>,
+        from: Instant,
+        to: Instant
+    ): List<Employee> {
+        logger.d("Getting ${staffDataGuid.size} staff members...")
 
         val staffBody = NetworkService.getStaff(code, orgUnitDataGuid, staffDataGuid, from, to)
             ?.bodyAsText()
         if (staffBody.isNullOrBlank()) {
+            logger.w("Empty staff response for ${staffDataGuid.size} guids")
             return emptyList()
         }
 
@@ -427,6 +443,7 @@ object PrepService : DutyScheduleServiceBase {
             val refreshedAt = Clock.System.now().toTimestamp()
             val staff = DataParserService.parseGetStaff(Json.parseToJsonElement(staffBody))
                 .map { it.copy(refreshedAt = refreshedAt) }
+                .filter { it.guid.isNotBlank() }
 
             StorageService.EMPLOYEES.update { items ->
                 items.copy(
@@ -451,6 +468,7 @@ object PrepService : DutyScheduleServiceBase {
             val cached = peekTimeline(orgUnitDataGuid, from, to)
             if (cached != null) {
                 logger.d("Serving timeline for $orgUnitDataGuid from cache")
+                backfillEmployees(orgUnitDataGuid, cached, from, to)
                 return cached
             }
         }
@@ -758,6 +776,34 @@ object PrepService : DutyScheduleServiceBase {
         }
 
         return parsed
+    }
+
+    /**
+     * Picks up employees a cached roster never managed to resolve. Runs in the background so the
+     * roster still draws immediately, and fills itself in once the requests land
+     */
+    private fun backfillEmployees(
+        orgUnitDataGuid: String,
+        days: List<OrgDay>,
+        from: Instant,
+        to: Instant
+    ) {
+        scope.launch {
+            val stored = StorageService.EMPLOYEES.getOrDefault().employees
+            val outstanding = days
+                .flatMap { it.dayShifts + it.nightShifts }
+                .flatMap { duty -> duty.slots.mapNotNull { it.employeeGuid.nullIfBlank() } }
+                .distinct()
+                .filter { guid ->
+                    val employee = stored[guid] ?: return@filter true
+                    !employee.refreshedAt?.toInstant().withinLast(EMPLOYEE_MAX_AGE)
+                }
+
+            if (outstanding.isNotEmpty()) {
+                logger.d("Backfilling ${outstanding.size} employees for a cached timeline")
+                refreshEmployees(orgUnitDataGuid, outstanding, from, to)
+            }
+        }
     }
 
     /**
