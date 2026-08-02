@@ -79,6 +79,7 @@ import me.emiliomini.dutyschedule.shared.ui.icons.ChevronRight
 import me.emiliomini.dutyschedule.shared.ui.main.entry.NavItemId
 import me.emiliomini.dutyschedule.shared.util.WEEK_MILLIS
 import me.emiliomini.dutyschedule.shared.util.format
+import me.emiliomini.dutyschedule.shared.util.nullIfBlank
 import me.emiliomini.dutyschedule.shared.util.startOfWeek
 import me.emiliomini.dutyschedule.shared.util.toInstant
 import org.jetbrains.compose.resources.stringResource
@@ -110,13 +111,24 @@ fun ScheduleScreen(
     var selectedStartDate by remember { mutableStateOf<Long?>(currentMillis) }
     var selectedEndDate by remember { mutableStateOf<Long?>(currentMillis + WEEK_MILLIS) }
 
-    var timeline by remember { mutableStateOf<List<OrgDay>?>(null) }
-    var timelineFailed by remember { mutableStateOf(false) }
-    var reloadToken by remember { mutableIntStateOf(0) }
-
     var allowedOrgs by remember { mutableStateOf<List<String>?>(null) }
-    var selectedOrg by remember { mutableStateOf<String?>(null) }
+    var selectedOrg by remember { mutableStateOf(userPreferences.lastSelectedOrg.nullIfBlank()) }
     val orgItems by StorageService.ORG_ITEMS.collectAsState()
+
+    var timeline by remember {
+        mutableStateOf(
+            selectedOrg?.let {
+                DutyScheduleService.peekTimeline(
+                    it,
+                    Instant.fromEpochMilliseconds(selectedStartDate ?: currentMillis),
+                    Instant.fromEpochMilliseconds(selectedEndDate ?: currentMillis + WEEK_MILLIS)
+                )
+            }
+        )
+    }
+    var timelineFailed by remember { mutableStateOf(false) }
+    var refreshing by remember { mutableStateOf(false) }
+    var reloadToken by remember { mutableIntStateOf(0) }
 
     var showThanks by remember { mutableStateOf(false) }
 
@@ -130,15 +142,12 @@ fun ScheduleScreen(
 
     LaunchedEffect(userPreferences) {
         allowedOrgs = userPreferences.allowedOrgs
-        selectedOrg = userPreferences.lastSelectedOrg
     }
 
     LaunchedEffect(orgItems, allowedOrgs) {
-        val default = DutyScheduleService.self?.defaultOrg
-        val primaryOrg = if (default != null) DutyScheduleService.getOrg(default) else null
-
         if (selectedOrg.isNullOrBlank()) {
-            selectedOrg = primaryOrg?.guid ?: allowedOrgs?.firstOrNull()
+            // Same resolution the preload uses, so the warmed cache is actually the one we ask for.
+            selectedOrg = DutyScheduleService.getDefaultOrgGuid()
         }
     }
 
@@ -160,26 +169,20 @@ fun ScheduleScreen(
             )
         }
 
-        timeline = null
+        val from = Instant.fromEpochMilliseconds(selectedStartDate!!)
+        val to = Instant.fromEpochMilliseconds(selectedEndDate!!)
+
+        timeline = DutyScheduleService.peekTimeline(selectedOrg!!, from, to)
         timelineFailed = false
 
-        val loaded = DutyScheduleService.loadTimeline(
-            selectedOrg!!,
-            Instant.fromEpochMilliseconds(selectedStartDate!!),
-            Instant.fromEpochMilliseconds(selectedEndDate!!)
-        )
-
+        val loaded = DutyScheduleService.loadTimeline(selectedOrg!!, from, to)
         if (loaded == null) {
             timelineFailed = true
             return@LaunchedEffect
         }
         timeline = loaded
 
-        DutyScheduleService.loadMessages(
-            selectedOrg!!,
-            Instant.fromEpochMilliseconds(selectedStartDate!!),
-            Instant.fromEpochMilliseconds(selectedEndDate!!)
-        )
+        DutyScheduleService.loadMessages(selectedOrg!!, from, to)
     }
 
     val stationScrollState = rememberScrollState()
@@ -217,7 +220,34 @@ fun ScheduleScreen(
     }
 
     Screen(
-        modifier = modifier, paddingValues = paddingValues
+        modifier = modifier,
+        paddingValues = paddingValues,
+        pullToRefresh = PullToRefreshOptions(
+            isRefreshing = refreshing, onRefresh = {
+                val org = selectedOrg
+                val start = selectedStartDate
+                val end = selectedEndDate
+                if (org != null && start != null && end != null) {
+                    scope.launch {
+                        refreshing = true
+                        try {
+                            val from = Instant.fromEpochMilliseconds(start)
+                            val to = Instant.fromEpochMilliseconds(end)
+
+                            val loaded =
+                                DutyScheduleService.loadTimeline(org, from, to, forceRefresh = true)
+                            if (loaded != null) {
+                                timeline = loaded
+                                timelineFailed = false
+                            }
+
+                            DutyScheduleService.loadMessages(org, from, to)
+                        } finally {
+                            refreshing = false
+                        }
+                    }
+                }
+            })
     ) { innerPadding ->
         Column(
             modifier = Modifier.padding(innerPadding).padding(horizontal = 20.dp)

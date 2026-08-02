@@ -39,7 +39,24 @@ interface DutyScheduleServiceBase {
      */
     suspend fun loadPlan(orgUnitDataGuid: String, from: Instant, to: Instant): Pair<List<DutyDefinition>, Map<String, DutyGroup>>?
     suspend fun getStaff(orgUnitDataGuid: String, staffDataGuid: List<String>, from: Instant, to: Instant): List<Employee>
-    suspend fun loadTimeline(orgUnitDataGuid: String, from: Instant, to: Instant): List<OrgDay>?
+
+    /**
+     * Served from an in memory cache while it is fresh, so moving between screens does not refetch
+     * a plan that is already on hand. [forceRefresh] is what a manual pull to refresh passes
+     */
+    suspend fun loadTimeline(orgUnitDataGuid: String, from: Instant, to: Instant, forceRefresh: Boolean = false): List<OrgDay>?
+
+    /**
+     * The cached timeline if one is still fresh, without suspending. Lets a screen render known
+     * data on its first frame instead of flashing a spinner while an effect fetches the same thing
+     */
+    fun peekTimeline(orgUnitDataGuid: String, from: Instant, to: Instant): List<OrgDay>?
+
+    /** The org the schedule opens on: last used, else the user's own, else the first allowed one */
+    suspend fun getDefaultOrgGuid(): String?
+
+    /** Warms the timeline cache for the schedule's opening view without blocking the caller */
+    fun preloadTimeline()
     suspend fun loadPast(year: String): List<MinimalDutyDefinition>?
     suspend fun loadHoursOfService(year: String): Float?
     suspend fun loadUpcoming(): List<MinimalDutyDefinition>?

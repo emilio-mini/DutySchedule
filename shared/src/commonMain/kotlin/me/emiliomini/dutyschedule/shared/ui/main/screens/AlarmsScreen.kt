@@ -84,6 +84,7 @@ fun AlarmsScreen(
     val timeFormat = "HH:mm"
     val dateFormat = "dd/MM/yyyy"
     val alarmItems by StorageService.ALARM_ITEMS.collectAsState()
+    val userPreferences by StorageService.USER_PREFERENCES.collectAsState()
     var blocked by remember { mutableStateOf(false) }
     Screen(
         modifier = modifier, paddingValues = paddingValues
@@ -97,12 +98,7 @@ fun AlarmsScreen(
                 color = MaterialTheme.colorScheme.primary
             )
             CardColumn {
-                var autoSetAll by remember { mutableStateOf(false) }
-
-
-                LaunchedEffect(Unit) {
-                    StorageService.USER_PREFERENCES.get()?.autoSetAlarms?.let { autoSetAll = it }
-                }
+                var autoSetAll by remember { mutableStateOf(userPreferences.autoSetAlarms) }
 
                 CardListItem(
                     modifier = Modifier.clickable {

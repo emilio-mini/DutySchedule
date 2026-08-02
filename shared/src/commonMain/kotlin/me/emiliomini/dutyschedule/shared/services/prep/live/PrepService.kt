@@ -7,8 +7,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import io.ktor.client.statement.bodyAsText
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -54,13 +56,16 @@ import me.emiliomini.dutyschedule.shared.util.isNight
 import me.emiliomini.dutyschedule.shared.util.isNightShift
 import me.emiliomini.dutyschedule.shared.util.isNotNullOrBlank
 import me.emiliomini.dutyschedule.shared.util.midpointInstant
+import me.emiliomini.dutyschedule.shared.util.WEEK_MILLIS
 import me.emiliomini.dutyschedule.shared.util.nullIfBlank
+import me.emiliomini.dutyschedule.shared.util.startOfDay
 import me.emiliomini.dutyschedule.shared.util.toInstant
 import me.emiliomini.dutyschedule.shared.util.toTimestamp
 import me.emiliomini.dutyschedule.shared.util.withinLast
 import kotlin.math.min
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -74,6 +79,12 @@ object PrepService : DutyScheduleServiceBase {
      */
     private val EMPLOYEE_MAX_AGE = 7.days
 
+    /**
+     * How long a loaded timeline stays usable. Long enough that switching tabs is instant, short
+     * enough that a forgotten screen does not keep showing yesterday's roster
+     */
+    private val TIMELINE_MAX_AGE = 15.minutes
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val logger = getPlatformLogger("PrepService")
     private var incode: Incode? = null
@@ -81,6 +92,13 @@ object PrepService : DutyScheduleServiceBase {
 
     private val employeeRefreshMutex = Mutex()
     private val refreshingEmployees = mutableSetOf<String>()
+
+    private val timelineMutex = Mutex()
+    private val runningTimelines = mutableMapOf<TimelineKey, Deferred<List<OrgDay>?>>()
+
+    // Replaced wholesale rather than mutated so peekTimeline can read it off the main thread
+    // without taking the lock; a stale read costs at most one spinner frame.
+    private var timelineCache: Map<TimelineKey, CachedTimeline> = emptyMap()
 
     private var isRestoringLogin by mutableStateOf(false)
     override var isLoggedIn by mutableStateOf(false)
@@ -253,6 +271,7 @@ object PrepService : DutyScheduleServiceBase {
         this.incode = null
         this.self = null
         this.messages.clear()
+        timelineMutex.withLock { timelineCache = emptyMap() }
         CredentialService.clearPassword()
         StorageService.clear()
         MultiplatformNetworkAdapter.clearCookies()
@@ -410,6 +429,41 @@ object PrepService : DutyScheduleServiceBase {
     override suspend fun loadTimeline(
         orgUnitDataGuid: String,
         from: Instant,
+        to: Instant,
+        forceRefresh: Boolean
+    ): List<OrgDay>? {
+        val key = TimelineKey(orgUnitDataGuid, from.toEpochMilliseconds(), to.toEpochMilliseconds())
+        if (!forceRefresh) {
+            val cached = peekTimeline(orgUnitDataGuid, from, to)
+            if (cached != null) {
+                logger.d("Serving timeline for $orgUnitDataGuid from cache")
+                return cached
+            }
+        }
+
+        val request = timelineMutex.withLock {
+            val running = if (forceRefresh) null else runningTimelines[key]
+            running ?: scope.async { fetchTimeline(key, orgUnitDataGuid, from, to) }.also { started ->
+                runningTimelines[key] = started
+                started.invokeOnCompletion {
+                    scope.launch {
+                        timelineMutex.withLock {
+                            if (runningTimelines[key] === started) {
+                                runningTimelines.remove(key)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return request.await()
+    }
+
+    private suspend fun fetchTimeline(
+        key: TimelineKey,
+        orgUnitDataGuid: String,
+        from: Instant,
         to: Instant
     ): List<OrgDay>? {
         // Load plan
@@ -491,8 +545,54 @@ object PrepService : DutyScheduleServiceBase {
         }
 
         logger.d("Loaded ${days.size} days on the timeline")
+        timelineMutex.withLock {
+            timelineCache = timelineCache + (key to CachedTimeline(daysList, Clock.System.now()))
+        }
+
         return daysList
     }
+
+    override fun peekTimeline(
+        orgUnitDataGuid: String,
+        from: Instant,
+        to: Instant
+    ): List<OrgDay>? {
+        val key = TimelineKey(orgUnitDataGuid, from.toEpochMilliseconds(), to.toEpochMilliseconds())
+        val cached = timelineCache[key] ?: return null
+
+        return if (cached.loadedAt.withinLast(TIMELINE_MAX_AGE)) cached.days else null
+    }
+
+    override suspend fun getDefaultOrgGuid(): String? {
+        val preferences = StorageService.USER_PREFERENCES.get()
+        val lastSelected = preferences?.lastSelectedOrg.nullIfBlank()
+        if (lastSelected != null) {
+            return lastSelected
+        }
+
+        val ownOrg = this.self?.defaultOrg?.let { getOrg(it) }?.guid
+        return ownOrg ?: preferences?.allowedOrgs?.firstOrNull()
+    }
+
+    override fun preloadTimeline() {
+        scope.launch {
+            if (!isLoggedIn) {
+                return@launch
+            }
+
+            val org = getDefaultOrgGuid() ?: return@launch
+
+            val from = Clock.System.now().startOfDay()
+            val to = Instant.fromEpochMilliseconds(from.toEpochMilliseconds() + WEEK_MILLIS)
+
+            logger.d("Preloading timeline for $org")
+            loadTimeline(org, from, to)
+        }
+    }
+
+    private data class TimelineKey(val orgUnitDataGuid: String, val from: Long, val to: Long)
+
+    private data class CachedTimeline(val days: List<OrgDay>, val loadedAt: Instant)
 
     override suspend fun loadPast(year: String): List<MinimalDutyDefinition>? {
         val intYear = year.toIntOrNull()

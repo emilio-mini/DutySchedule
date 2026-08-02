@@ -133,6 +133,8 @@ fun DashboardScreen(
                 hoursLoaded = true
             }
         }
+
+        DutyScheduleService.preloadTimeline()
     }
 
     LaunchedEffect(statistics) {
