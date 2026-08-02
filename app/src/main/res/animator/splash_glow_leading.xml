@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Front lamps and halos are invisible unless lit, so these drop to fully transparent rather than
+  dimming the way the roof lenses do. See splash_lights_leading for the interpolator and phasing.
+-->
+<set xmlns:android="http://schemas.android.com/apk/res/android">
+    <objectAnimator
+        android:duration="900"
+        android:repeatCount="infinite"
+        android:interpolator="@android:anim/linear_interpolator"
+        android:valueType="floatType">
+        <propertyValuesHolder android:propertyName="fillAlpha">
+            <keyframe android:fraction="0" android:value="1" />
+            <keyframe android:fraction="0.122" android:value="1" />
+            <keyframe android:fraction="0.128" android:value="0" />
+            <keyframe android:fraction="0.244" android:value="0" />
+            <keyframe android:fraction="0.25" android:value="1" />
+            <keyframe android:fraction="0.367" android:value="1" />
+            <keyframe android:fraction="0.373" android:value="0" />
+            <keyframe android:fraction="1" android:value="0" />
+        </propertyValuesHolder>
+    </objectAnimator>
+    <objectAnimator
+        android:duration="900"
+        android:repeatCount="infinite"
+        android:interpolator="@android:anim/linear_interpolator"
+        android:valueType="floatType">
+        <propertyValuesHolder android:propertyName="strokeAlpha">
+            <keyframe android:fraction="0" android:value="1" />
+            <keyframe android:fraction="0.122" android:value="1" />
+            <keyframe android:fraction="0.128" android:value="0" />
+            <keyframe android:fraction="0.244" android:value="0" />
+            <keyframe android:fraction="0.25" android:value="1" />
+            <keyframe android:fraction="0.367" android:value="1" />
+            <keyframe android:fraction="0.373" android:value="0" />
+            <keyframe android:fraction="1" android:value="0" />
+        </propertyValuesHolder>
+    </objectAnimator>
+</set>

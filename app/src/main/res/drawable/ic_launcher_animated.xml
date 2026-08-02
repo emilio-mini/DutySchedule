@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Splash icon: the launcher foreground with its emergency lights flashing diagonally -->
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_launcher_foreground">
+
+    <target
+        android:name="lightTopRight"
+        android:animation="@animator/splash_lights_leading" />
+    <target
+        android:name="glowTopRight"
+        android:animation="@animator/splash_glow_leading" />
+    <target
+        android:name="lightFrontLeft"
+        android:animation="@animator/splash_glow_leading" />
+    <target
+        android:name="glowFrontLeft"
+        android:animation="@animator/splash_glow_leading" />
+
+    <target
+        android:name="lightTopLeft"
+        android:animation="@animator/splash_lights_trailing" />
+    <target
+        android:name="glowTopLeft"
+        android:animation="@animator/splash_glow_trailing" />
+    <target
+        android:name="lightFrontRight"
+        android:animation="@animator/splash_glow_trailing" />
+    <target
+        android:name="glowFrontRight"
+        android:animation="@animator/splash_glow_trailing" />
+</animated-vector>

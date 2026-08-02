@@ -4,5 +4,7 @@
     <!-- API 31+ draws its own splash screen instead of just showing the window background -->
     <style name="Theme.DutySchedule" parent="Theme.DutySchedule.Base">
         <item name="android:windowSplashScreenBackground">@color/app_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_animated</item>
+        <item name="android:windowSplashScreenAnimationDuration">900</item>
     </style>
 </resources>

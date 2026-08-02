@@ -30,6 +30,8 @@ fun DutyScheduleApp(composableLoadActions: @Composable () -> Unit) {
             previouslyLoggedIn = DutyScheduleService.previouslyLoggedIn()
             loaded = true
         }
+
+        AppReadyState.markReady()
     }
 
     LaunchedEffect(Unit) {

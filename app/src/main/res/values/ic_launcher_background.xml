@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Transparent so the API 31+ splash draws the icon straight onto the splash colour instead
-         of putting a white disc on it -->
-    <color name="ic_launcher_background">#00000000</color>
+    <!-- Only the adaptive launcher icon uses this. The splash draws @drawable/ic_launcher_animated,
+         which wraps the foreground on its own, so this plate never reaches the splash screen. -->
+    <color name="ic_launcher_background">#FFFFFF</color>
 </resources>

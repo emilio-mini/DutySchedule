@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  A linear interpolator is required: the ValueAnimator default is accelerate/decelerate, which
+  warps elapsed time onto the keyframe fraction and makes the flashes land at the wrong moments.
+  The half cycle offset for the trailing pair is baked into the fractions rather than set with
+  startOffset, because a start delay only applies to the first iteration of a repeating animator.
+-->
+<set xmlns:android="http://schemas.android.com/apk/res/android">
+    <objectAnimator
+        android:duration="900"
+        android:repeatCount="infinite"
+        android:interpolator="@android:anim/linear_interpolator"
+        android:valueType="floatType">
+        <propertyValuesHolder android:propertyName="fillAlpha">
+            <keyframe android:fraction="0" android:value="1" />
+            <keyframe android:fraction="0.122" android:value="1" />
+            <keyframe android:fraction="0.128" android:value="0.35" />
+            <keyframe android:fraction="0.244" android:value="0.35" />
+            <keyframe android:fraction="0.25" android:value="1" />
+            <keyframe android:fraction="0.367" android:value="1" />
+            <keyframe android:fraction="0.373" android:value="0.35" />
+            <keyframe android:fraction="1" android:value="0.35" />
+        </propertyValuesHolder>
+    </objectAnimator>
+    <objectAnimator
+        android:duration="900"
+        android:repeatCount="infinite"
+        android:interpolator="@android:anim/linear_interpolator"
+        android:valueType="floatType">
+        <propertyValuesHolder android:propertyName="strokeAlpha">
+            <keyframe android:fraction="0" android:value="1" />
+            <keyframe android:fraction="0.122" android:value="1" />
+            <keyframe android:fraction="0.128" android:value="0.35" />
+            <keyframe android:fraction="0.244" android:value="0.35" />
+            <keyframe android:fraction="0.25" android:value="1" />
+            <keyframe android:fraction="0.367" android:value="1" />
+            <keyframe android:fraction="0.373" android:value="0.35" />
+            <keyframe android:fraction="1" android:value="0.35" />
+        </propertyValuesHolder>
+    </objectAnimator>
+</set>
