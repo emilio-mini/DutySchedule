@@ -1,18 +1,16 @@
 package me.emiliomini.dutyschedule.shared
 
-import me.emiliomini.dutyschedule.shared.api.getPlatformLogger
 import platform.Foundation.NSBundle
-import platform.Foundation.NSString
 
 actual fun platform() = "ios"
 
-actual fun versionCode(): Long {
-    getPlatformLogger("VERSION_TAG").d(NSBundle.mainBundle.infoDictionary?.get("CFBundleVersion") as String)
-    return (NSBundle.mainBundle.infoDictionary?.get("CFBundleVersion") as? NSString)
-        .let { if (it != null) it.toString().toLong() else -1 }
-}
+actual fun versionCode(): Long = bundleValue("CFBundleVersion")?.toLongOrNull() ?: -1
 
-actual fun versionName(): String {
-    val info = NSBundle.mainBundle.infoDictionary
-    return (info?.get("CFBundleShortVersionString") as? NSString)?.toString() ?: "unknown"
-}
+actual fun versionName(): String = bundleValue("CFBundleShortVersionString") ?: "unknown"
+
+/**
+ * Bridged NSString values arrive as Kotlin strings, so casting to NSString silently missed every
+ * time and both versions came back as their fallbacks.
+ */
+private fun bundleValue(key: String): String? =
+    NSBundle.mainBundle.infoDictionary?.get(key) as? String

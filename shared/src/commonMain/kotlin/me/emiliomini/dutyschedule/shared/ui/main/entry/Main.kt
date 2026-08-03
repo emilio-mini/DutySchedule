@@ -28,6 +28,7 @@ import dutyschedule.shared.generated.resources.nav_archive
 import dutyschedule.shared.generated.resources.nav_dashboard
 import dutyschedule.shared.generated.resources.nav_schedule
 import me.emiliomini.dutyschedule.shared.services.scaffold.ScaffoldService
+import me.emiliomini.dutyschedule.shared.supportsAlarms
 import me.emiliomini.dutyschedule.shared.ui.icons.Alarm
 import me.emiliomini.dutyschedule.shared.ui.icons.Archive
 import me.emiliomini.dutyschedule.shared.ui.icons.Dashboard
@@ -44,7 +45,7 @@ fun Main(modifier: Modifier = Modifier, onLogout: () -> Unit, onRestart: () -> U
     val snackbarHostState = remember { SnackbarHostState() }
     ScaffoldService.registerSnackbar(snackbarHostState)
     var selectedNavIndex by remember { mutableIntStateOf(0) }
-    val navItems = listOf(
+    val navItems = listOfNotNull(
         NavItem(
             id = NavItemId.DASHBOARD,
             label = stringResource(Res.string.nav_dashboard),
@@ -63,12 +64,16 @@ fun Main(modifier: Modifier = Modifier, onLogout: () -> Unit, onRestart: () -> U
             title = stringResource(Res.string.main_archive_title),
             icon = Archive
         ),
-        NavItem(
-            id = NavItemId.ALARMS,
-            label = stringResource(Res.string.nav_alarms),
-            title = stringResource(Res.string.main_alarms_title),
-            icon = Alarm
-        ),
+        if (supportsAlarms) {
+            NavItem(
+                id = NavItemId.ALARMS,
+                label = stringResource(Res.string.nav_alarms),
+                title = stringResource(Res.string.main_alarms_title),
+                icon = Alarm
+            )
+        } else {
+            null
+        },
     )
 
     Scaffold(modifier = modifier, topBar = {
@@ -100,16 +105,16 @@ fun Main(modifier: Modifier = Modifier, onLogout: () -> Unit, onRestart: () -> U
             }
         }
     }, snackbarHost = { SnackbarHost(snackbarHostState) }) { paddingValues ->
-        when (selectedNavIndex) {
-            0 -> DashboardScreen(
+        when (navItems[selectedNavIndex].id) {
+            NavItemId.DASHBOARD -> DashboardScreen(
                 paddingValues = paddingValues, onRestart = onRestart, onLogout = onLogout
             )
 
-            1 -> ScheduleScreen(paddingValues = paddingValues)
+            NavItemId.SCHEDULE -> ScheduleScreen(paddingValues = paddingValues)
 
-            2 -> ArchiveScreen(paddingValues = paddingValues)
+            NavItemId.ARCHIVE -> ArchiveScreen(paddingValues = paddingValues)
 
-            3 -> AlarmsScreen(paddingValues = paddingValues)
+            NavItemId.ALARMS -> AlarmsScreen(paddingValues = paddingValues)
         }
     }
 }

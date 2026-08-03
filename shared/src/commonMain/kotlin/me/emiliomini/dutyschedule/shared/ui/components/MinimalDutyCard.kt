@@ -29,6 +29,7 @@ import me.emiliomini.dutyschedule.shared.api.getPlatformClipboardApi
 import me.emiliomini.dutyschedule.shared.datastores.DutyType
 import me.emiliomini.dutyschedule.shared.datastores.MinimalDutyDefinition
 import me.emiliomini.dutyschedule.shared.debug.DebugFlags
+import me.emiliomini.dutyschedule.shared.supportsAlarms
 import me.emiliomini.dutyschedule.shared.ui.icons.Ambulance
 import me.emiliomini.dutyschedule.shared.ui.icons.Coffee
 import me.emiliomini.dutyschedule.shared.ui.icons.Drone
@@ -122,7 +123,7 @@ fun MinimalDutyCard(
             },
             type = type
         )
-        if (!demo) {
+        if (!demo && supportsAlarms) {
             AlarmToggle(dutyBegin = duty.begin.toInstant(), guid = duty.guid, snackbarHostState = snackbarHostState)
         }
     }

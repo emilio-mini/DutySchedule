@@ -33,8 +33,7 @@ class IosAlarmApi : PlatformAlarmApi {
     }
 
     override fun getNextAlarm(): Instant? {
-        // TODO: Implement
-        return Clock.System.now()
+        return null
     }
 
 }
