@@ -5,7 +5,9 @@ package me.emiliomini.dutyschedule.shared.services.prep.live
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -104,6 +106,9 @@ object PrepService : DutyScheduleServiceBase {
     private var timelineCache: Map<TimelineKey, CachedTimeline> = emptyMap()
 
     private var isRecoveringSession = false
+
+    /** Guards [withSessionRecovery] against re-entering on the same coroutine -- see there */
+    private var isRecoveringFromExpiredSession = false
 
     private var isRestoringLogin by mutableStateOf(false)
     override var isLoggedIn by mutableStateOf(false)
@@ -212,6 +217,50 @@ object PrepService : DutyScheduleServiceBase {
         ensureSessionData()
 
         return true
+    }
+
+    /**
+     * Runs an authenticated call and, if the incode it was sent has gone stale mid-session
+     * (401/403), logs back in once with the stored credentials and retries. [call] must read
+     * `this.incode` itself rather than closing over a value captured before the retry, or the
+     * retry would resend the same dead incode.
+     *
+     * Guarded by a plain flag rather than a Mutex: `login()` makes further authenticated calls
+     * synchronously on the same coroutine (loadSelf -> getStaff), which would deadlock a
+     * Mutex-based guard by re-entering it while still held. The flag only needs to break that
+     * same-coroutine reentry; a genuinely concurrent expiry on another coroutine just costs one
+     * redundant login, which is harmless
+     */
+    private suspend fun withSessionRecovery(call: suspend () -> HttpResponse?): HttpResponse? {
+        val response = call()
+        if (response == null || !isSessionExpired(response) || isRecoveringFromExpiredSession) {
+            return response
+        }
+
+        isRecoveringFromExpiredSession = true
+        try {
+            logger.w("Session appears to have expired (status ${response.status}); relogging in")
+            val username = StorageService.USER_PREFERENCES.get()?.username
+            val password = CredentialService.getPassword()
+            if (username.isNullOrBlank() || password.isNullOrBlank()) {
+                logger.w("No stored credentials to relogin with")
+                return response
+            }
+
+            if (!login(username, password)) {
+                logger.w("Relogin after session expiry failed")
+                return response
+            }
+        } finally {
+            isRecoveringFromExpiredSession = false
+        }
+
+        logger.d("Relogin succeeded, retrying the original request")
+        return call()
+    }
+
+    private fun isSessionExpired(response: HttpResponse): Boolean {
+        return response.status == HttpStatusCode.Unauthorized || response.status == HttpStatusCode.Forbidden
     }
 
     override suspend fun previouslyLoggedIn(): Boolean {
@@ -393,7 +442,9 @@ object PrepService : DutyScheduleServiceBase {
             return null
         }
 
-        val planBody = NetworkService.loadPlan(code, orgUnitDataGuid, from, to)?.bodyAsText()
+        val planBody = withSessionRecovery {
+            this.incode?.let { NetworkService.loadPlan(it, orgUnitDataGuid, from, to) }
+        }?.bodyAsText()
         if (planBody.isNullOrBlank()) {
             logger.w("loadPlan: empty response")
             return null
@@ -419,12 +470,11 @@ object PrepService : DutyScheduleServiceBase {
         }
 
         return staffDataGuid.distinct().chunked(STAFF_REQUEST_CHUNK).flatMap { chunk ->
-            getStaffChunk(code, orgUnitDataGuid, chunk, from, to)
+            getStaffChunk(orgUnitDataGuid, chunk, from, to)
         }
     }
 
     private suspend fun getStaffChunk(
-        code: Incode,
         orgUnitDataGuid: String,
         staffDataGuid: List<String>,
         from: Instant,
@@ -432,8 +482,9 @@ object PrepService : DutyScheduleServiceBase {
     ): List<Employee> {
         logger.d("Getting ${staffDataGuid.size} staff members...")
 
-        val staffBody = NetworkService.getStaff(code, orgUnitDataGuid, staffDataGuid, from, to)
-            ?.bodyAsText()
+        val staffBody = withSessionRecovery {
+            this.incode?.let { NetworkService.getStaff(it, orgUnitDataGuid, staffDataGuid, from, to) }
+        }?.bodyAsText()
         if (staffBody.isNullOrBlank()) {
             logger.w("Empty staff response for ${staffDataGuid.size} guids")
             return emptyList()
@@ -644,7 +695,9 @@ object PrepService : DutyScheduleServiceBase {
             return cached
         }
 
-        val pastResponse = NetworkService.loadPast(code, year)?.bodyAsText()
+        val pastResponse = withSessionRecovery {
+            this.incode?.let { NetworkService.loadPast(it, year) }
+        }?.bodyAsText()
         if (pastResponse.isNullOrBlank()) {
             logger.w("loadPast: empty response, keeping cached data")
             return null
@@ -697,7 +750,9 @@ object PrepService : DutyScheduleServiceBase {
             return localUpcoming
         }
 
-        val upcomingResponse = NetworkService.loadUpcoming(code)?.bodyAsText()
+        val upcomingResponse = withSessionRecovery {
+            this.incode?.let { NetworkService.loadUpcoming(it) }
+        }?.bodyAsText()
         if (upcomingResponse.isNullOrBlank()) {
             logger.w("loadUpcoming: empty response, keeping cached data")
             return null
@@ -732,8 +787,9 @@ object PrepService : DutyScheduleServiceBase {
             return emptyList()
         }
 
-        val messagesResponse =
-            NetworkService.getMessages(code, orgUnitDataGuid, from, to)?.bodyAsText()
+        val messagesResponse = withSessionRecovery {
+            this.incode?.let { NetworkService.getMessages(it, orgUnitDataGuid, from, to) }
+        }?.bodyAsText()
         if (messagesResponse.isNullOrBlank()) {
             return emptyList()
         }
@@ -762,11 +818,11 @@ object PrepService : DutyScheduleServiceBase {
     }
 
     override suspend fun createAndAllocateDuty(planDataGuid: String): CreateDutyResponse? {
-        val code = getIncode() ?: return null
+        if (getIncode() == null) return null
 
-        val body =
-            NetworkService.createAndAllocateDuty(code, planDataGuid)?.bodyAsText().nullIfBlank()
-                ?: return null
+        val body = withSessionRecovery {
+            this.incode?.let { NetworkService.createAndAllocateDuty(it, planDataGuid) }
+        }?.bodyAsText().nullIfBlank() ?: return null
 
         val parsed = try {
             DataParserService.parseCreateAndAllocateDuty(Json.parseToJsonElement(body))
