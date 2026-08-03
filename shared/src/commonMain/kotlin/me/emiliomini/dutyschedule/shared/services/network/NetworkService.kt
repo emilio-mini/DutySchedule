@@ -22,7 +22,7 @@ object NetworkService {
     private val logger = getPlatformLogger("NetworkService")
 
     suspend fun getBase(): HttpResponse? {
-        return MultiplatformNetworkAdapter.get(Endpoints.SCHEDULE_BASE.url)
+        return MultiplatformNetworkAdapter.get(Endpoints.scheduleBase)
     }
 
     @OptIn(InternalAPI::class)
@@ -247,7 +247,7 @@ object NetworkService {
     ): HttpResponse? {
         return MultiplatformNetworkAdapter.get {
             url {
-                url(Endpoints.DOCSCED.url)
+                url(Endpoints.docsced)
                 parameter("site", "calendar")
                 parameter("config", orgUnitDataGuid)
 
@@ -279,8 +279,8 @@ object NetworkService {
                 append("Accept", "application/json, text/javascript, */*; q=0.01")
                 append("X-Requested-With", "XMLHttpRequest")
                 append("Accept-Encoding", "gzip")
-                append("Origin", "https://dienstplan.o.roteskreuz.at")
-                append("Referer", "https://dienstplan.o.roteskreuz.at/StaffPortal/dispo.php")
+                append("Origin", Endpoints.scheduleBase)
+                append("Referer", Endpoints.DISPO.url)
             }
         }
     }

@@ -87,6 +87,7 @@ import dutyschedule.shared.generated.resources.onboarding_login_password
 import dutyschedule.shared.generated.resources.onboarding_login_title
 import dutyschedule.shared.generated.resources.onboarding_notifications_body
 import dutyschedule.shared.generated.resources.onboarding_notifications_title
+import dutyschedule.shared.generated.resources.onboarding_settings_accessibility_open
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.shared.api.getPlatformAlarmApi
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
@@ -94,6 +95,7 @@ import me.emiliomini.dutyschedule.shared.ui.icons.Check
 import me.emiliomini.dutyschedule.shared.ui.icons.ChevronRight
 import me.emiliomini.dutyschedule.shared.ui.icons.Fingerprint
 import me.emiliomini.dutyschedule.shared.ui.icons.Person
+import me.emiliomini.dutyschedule.shared.ui.icons.Settings
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -108,6 +110,7 @@ fun Onboarding() {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var loginFailed by remember { mutableStateOf(false) }
+    var showSettings by remember { mutableStateOf(false) }
 
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -311,6 +314,11 @@ fun Onboarding() {
     )
     var pageIndex by remember { mutableIntStateOf(0) }
 
+    if (showSettings) {
+        EndpointSettings(onDismiss = { showSettings = false })
+        return
+    }
+
     val infiniteTransition = rememberInfiniteTransition(label = "rotationTransition")
     val rotation by infiniteTransition.animateFloat(
         initialValue = 0f, targetValue = 360f, animationSpec = infiniteRepeatable(
@@ -377,6 +385,16 @@ fun Onboarding() {
                         .offset(x = notification2PosX, y = 230.dp)
                 )
                 pages[pageIndex].content()
+
+                IconButton(
+                    modifier = Modifier.align(Alignment.TopEnd),
+                    onClick = { showSettings = true }
+                ) {
+                    Icon(
+                        Settings,
+                        contentDescription = stringResource(Res.string.onboarding_settings_accessibility_open)
+                    )
+                }
             }
             Row(
                 modifier = Modifier

@@ -6,6 +6,7 @@ import me.emiliomini.dutyschedule.shared.api.getPlatformStorageApi
 import me.emiliomini.dutyschedule.shared.datastores.AlarmItems
 import me.emiliomini.dutyschedule.shared.datastores.ClientCookies
 import me.emiliomini.dutyschedule.shared.datastores.Employee
+import me.emiliomini.dutyschedule.shared.datastores.EndpointConfig
 import me.emiliomini.dutyschedule.shared.datastores.EmployeeItems
 import me.emiliomini.dutyschedule.shared.datastores.Incode
 import me.emiliomini.dutyschedule.shared.datastores.OrgItems
@@ -77,6 +78,13 @@ object StorageService {
         ClientCookies()
     )
 
+    val ENDPOINTS = MultiplatformDataStore(
+        "endpoints",
+        onUpdate = { store, newData -> storageApi.update(store, newData) },
+        EndpointConfig.serializer(),
+        EndpointConfig()
+    )
+
     val ALL_STORES = listOf(
         USER_PREFERENCES,
         STATISTICS,
@@ -87,8 +95,15 @@ object StorageService {
         UPCOMING_DUTIES,
         PAST_DUTIES,
         EMPLOYEES,
-        COOKIES
+        COOKIES,
+        ENDPOINTS
     )
+
+    /**
+     * Everything except the configured endpoints. Those describe which server the app talks to, not
+     * who is signed in, so logging out must not send the user back to onboarding without them.
+     */
+    private val CLEARED_ON_LOGOUT = ALL_STORES - ENDPOINTS
 
     private val storageApi = getPlatformStorageApi()
     private val initMutex = Mutex()
@@ -115,7 +130,7 @@ object StorageService {
     }
 
     suspend fun clear() {
-        ALL_STORES.forEach {
+        CLEARED_ON_LOGOUT.forEach {
             it.clear()
         }
     }

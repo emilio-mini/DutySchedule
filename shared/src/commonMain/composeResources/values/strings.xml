@@ -149,6 +149,13 @@
     <string name="onboarding_login_title">Account</string>
     <string name="onboarding_action_demo">Demo Mode</string>
     <string name="onboarding_action_skip">Skip</string>
+    <string name="onboarding_settings_title">Server Settings</string>
+    <string name="onboarding_settings_body">Due to regulations in both the Play Store and the App Store, you are required to fill in the following URLs manually. Please navigate to PREP and Docsced in your browser and copy the URLs of both into the boxes provided.</string>
+    <string name="onboarding_settings_action_save">Save</string>
+    <string name="onboarding_settings_accessibility_open">Open settings</string>
+    <string name="onboarding_settings_accessibility_close">Close settings</string>
+    <string name="onboarding_settings_prep_url" translatable="false">PREP URL</string>
+    <string name="onboarding_settings_docsced_url" translatable="false">Docsced URL</string>
     <string name="data_requirement_training">Training</string>
     <string name="data_requirement_vehicle">Vehicle</string>
     <string name="data_requirement_kfz">Vehicle</string>

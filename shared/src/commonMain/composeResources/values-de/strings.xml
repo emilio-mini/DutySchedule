@@ -132,6 +132,11 @@
     <string name="onboarding_login_title">Konto</string>
     <string name="onboarding_action_demo">Demo Modus</string>
     <string name="onboarding_action_skip">Überspringen</string>
+    <string name="onboarding_settings_title">Server Einstellungen</string>
+    <string name="onboarding_settings_body">Aufgrund von Regelungen des Play Stores und des App-Stores, müssen fortan folgende URLs manuell eingetragen werden. Bitte öffne dein PREP und Docsced im Browser und kopiere die URLs in die dafür vorgesehenen Felder.</string>
+    <string name="onboarding_settings_action_save">Speichern</string>
+    <string name="onboarding_settings_accessibility_open">Einstellungen öffnen</string>
+    <string name="onboarding_settings_accessibility_close">Einstellungen schließen</string>
     <string name="data_requirement_training">Schulung</string>
     <string name="data_requirement_vehicle">Dienstfahrzeug</string>
     <string name="data_org_braunau">Braunau</string>
