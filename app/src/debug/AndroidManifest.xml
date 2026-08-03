@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Debug-only overlay: the server url is user-supplied, so development builds
+    have to be able to reach a plain-http backend such as the mock server at
+    git.mwq.at/DutySchedule/mock_backend. Release builds keep Android's
+    cleartext ban.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application
+        android:usesCleartextTraffic="true"
+        tools:replace="android:usesCleartextTraffic" />
+
+</manifest>
