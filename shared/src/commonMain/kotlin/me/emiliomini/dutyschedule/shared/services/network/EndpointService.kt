@@ -38,35 +38,6 @@ object EndpointService {
         }
     }
 
-    /**
-     * Moves installs off the endpoints earlier builds shipped with.
-     *
-     * The store is written during onboarding and outlives logout, so a new default alone reaches
-     * fresh installs only - an existing one keeps pointing at the old server after an update.
-     * Only an exact match on a retired default is rewritten: a URL the user typed themselves is
-     * theirs, and gets left alone.
-     */
-    suspend fun migrateRetiredDefaults() {
-        val current = stored()
-
-        val prepUrl = if (current.prepUrl in EndpointConfig.RETIRED_PREP_URLS) {
-            EndpointConfig.DEFAULT_PREP_URL
-        } else {
-            current.prepUrl
-        }
-        val docscedUrl = if (current.docscedUrl in EndpointConfig.RETIRED_DOCSCED_URLS) {
-            EndpointConfig.DEFAULT_DOCSCED_URL
-        } else {
-            current.docscedUrl
-        }
-
-        if (prepUrl == current.prepUrl && docscedUrl == current.docscedUrl) {
-            return
-        }
-
-        update(prepUrl, docscedUrl)
-    }
-
     private fun stored(): EndpointConfig = StorageService.ENDPOINTS.flow.value
 
     /**

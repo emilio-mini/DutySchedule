@@ -19,16 +19,6 @@ data class EndpointConfig(
     companion object {
         const val DEFAULT_PREP_URL = "https://prep-demo.mwq.at"
         const val DEFAULT_DOCSCED_URL = "https://prep-demo.mwq.at"
-
-        /**
-         * Defaults earlier builds shipped with. The endpoint store is written during onboarding
-         * and deliberately survives logout, so changing the constants above moves fresh installs
-         * only - existing ones keep whatever they were onboarded with until
-         * [me.emiliomini.dutyschedule.shared.services.network.EndpointService.migrateRetiredDefaults]
-         * rewrites them.
-         */
-        val RETIRED_PREP_URLS = setOf("https://dienstplan.o.roteskreuz.at")
-        val RETIRED_DOCSCED_URLS = setOf("https://docsced.app")
     }
 }
 
