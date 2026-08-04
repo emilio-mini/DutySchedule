@@ -15,6 +15,7 @@ import me.emiliomini.dutyschedule.shared.datastores.Statistics
 import me.emiliomini.dutyschedule.shared.datastores.UpcomingDutyItems
 import me.emiliomini.dutyschedule.shared.datastores.UserPreferences
 import me.emiliomini.dutyschedule.shared.services.CredentialService
+import me.emiliomini.dutyschedule.shared.services.network.EndpointService
 
 object StorageService {
     val USER_PREFERENCES = MultiplatformDataStore(
@@ -127,6 +128,7 @@ object StorageService {
         }
 
         CredentialService.migrateLegacyPlaintextPassword()
+        EndpointService.migrateRetiredDefaults()
     }
 
     suspend fun clear() {
