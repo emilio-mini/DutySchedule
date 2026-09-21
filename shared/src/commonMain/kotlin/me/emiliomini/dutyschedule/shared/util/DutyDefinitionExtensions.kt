@@ -5,6 +5,7 @@ package me.emiliomini.dutyschedule.shared.util
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import me.emiliomini.dutyschedule.shared.datastores.DutyDefinition
+import me.emiliomini.dutyschedule.shared.datastores.MinimalDutyDefinition
 import me.emiliomini.dutyschedule.shared.datastores.Slot
 import me.emiliomini.dutyschedule.shared.mappings.RequirementMapping
 import kotlin.time.ExperimentalTime
@@ -56,5 +57,10 @@ fun DutyDefinition.getAllocatedSlotsCount(): Int {
 }
 
 fun DutyDefinition.isNightShift(zone: TimeZone = TimeZone.currentSystemDefault()): Boolean {
+    return midpointInstant(begin.toInstant(), end.toInstant()).isNight(zone)
+}
+
+/** @see DutyDefinition.isNightShift */
+fun MinimalDutyDefinition.isNightShift(zone: TimeZone = TimeZone.currentSystemDefault()): Boolean {
     return midpointInstant(begin.toInstant(), end.toInstant()).isNight(zone)
 }

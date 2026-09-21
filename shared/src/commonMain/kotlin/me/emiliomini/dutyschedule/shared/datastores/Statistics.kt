@@ -12,7 +12,13 @@ import kotlinx.serialization.protobuf.ProtoNumber
 @Serializable
 data class Statistics(
     @ProtoNumber(2)
-    val minutesByDutyType: Map<DutyType, Int> = emptyMap()
+    val minutesByDutyType: Map<DutyType, Int> = emptyMap(),
+    /**
+     * Which year [minutesByDutyType] was counted over. Blank means nothing has been counted yet,
+     * which is also how a store written before the split reads, so both ask for a fresh count
+     */
+    @ProtoNumber(3)
+    val year: String = ""
 ) : MultiplatformDataModel
 
 fun Statistics.isDefault(): Boolean {

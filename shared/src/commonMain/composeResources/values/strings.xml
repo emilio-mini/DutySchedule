@@ -95,6 +95,13 @@
     <string name="main_dashboard_hours">Hours</string>
     <string name="main_dashboard_section_upcoming_title">Upcoming</string>
     <string name="main_dashboard_chart_slice_format">%1$s (%2$s h)</string>
+    <string name="main_dashboard_nextduty_starts_in">Upcoming in</string>
+    <string name="main_dashboard_nextduty_ends_in">Ending in</string>
+    <string name="main_dashboard_nextduty_countdown_days">%1$sd %2$s</string>
+    <string name="main_dashboard_nextduty_handoff">Handoff to next crew at %1$s</string>
+    <string name="main_dashboard_nextduty_to_garage">To Garage at %1$s</string>
+    <string name="main_dashboard_nextduty_takeover">Take over from previous shift at %1$s</string>
+    <string name="main_dashboard_nextduty_from_garage">From Garage at %1$s</string>
     <string name="main_dashboard_chart_total_format">%1$s hours in total</string>
     <string name="main_dashboard_upcoming_link_failed">This duty could not be found in the schedule.</string>
     <string name="base_avatar_dialog_title">Account</string>

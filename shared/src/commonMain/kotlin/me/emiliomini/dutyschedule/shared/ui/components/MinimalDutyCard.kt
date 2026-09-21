@@ -26,23 +26,11 @@ import dutyschedule.shared.generated.resources.base_dutycard_clipboard_duty
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import me.emiliomini.dutyschedule.shared.api.getPlatformClipboardApi
-import me.emiliomini.dutyschedule.shared.datastores.DutyType
 import me.emiliomini.dutyschedule.shared.datastores.MinimalDutyDefinition
 import me.emiliomini.dutyschedule.shared.debug.DebugFlags
 import me.emiliomini.dutyschedule.shared.supportsAlarms
-import me.emiliomini.dutyschedule.shared.ui.icons.Ambulance
-import me.emiliomini.dutyschedule.shared.ui.icons.Coffee
-import me.emiliomini.dutyschedule.shared.ui.icons.Drone
-import me.emiliomini.dutyschedule.shared.ui.icons.EcgHeart
-import me.emiliomini.dutyschedule.shared.ui.icons.EmojiPeople
-import me.emiliomini.dutyschedule.shared.ui.icons.Exercise
-import me.emiliomini.dutyschedule.shared.ui.icons.Festival
-import me.emiliomini.dutyschedule.shared.ui.icons.MedicalServices
-import me.emiliomini.dutyschedule.shared.ui.icons.QuestionMark
-import me.emiliomini.dutyschedule.shared.ui.icons.School
-import me.emiliomini.dutyschedule.shared.ui.icons.SteeringWheel
-import me.emiliomini.dutyschedule.shared.ui.icons.VolunteerActivism
 import me.emiliomini.dutyschedule.shared.util.format
+import me.emiliomini.dutyschedule.shared.util.getIcon
 import me.emiliomini.dutyschedule.shared.util.resourceString
 import me.emiliomini.dutyschedule.shared.util.toInstant
 import org.jetbrains.compose.resources.stringResource
@@ -103,20 +91,7 @@ fun MinimalDutyCard(
             leadingContent = {
                 Column(verticalArrangement = Arrangement.Top) {
                     Icon(
-                        when (duty.type) {
-                            DutyType.EMS -> Ambulance
-                            DutyType.TRAINING -> School
-                            DutyType.MEET -> EmojiPeople
-                            DutyType.DRILL -> Exercise
-                            DutyType.VEHICLE_TRAINING -> SteeringWheel
-                            DutyType.RECERTIFICATION -> EcgHeart
-                            DutyType.HAEND -> MedicalServices
-                            DutyType.ADMINISTRATIVE -> Coffee
-                            DutyType.EVENT -> Festival
-                            DutyType.BLOOD_DONATION_SERVICE -> VolunteerActivism
-                            DutyType.DRONE_TEAM -> Drone
-                            else -> QuestionMark
-                        },
+                        duty.type.getIcon(),
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary
                     )

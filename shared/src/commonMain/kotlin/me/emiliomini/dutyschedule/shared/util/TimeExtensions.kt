@@ -88,6 +88,21 @@ fun Instant?.withinLast(duration: Duration): Boolean {
     return this >= threshold
 }
 
+/**
+ * A duration as a clock style countdown, gaining a leading day count once it runs past 24 hours.
+ * Anything already elapsed reads as zero rather than counting backwards
+ */
+fun Duration.formatCountdown(dayFormat: String): String {
+    return this.coerceAtLeast(Duration.ZERO).toComponents { days, hours, minutes, seconds, _ ->
+        val clock = "${hours.pad()}:${minutes.pad()}:${seconds.pad()}"
+        if (days > 0) dayFormat.replace("%1\$s", days.toString()).replace("%2\$s", clock) else clock
+    }
+}
+
+private fun Int.pad(): String {
+    return this.toString().padStart(2, '0')
+}
+
 fun midpointInstant(a: Instant, b: Instant): Instant {
     val difference = millisecondsBetween(a, b)
     return if (a.toEpochMilliseconds() < b.toEpochMilliseconds()) {

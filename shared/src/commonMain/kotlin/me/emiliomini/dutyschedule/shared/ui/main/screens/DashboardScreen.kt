@@ -126,9 +126,10 @@ fun DashboardScreen(
             }
         }
 
-        // The empty check also covers upgrading from the build that stored one combined figure,
-        // which would otherwise leave the ring on zero until the stored stats went stale
-        if (statistics.minutesByDutyType.isEmpty() ||
+        // The year check catches both the rollover into January and a store written before the
+        // hours were split by type, without mistaking a year that genuinely holds no duties yet
+        // for one that was never counted
+        if (statistics.year != currentYear ||
             !StorageService.STATISTICS.lastUpdated.withinLast(30.minutes)
         ) {
             hoursLoaded = false
@@ -197,9 +198,9 @@ fun DashboardScreen(
                 countedMinutes = countedMinutes,
                 requiredMinutes = requiredMinutes,
                 statistics = statistics,
+                upcomingDuties = upcomingDuties.minimalDutyDefinitions,
                 pending = !hoursLoaded
             )
-            Spacer(Modifier.height(24.dp))
             Row(
                 Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,

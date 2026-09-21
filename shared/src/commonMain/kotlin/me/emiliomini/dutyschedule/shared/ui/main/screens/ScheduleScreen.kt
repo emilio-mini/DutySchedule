@@ -358,8 +358,12 @@ fun ScheduleScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
+                    // Nothing to load a plan for once the preferences are in and still no station
+                    // resolved, so say so rather than spinning against a request never made
+                    val noStation = allowedOrgs != null && selectedOrg == null
+
                     when {
-                        timelineFailed -> {
+                        timelineFailed || noStation -> {
                             Text(
                                 stringResource(Res.string.error_load_failed),
                                 color = MaterialTheme.colorScheme.error

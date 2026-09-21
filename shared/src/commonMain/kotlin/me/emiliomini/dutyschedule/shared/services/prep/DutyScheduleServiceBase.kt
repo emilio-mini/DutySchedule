@@ -77,6 +77,12 @@ interface DutyScheduleServiceBase {
 
     /** Works through every upcoming duty that has no link yet, without blocking the caller */
     fun resolveUpcomingDutyLinks()
+
+    /**
+     * The plan entry behind an upcoming duty together with the vehicle handovers on either side of
+     * it. Costs one plan request over the shift plus a margin, so the result is cached briefly
+     */
+    suspend fun loadDutyContext(duty: MinimalDutyDefinition): DutyContext?
     suspend fun loadPast(year: String): List<MinimalDutyDefinition>?
     suspend fun loadHoursOfService(year: String): Float?
     suspend fun loadUpcoming(): List<MinimalDutyDefinition>?

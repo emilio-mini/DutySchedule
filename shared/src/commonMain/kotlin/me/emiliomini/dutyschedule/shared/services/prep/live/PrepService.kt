@@ -48,6 +48,7 @@ import me.emiliomini.dutyschedule.shared.services.CredentialService
 import me.emiliomini.dutyschedule.shared.services.network.Endpoints
 import me.emiliomini.dutyschedule.shared.services.network.MultiplatformNetworkAdapter
 import me.emiliomini.dutyschedule.shared.services.network.NetworkService
+import me.emiliomini.dutyschedule.shared.services.prep.DutyContext
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleServiceBase
 import me.emiliomini.dutyschedule.shared.services.prep.parsing.DataExtractorService
 import me.emiliomini.dutyschedule.shared.services.prep.parsing.DataParserService
@@ -55,6 +56,7 @@ import me.emiliomini.dutyschedule.shared.services.prep.parsing.DocScedParserServ
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.util.format
 import me.emiliomini.dutyschedule.shared.util.getAllVehicles
+import me.emiliomini.dutyschedule.shared.util.getVehicle
 import me.emiliomini.dutyschedule.shared.util.isInvalid
 import me.emiliomini.dutyschedule.shared.util.isNight
 import me.emiliomini.dutyschedule.shared.util.isNightShift
@@ -71,6 +73,7 @@ import me.emiliomini.dutyschedule.shared.util.withinLast
 import kotlin.math.min
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
@@ -104,6 +107,17 @@ object PrepService : DutyScheduleServiceBase {
 
     private val timelineMutex = Mutex()
     private val runningTimelines = mutableMapOf<TimelineKey, Deferred<List<OrgDay>?>>()
+
+    /** How far either side of a shift to look for the vehicle's neighbouring duties */
+    private val HANDOVER_WINDOW = 12.hours
+
+    /** The largest gap between two duties of one vehicle that still counts as a handover */
+    private val HANDOVER_TOLERANCE = 30.minutes
+
+    private val DUTY_CONTEXT_MAX_AGE = 15.minutes
+
+    private val dutyContextMutex = Mutex()
+    private var dutyContextCache: Map<String, CachedDutyContext> = emptyMap()
 
     private val dutyLinkMutex = Mutex()
     private val runningDutyLinks = mutableMapOf<String, Deferred<DutyLink?>>()
@@ -335,6 +349,7 @@ object PrepService : DutyScheduleServiceBase {
         this.self = null
         this.messages.clear()
         timelineMutex.withLock { timelineCache = emptyMap() }
+        dutyContextMutex.withLock { dutyContextCache = emptyMap() }
         dutyLinkMutex.withLock { unresolvedDutyLinks.clear() }
         CredentialService.clearPassword()
         StorageService.clear()
@@ -851,6 +866,76 @@ object PrepService : DutyScheduleServiceBase {
 
     private data class PlanKey(val orgUnitDataGuid: String, val from: Long, val to: Long)
 
+    override suspend fun loadDutyContext(duty: MinimalDutyDefinition): DutyContext? {
+        dutyContextMutex.withLock {
+            val cached = dutyContextCache[duty.guid]
+            if (cached != null && cached.loadedAt.withinLast(DUTY_CONTEXT_MAX_AGE)) {
+                return cached.context
+            }
+        }
+
+        // This is the duty the user is looking at, so a link an earlier sweep gave up on is worth
+        // another try -- a plan published since would otherwise stay unreachable for the session.
+        // Coming up empty is remembered too, which is what keeps that retry down to one a window
+        val context = buildDutyContext(duty)
+        dutyContextMutex.withLock {
+            dutyContextCache =
+                dutyContextCache + (duty.guid to CachedDutyContext(context, Clock.System.now()))
+        }
+
+        return context
+    }
+
+    private suspend fun buildDutyContext(duty: MinimalDutyDefinition): DutyContext? {
+        val link = resolveDutyLink(duty, retryUnresolved = true) ?: return null
+
+        // Wide enough that a shift butting onto this one is inside the window whether the portal
+        // returns duties overlapping the range or only those fully within it
+        val from = duty.begin.toInstant() - HANDOVER_WINDOW
+        val to = duty.end.toInstant() + HANDOVER_WINDOW
+
+        val duties = loadPlan(link.orgGuid, from, to)?.first ?: return null
+        val planDuty = duties.firstOrNull { it.guid == link.planDutyGuid } ?: return null
+
+        val vehicle = planDuty.getVehicle()
+        val vehicleGuid = vehicle?.employeeGuid.nullIfBlank()
+        val sameVehicle = if (vehicleGuid == null) {
+            emptyList()
+        } else {
+            duties.filter { it.guid != planDuty.guid && it.getVehicle()?.employeeGuid == vehicleGuid }
+        }
+
+        return DutyContext(
+            orgGuid = link.orgGuid,
+            duty = planDuty,
+            vehicle = vehicle,
+            handoverFrom = sameVehicle.adjoining(planDuty.begin.toEpochMilliseconds(), before = true),
+            handoverTo = sameVehicle.adjoining(planDuty.end.toEpochMilliseconds(), before = false)
+        )
+    }
+
+    /**
+     * The duty of this vehicle that runs up to [boundary], or away from it when [before] is false.
+     * A small gap still counts as a handover; plans are not always written to the exact minute
+     */
+    private fun List<DutyDefinition>.adjoining(
+        boundary: Long,
+        before: Boolean
+    ): DutyDefinition? {
+        val tolerance = HANDOVER_TOLERANCE.inWholeMilliseconds
+
+        return if (before) {
+            this.filter { boundary - it.end.toEpochMilliseconds() in 0..tolerance }
+                .maxByOrNull { it.end.toEpochMilliseconds() }
+        } else {
+            this.filter { it.begin.toEpochMilliseconds() - boundary in 0..tolerance }
+                .minByOrNull { it.begin.toEpochMilliseconds() }
+        }
+    }
+
+    /** [context] is null for a duty whose plan entry could not be found, so that result caches too */
+    private data class CachedDutyContext(val context: DutyContext?, val loadedAt: Instant)
+
     override suspend fun loadPast(year: String): List<MinimalDutyDefinition>? {
         val intYear = year.toIntOrNull()
         if (intYear == null) {
@@ -907,7 +992,7 @@ object PrepService : DutyScheduleServiceBase {
             .mapValues { (_, duties) -> duties.sumOf { it.duration } }
         StorageService.STATISTICS.update {
             it.copy(
-                minutesByDutyType = minutesByDutyType
+                minutesByDutyType = minutesByDutyType, year = year
             )
         }
 

@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package me.emiliomini.dutyschedule.shared.ui.components
 
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -8,6 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -17,7 +20,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -26,25 +34,43 @@ import dutyschedule.shared.generated.resources.Res
 import dutyschedule.shared.generated.resources.main_dashboard_chart_slice_format
 import dutyschedule.shared.generated.resources.main_dashboard_chart_total_format
 import dutyschedule.shared.generated.resources.main_dashboard_hours
+import kotlinx.coroutines.delay
+import me.emiliomini.dutyschedule.shared.datastores.MinimalDutyDefinition
+import me.emiliomini.dutyschedule.shared.datastores.Slot
 import me.emiliomini.dutyschedule.shared.datastores.Statistics
 import me.emiliomini.dutyschedule.shared.datastores.totalMinutes
+import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.util.resourceString
+import me.emiliomini.dutyschedule.shared.util.toEpochMilliseconds
+import me.emiliomini.dutyschedule.shared.util.toInstant
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.floor
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
 
-private const val QUOTA_PAGE = 0
-private const val PAGE_COUNT = 2
+/** In swipe order. [NEXT_DUTY] drops out entirely when there is nothing coming up */
+private enum class SummaryPage {
+    NEXT_DUTY, QUOTA, BREAKDOWN
+}
 
 /**
  * Swiping wraps around, which a pager does by running over a virtual range far longer than anyone
  * will swipe and taking the page modulo the real count. Starting halfway along, on a multiple of
- * [PAGE_COUNT], leaves the quota page first and as much room to swipe back as forward
+ * that count, leaves as much room to swipe back as forward
  */
 private const val VIRTUAL_PAGE_COUNT = Int.MAX_VALUE
-private val VIRTUAL_START = (VIRTUAL_PAGE_COUNT / 2).let { it - it % PAGE_COUNT }
 
-/** Both pages sit in the same box so swiping between them does not resize the dashboard */
-private val PAGE_HEIGHT = 232.dp
+/**
+ * Every page sits in the same box so swiping between them does not resize the dashboard. The box
+ * is taller than the ring it grew out of, taking the space that used to sit between the carousel
+ * and the upcoming list, so what is below stays where it was and only the duty page gets the room
+ */
+private val PAGE_HEIGHT = 264.dp
+
+/** The charts keep their own sizes rather than filling the taller page; they are centred in it */
+private val QUOTA_SIZE = 232.dp
+private val PIE_SIZE = 160.dp
 
 /**
  * The year's hours, as the quota ring against the types the user counts and, a swipe away, the
@@ -57,10 +83,44 @@ fun HoursSummary(
     countedMinutes: Int,
     requiredMinutes: Float,
     statistics: Statistics,
+    upcomingDuties: List<MinimalDutyDefinition> = emptyList(),
     pending: Boolean = false
 ) {
-    val pagerState =
-        rememberPagerState(initialPage = VIRTUAL_START, pageCount = { VIRTUAL_PAGE_COUNT })
+    // Ticks only while there is a countdown to show; the other pages hold nothing live. The clock
+    // also decides which duty is next, so one running out rolls onto the following one by itself
+    // instead of sitting at zero until the upcoming list happens to be fetched again
+    var now by remember { mutableStateOf(Clock.System.now()) }
+    LaunchedEffect(upcomingDuties) {
+        while (true) {
+            now = Clock.System.now()
+            if (upcomingDuties.none { it.end.toInstant() > now }) {
+                break
+            }
+            delay(1.seconds)
+        }
+    }
+
+    val nextDuty = upcomingDuties
+        .filter { it.end.toInstant() > now }
+        .minByOrNull { it.begin.toEpochMilliseconds() }
+
+    val pages = remember(nextDuty == null) {
+        SummaryPage.entries.filter { it != SummaryPage.NEXT_DUTY || nextDuty != null }
+    }
+
+    // A duty already under way is the thing the user opened the app for, so start there
+    val ongoing = nextDuty != null && now >= nextDuty.begin.toInstant()
+    val pagerState = key(pages.size) {
+        val start = (VIRTUAL_PAGE_COUNT / 2).let { it - it % pages.size }
+        val landing = if (ongoing) SummaryPage.NEXT_DUTY else SummaryPage.QUOTA
+
+        rememberPagerState(
+            initialPage = start + pages.indexOf(landing).coerceAtLeast(0),
+            pageCount = { VIRTUAL_PAGE_COUNT })
+    }
+
+    var detailViewEmployee by remember { mutableStateOf<Slot?>(null) }
+    val orgItems by StorageService.ORG_ITEMS.collectAsState()
 
     val animatedMinutes by animateIntAsState(
         targetValue = countedMinutes, animationSpec = tween(
@@ -73,11 +133,25 @@ fun HoursSummary(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        HorizontalPager(state = pagerState, verticalAlignment = Alignment.CenterVertically) { page ->
-            when (page % PAGE_COUNT) {
-                QUOTA_PAGE -> ArcProgressIndicator(
+        // The height belongs to the pager, not to the pages: left to the pages it would follow
+        // whichever one is showing and the carousel would resize as you swipe through them
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.height(PAGE_HEIGHT),
+            verticalAlignment = Alignment.CenterVertically
+        ) { page ->
+            when (pages[page % pages.size]) {
+                SummaryPage.NEXT_DUTY -> if (nextDuty != null) {
+                    NextDutyPage(
+                        modifier = Modifier.fillMaxHeight(),
+                        duty = nextDuty,
+                        now = now,
+                        onEmployeeClick = { detailViewEmployee = it })
+                }
+
+                SummaryPage.QUOTA -> ArcProgressIndicator(
                     modifier = Modifier.fillMaxWidth(),
-                    sizeDp = PAGE_HEIGHT,
+                    sizeDp = QUOTA_SIZE,
                     progress = countedMinutes / requiredMinutes,
                     strokeWidth = 24.dp,
                     pending = pending
@@ -101,15 +175,15 @@ fun HoursSummary(
                     }
                 }
 
-                else -> DutyTypeBreakdown(statistics)
+                SummaryPage.BREAKDOWN -> DutyTypeBreakdown(statistics)
             }
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            repeat(PAGE_COUNT) { page ->
+            repeat(pages.size) { page ->
                 Box(
                     Modifier.size(8.dp).background(
-                        color = if (pagerState.currentPage % PAGE_COUNT == page) {
+                        color = if (pagerState.currentPage % pages.size == page) {
                             MaterialTheme.colorScheme.primary
                         } else {
                             MaterialTheme.colorScheme.surfaceContainerHighest
@@ -118,6 +192,13 @@ fun HoursSummary(
                 )
             }
         }
+    }
+
+    if (detailViewEmployee != null) {
+        EmployeeDetailSheet(
+            slot = detailViewEmployee,
+            orgs = orgItems.orgs.values.toList(),
+            onDismiss = { detailViewEmployee = null })
     }
 }
 
@@ -140,10 +221,10 @@ private fun DutyTypeBreakdown(statistics: Statistics) {
     }
 
     Column(
-        modifier = Modifier.height(PAGE_HEIGHT).fillMaxWidth(),
+        modifier = Modifier.fillMaxHeight().fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically)
     ) {
-        PieChart(data = slices, chartSize = 160.dp, labelText = { key, _, _ -> key })
+        PieChart(data = slices, chartSize = PIE_SIZE, labelText = { key, _, _ -> key })
         Text(
             stringResource(
                 Res.string.main_dashboard_chart_total_format,
