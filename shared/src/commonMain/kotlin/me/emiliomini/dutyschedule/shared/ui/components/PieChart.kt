@@ -90,7 +90,7 @@ fun <T> PieChart(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.Top
     ) {
-        Canvas(modifier = modifier.size(chartSize)) {
+        Canvas(modifier = Modifier.size(chartSize)) {
             val radius = size.minDimension / 2f
 
             var startAngle = -90f

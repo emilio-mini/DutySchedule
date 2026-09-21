@@ -96,6 +96,8 @@
     <string name="main_dashboard_title">Dashboard</string>
     <string name="main_dashboard_hours">Dienststunden</string>
     <string name="main_dashboard_section_upcoming_title">Nächste Dienste</string>
+    <string name="main_dashboard_chart_slice_format">%1$s (%2$s h)</string>
+    <string name="main_dashboard_chart_total_format">%1$s Stunden insgesamt</string>
     <string name="main_dashboard_upcoming_link_failed">Dieser Dienst konnte im Dienstplan nicht gefunden werden.</string>
     <string name="base_avatar_dialog_title">Konto</string>
     <string name="base_dutytypefilter_title">Gezählte Dienstarten</string>

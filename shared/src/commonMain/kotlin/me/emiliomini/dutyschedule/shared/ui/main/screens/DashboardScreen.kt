@@ -2,9 +2,6 @@
 
 package me.emiliomini.dutyschedule.shared.ui.main.screens
 
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateIntAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -26,17 +23,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dutyschedule.shared.generated.resources.Res
-import dutyschedule.shared.generated.resources.main_dashboard_hours
 import dutyschedule.shared.generated.resources.main_dashboard_section_upcoming_title
 import dutyschedule.shared.generated.resources.main_dashboard_upcoming_link_failed
 import kotlinx.coroutines.launch
@@ -51,10 +45,10 @@ import me.emiliomini.dutyschedule.shared.services.scaffold.Action
 import me.emiliomini.dutyschedule.shared.services.scaffold.ScaffoldService
 import me.emiliomini.dutyschedule.shared.services.scaffold.ScreenActions
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
-import me.emiliomini.dutyschedule.shared.ui.components.ArcProgressIndicator
 import me.emiliomini.dutyschedule.shared.ui.components.CardListItemType
 import me.emiliomini.dutyschedule.shared.ui.components.DutyTypeFilter
 import me.emiliomini.dutyschedule.shared.ui.components.EmployeeAvatar
+import me.emiliomini.dutyschedule.shared.ui.components.HoursSummary
 import me.emiliomini.dutyschedule.shared.ui.components.LazyCardColumn
 import me.emiliomini.dutyschedule.shared.ui.components.MinimalDutyCard
 import me.emiliomini.dutyschedule.shared.ui.icons.DeleteSweep
@@ -63,7 +57,6 @@ import me.emiliomini.dutyschedule.shared.util.format
 import me.emiliomini.dutyschedule.shared.util.toScheduleFocus
 import me.emiliomini.dutyschedule.shared.util.withinLast
 import org.jetbrains.compose.resources.stringResource
-import kotlin.math.floor
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
@@ -112,7 +105,6 @@ fun DashboardScreen(
 
     val requiredMinutes = 144 * 60f
     val countedMinutes = statistics.minutesOf(userPreferences.countedDutyTypes())
-    var progress by remember { mutableFloatStateOf(0f) }
 
     var hoursLoaded by remember { mutableStateOf(true) }
     var upcomingLoaded by remember { mutableStateOf(true) }
@@ -176,16 +168,6 @@ fun DashboardScreen(
         }
     }
 
-    LaunchedEffect(countedMinutes) {
-        progress = countedMinutes / requiredMinutes
-    }
-
-    val animatedMinutes by animateIntAsState(
-        targetValue = countedMinutes, animationSpec = tween(
-            durationMillis = 500, easing = FastOutSlowInEasing
-        ), label = "QuotaAnimation"
-    )
-
     Screen(
         modifier = modifier,
         paddingValues = paddingValues,
@@ -210,31 +192,13 @@ fun DashboardScreen(
                 .padding(top = 20.dp, start = 20.dp, end = 20.dp, bottom = 0.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            ArcProgressIndicator(
+            HoursSummary(
                 modifier = Modifier.fillMaxWidth(),
-                sizeDp = 232.dp,
-                progress = progress,
-                strokeWidth = 24.dp,
+                countedMinutes = countedMinutes,
+                requiredMinutes = requiredMinutes,
+                statistics = statistics,
                 pending = !hoursLoaded
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.Bottom) {
-                        Text(
-                            "${floor((animatedMinutes / 60.0) * 100) / 100}",
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                        Text(
-                            " / ${floor(requiredMinutes / 60).toInt()}",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                    Text(stringResource(Res.string.main_dashboard_hours))
-                }
-            }
+            )
             Spacer(Modifier.height(24.dp))
             Row(
                 Modifier.fillMaxWidth(),
