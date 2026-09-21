@@ -25,8 +25,13 @@ data class StoredCookie(
     val secure: Boolean = false,
     @ProtoNumber(8)
     val httpOnly: Boolean = false,
+    /**
+     * A cookie attribute carrying no value, such as a bare flag, reaches us as a null. Protobuf
+     * cannot write a null into a map, and the failure takes the whole cookie jar down with it, so
+     * those are held as blanks here and turned back into nulls on the way out
+     */
     @ProtoNumber(9)
-    val extensions: Map<String, String?>? = null
+    val extensions: Map<String, String>? = null
 ) : MultiplatformDataModel {
     companion object Companion {
         fun fromCookie(cookie: Cookie): StoredCookie = StoredCookie(
@@ -38,7 +43,9 @@ data class StoredCookie(
             path = cookie.path,
             secure = cookie.secure,
             httpOnly = cookie.httpOnly,
-            extensions = cookie.extensions.takeIf { it.isNotEmpty() }
+            extensions = cookie.extensions
+                .takeIf { it.isNotEmpty() }
+                ?.mapValues { (_, value) -> value.orEmpty() }
         )
 
         fun toCookie(sc: StoredCookie): Cookie = Cookie(
@@ -50,7 +57,7 @@ data class StoredCookie(
             path = sc.path,
             secure = sc.secure,
             httpOnly = sc.httpOnly,
-            extensions = sc.extensions.orEmpty()
+            extensions = sc.extensions.orEmpty().mapValues { (_, value) -> value.ifBlank { null } }
         )
     }
 }

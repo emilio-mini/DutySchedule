@@ -1,5 +1,7 @@
 package me.emiliomini.dutyschedule.shared.services.storage
 
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import me.emiliomini.dutyschedule.shared.api.getPlatformStorageApi
@@ -138,8 +140,13 @@ object StorageService {
             }
 
             storageApi.initialize(ALL_STORES)
-            ALL_STORES.forEach {
-                it.ensureLoaded()
+
+            // Each store is its own file behind its own lock, and the splash is held for all of
+            // them, so they are read side by side rather than one after the other
+            coroutineScope {
+                ALL_STORES.forEach { store ->
+                    launch { store.ensureLoaded() }
+                }
             }
             initialized = true
         }

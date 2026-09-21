@@ -47,7 +47,10 @@ fun DutyScheduleApp(composableLoadActions: @Composable () -> Unit) {
         getPlatformTaskSchedulerApi().scheduleTask(MultiplatformTask.UpdateAlarms)
     }
 
-    LaunchedEffect(loaded, previouslyLoggedIn, DutyScheduleService.isLoggedIn) {
+    // Deliberately not keyed on the session: signing in flips it partway through, and while it was
+    // a key that disposed this effect and cancelled the very call doing the signing in, losing the
+    // orgs and the identity that are fetched after it. Reading it here does not subscribe to it
+    LaunchedEffect(loaded, previouslyLoggedIn) {
         if (loaded && previouslyLoggedIn && !DutyScheduleService.isLoggedIn) {
             DutyScheduleService.restoreLogin()
         }
