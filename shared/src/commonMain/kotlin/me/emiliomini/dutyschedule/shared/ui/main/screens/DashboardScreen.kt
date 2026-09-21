@@ -41,6 +41,8 @@ import dutyschedule.shared.generated.resources.main_dashboard_section_upcoming_t
 import dutyschedule.shared.generated.resources.main_dashboard_upcoming_link_failed
 import kotlinx.coroutines.launch
 import me.emiliomini.dutyschedule.shared.datastores.MinimalDutyDefinition
+import me.emiliomini.dutyschedule.shared.datastores.countedDutyTypes
+import me.emiliomini.dutyschedule.shared.datastores.minutesOf
 import me.emiliomini.dutyschedule.shared.debug.DebugFlags
 import me.emiliomini.dutyschedule.shared.services.CredentialService
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
@@ -51,6 +53,7 @@ import me.emiliomini.dutyschedule.shared.services.scaffold.ScreenActions
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.components.ArcProgressIndicator
 import me.emiliomini.dutyschedule.shared.ui.components.CardListItemType
+import me.emiliomini.dutyschedule.shared.ui.components.DutyTypeFilter
 import me.emiliomini.dutyschedule.shared.ui.components.EmployeeAvatar
 import me.emiliomini.dutyschedule.shared.ui.components.LazyCardColumn
 import me.emiliomini.dutyschedule.shared.ui.components.MinimalDutyCard
@@ -96,6 +99,7 @@ fun DashboardScreen(
                     onRestart()
                 }
             }, visible = DebugFlags.SHOW_DEBUG_ACTIONS.active()),
+            Action({ DutyTypeFilter() }),
             Action({ EmployeeAvatar(employee = DutyScheduleService.self, onLogout = onLogout) }),
             Action({ Spacer(Modifier.width(16.dp)) })
         )
@@ -104,8 +108,10 @@ fun DashboardScreen(
     val currentYear = Clock.System.now().format("yyyy")
     val upcomingDuties by StorageService.UPCOMING_DUTIES.collectAsState()
     val statistics by StorageService.STATISTICS.collectAsState()
+    val userPreferences by StorageService.USER_PREFERENCES.collectAsState()
 
     val requiredMinutes = 144 * 60f
+    val countedMinutes = statistics.minutesOf(userPreferences.countedDutyTypes())
     var progress by remember { mutableFloatStateOf(0f) }
 
     var hoursLoaded by remember { mutableStateOf(true) }
@@ -128,7 +134,11 @@ fun DashboardScreen(
             }
         }
 
-        if (!StorageService.STATISTICS.lastUpdated.withinLast(30.minutes)) {
+        // The empty check also covers upgrading from the build that stored one combined figure,
+        // which would otherwise leave the ring on zero until the stored stats went stale
+        if (statistics.minutesByDutyType.isEmpty() ||
+            !StorageService.STATISTICS.lastUpdated.withinLast(30.minutes)
+        ) {
             hoursLoaded = false
             try {
                 DutyScheduleService.loadHoursOfService(currentYear)
@@ -166,12 +176,12 @@ fun DashboardScreen(
         }
     }
 
-    LaunchedEffect(statistics) {
-        progress = statistics.minutesServed / requiredMinutes
+    LaunchedEffect(countedMinutes) {
+        progress = countedMinutes / requiredMinutes
     }
 
     val animatedMinutes by animateIntAsState(
-        targetValue = statistics.minutesServed, animationSpec = tween(
+        targetValue = countedMinutes, animationSpec = tween(
             durationMillis = 500, easing = FastOutSlowInEasing
         ), label = "QuotaAnimation"
     )

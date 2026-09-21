@@ -98,6 +98,10 @@
     <string name="main_dashboard_section_upcoming_title">Nächste Dienste</string>
     <string name="main_dashboard_upcoming_link_failed">Dieser Dienst konnte im Dienstplan nicht gefunden werden.</string>
     <string name="base_avatar_dialog_title">Konto</string>
+    <string name="base_dutytypefilter_title">Gezählte Dienstarten</string>
+    <string name="base_dutytypefilter_accessibility_open">Gezählte Dienstarten auswählen</string>
+    <string name="base_dutytypefilter_empty">Dieses Jahr wurden noch keine Dienste erfasst.</string>
+    <string name="base_dutytypefilter_hours_format">%1$s Stunden</string>
     <string name="base_avatar_dialog_phone">Telefon</string>
     <string name="base_avatar_dialog_mail">E-Mail</string>
     <string name="base_avatar_dialog_birthdate">Geburtstag</string>

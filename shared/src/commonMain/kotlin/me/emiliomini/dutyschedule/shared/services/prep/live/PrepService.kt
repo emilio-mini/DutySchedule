@@ -40,6 +40,7 @@ import me.emiliomini.dutyschedule.shared.datastores.OrgItems
 import me.emiliomini.dutyschedule.shared.datastores.Requirement
 import me.emiliomini.dutyschedule.shared.datastores.Slot
 import me.emiliomini.dutyschedule.shared.datastores.YearlyDutyItems
+import me.emiliomini.dutyschedule.shared.datastores.totalMinutes
 import me.emiliomini.dutyschedule.shared.mappings.RequirementMapping
 import me.emiliomini.dutyschedule.shared.mappings.docScedConfigFromString
 import me.emiliomini.dutyschedule.shared.services.AlarmService.updateAlarms
@@ -892,7 +893,7 @@ object PrepService : DutyScheduleServiceBase {
     override suspend fun loadHoursOfService(year: String): Float? {
         val localStats = StorageService.STATISTICS.get()
         if (localStats != null && !isLoggedIn) {
-            return localStats.minutesServed / 60f
+            return localStats.totalMinutes() / 60f
         }
 
         val yearData = loadPast(year)
@@ -901,14 +902,16 @@ object PrepService : DutyScheduleServiceBase {
             return null
         }
 
-        val minutesServed = yearData.sumOf { it.duration }
+        val minutesByDutyType = yearData
+            .groupBy { it.type }
+            .mapValues { (_, duties) -> duties.sumOf { it.duration } }
         StorageService.STATISTICS.update {
             it.copy(
-                minutesServed = minutesServed
+                minutesByDutyType = minutesByDutyType
             )
         }
 
-        return minutesServed / 60f
+        return minutesByDutyType.values.sum() / 60f
     }
 
     override suspend fun loadUpcoming(): List<MinimalDutyDefinition>? {

@@ -3,30 +3,38 @@ package me.emiliomini.dutyschedule.shared.datastores
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+/**
+ * [countsByDefault] is whether the type is ticked in the dashboard's quota filter before the user
+ * has touched it, which is to say whether it is service time rather than training or office work
+ */
 @Serializable
-enum class DutyType {
+enum class DutyType(val countsByDefault: Boolean) {
     @SerialName("0")
-    UNKNOWN,
+    UNKNOWN(true),
     @SerialName("1")
-    EMS,
+    EMS(true),
     @SerialName("2")
-    TRAINING,
+    TRAINING(false),
     @SerialName("3")
-    MEET,
+    MEET(false),
     @SerialName("4")
-    DRILL,
+    DRILL(false),
     @SerialName("5")
-    VEHICLE_TRAINING,
+    VEHICLE_TRAINING(false),
     @SerialName("6")
-    RECERTIFICATION,
+    RECERTIFICATION(false),
     @SerialName("7")
-    HAEND,
+    HAEND(true),
     @SerialName("8")
-    ADMINISTRATIVE,
+    ADMINISTRATIVE(false),
     @SerialName("9")
-    EVENT,
+    EVENT(false),
     @SerialName("10")
-    BLOOD_DONATION_SERVICE,
+    BLOOD_DONATION_SERVICE(false),
     @SerialName("11")
-    DRONE_TEAM
+    DRONE_TEAM(true);
+
+    companion object {
+        val DEFAULT_COUNTED = entries.filter { it.countsByDefault }.toSet()
+    }
 }

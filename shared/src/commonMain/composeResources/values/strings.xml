@@ -96,6 +96,10 @@
     <string name="main_dashboard_section_upcoming_title">Upcoming</string>
     <string name="main_dashboard_upcoming_link_failed">This duty could not be found in the schedule.</string>
     <string name="base_avatar_dialog_title">Account</string>
+    <string name="base_dutytypefilter_title">Counted duty types</string>
+    <string name="base_dutytypefilter_accessibility_open">Pick which duty types count</string>
+    <string name="base_dutytypefilter_empty">No duties recorded this year yet.</string>
+    <string name="base_dutytypefilter_hours_format">%1$s hours</string>
     <string name="base_avatar_dialog_phone">Phone</string>
     <string name="base_avatar_dialog_mail">Mail</string>
     <string name="base_avatar_dialog_birthdate">Birthday</string>
