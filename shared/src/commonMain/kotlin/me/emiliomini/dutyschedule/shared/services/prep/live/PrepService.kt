@@ -628,8 +628,14 @@ object PrepService : DutyScheduleServiceBase {
         }
 
         logger.d("Loaded ${days.size} days on the timeline")
-        timelineMutex.withLock {
-            timelineCache = timelineCache + (key to CachedTimeline(daysList, Clock.System.now()))
+        // A plan that parses but holds nothing is far more often a session that was not ready yet
+        // than a genuinely empty week. Caching it would keep the screen empty for the whole window,
+        // so leave the slot open and let the next visit ask again.
+        if (daysList.isNotEmpty()) {
+            timelineMutex.withLock {
+                timelineCache =
+                    timelineCache + (key to CachedTimeline(daysList, Clock.System.now()))
+            }
         }
 
         return daysList

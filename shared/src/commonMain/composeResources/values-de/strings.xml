@@ -29,6 +29,7 @@
     <string name="main_schedule_accessibility_datepicker">Klicken um einen neuen Zeitraum auszuwählen</string>
     <string name="main_schedule_datepicker_confirm">OK</string>
     <string name="main_schedule_datepicker_dismiss">Abbrechen</string>
+    <string name="main_schedule_empty">Keine Dienste in diesem Zeitraum gefunden.</string>
     <string name="base_dutycard_no_vehicle">Keiner zugewiesen</string>
     <string name="base_dutycard_no_staff">Freier Platz</string>
     <string name="base_date_ordinal"> </string>

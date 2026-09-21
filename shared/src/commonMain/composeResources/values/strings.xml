@@ -30,6 +30,7 @@
     <string name="main_schedule_accessibility_datepicker">Click to pick a date range</string>
     <string name="main_schedule_datepicker_confirm">OK</string>
     <string name="main_schedule_datepicker_dismiss">Cancel</string>
+    <string name="main_schedule_empty">No duties found for this period.</string>
     <string name="base_date_ordinal">%1$s</string>
     <string name="main_settings_section_app">About this app</string>
     <string name="main_settings_app_version_title">Up to date</string>

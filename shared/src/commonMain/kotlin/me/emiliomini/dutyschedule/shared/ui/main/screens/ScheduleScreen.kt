@@ -56,6 +56,7 @@ import dutyschedule.shared.generated.resources.main_schedule_assign_success_cont
 import dutyschedule.shared.generated.resources.main_schedule_assign_success_title
 import dutyschedule.shared.generated.resources.main_schedule_datepicker_confirm
 import dutyschedule.shared.generated.resources.main_schedule_datepicker_dismiss
+import dutyschedule.shared.generated.resources.main_schedule_empty
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -144,7 +145,9 @@ fun ScheduleScreen(
         allowedOrgs = userPreferences.allowedOrgs
     }
 
-    LaunchedEffect(orgItems, allowedOrgs) {
+    // Keyed on the session as well: opening the screen before login settles leaves nothing to
+    // resolve against, and without a retry the screen would sit on an org that stays null.
+    LaunchedEffect(orgItems, allowedOrgs, DutyScheduleService.isLoggedIn) {
         if (selectedOrg.isNullOrBlank()) {
             // Same resolution the preload uses, so the warmed cache is actually the one we ask for.
             selectedOrg = DutyScheduleService.getDefaultOrgGuid()
@@ -290,13 +293,14 @@ fun ScheduleScreen(
                     )
                 }
             }
-            if (timeline != null) {
+            val days = timeline
+            if (!days.isNullOrEmpty()) {
                 LazyColumn(
                     modifier = modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = PaddingValues(bottom = 20.dp)
                 ) {
-                    items(timeline ?: emptyList()) { item ->
+                    items(days) { item ->
                         AppDateInfo(date = item.date.toInstant())
                         DutyCardCarousel(
                             duties = item.dayShifts,
@@ -328,16 +332,28 @@ fun ScheduleScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    if (timelineFailed) {
-                        Text(
-                            stringResource(Res.string.error_load_failed),
-                            color = MaterialTheme.colorScheme.error
-                        )
-                        TextButton(onClick = { reloadToken++ }) {
-                            Text(stringResource(Res.string.error_load_retry))
+                    when {
+                        timelineFailed -> {
+                            Text(
+                                stringResource(Res.string.error_load_failed),
+                                color = MaterialTheme.colorScheme.error
+                            )
+                            TextButton(onClick = { reloadToken++ }) {
+                                Text(stringResource(Res.string.error_load_retry))
+                            }
                         }
-                    } else {
-                        LoadingIndicator()
+
+                        days != null -> {
+                            Text(
+                                stringResource(Res.string.main_schedule_empty),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            TextButton(onClick = { reloadToken++ }) {
+                                Text(stringResource(Res.string.error_load_retry))
+                            }
+                        }
+
+                        else -> LoadingIndicator()
                     }
                 }
             }
