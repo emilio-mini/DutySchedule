@@ -3,6 +3,7 @@ package me.emiliomini.dutyschedule.shared.services.prep
 import me.emiliomini.dutyschedule.shared.datastores.CreateDutyResponse
 import me.emiliomini.dutyschedule.shared.datastores.DutyDefinition
 import me.emiliomini.dutyschedule.shared.datastores.DutyGroup
+import me.emiliomini.dutyschedule.shared.datastores.DutyContext
 import me.emiliomini.dutyschedule.shared.datastores.DutyLink
 import me.emiliomini.dutyschedule.shared.datastores.Employee
 import me.emiliomini.dutyschedule.shared.datastores.Incode
@@ -12,6 +13,7 @@ import me.emiliomini.dutyschedule.shared.datastores.Org
 import me.emiliomini.dutyschedule.shared.datastores.OrgDay
 import me.emiliomini.dutyschedule.shared.datastores.OrgItems
 import me.emiliomini.dutyschedule.shared.services.prep.live.PrepService
+import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -83,6 +85,13 @@ interface DutyScheduleServiceBase {
      * it. Costs one plan request over the shift plus a margin, so the result is cached briefly
      */
     suspend fun loadDutyContext(duty: MinimalDutyDefinition): DutyContext?
+
+    /**
+     * The stored context for an upcoming duty, however old, without suspending. Screens follow
+     * [StorageService.DUTY_CONTEXTS] instead, so that they also pick it up when the store finishes
+     * loading; this is for callers that only need the value they can see right now
+     */
+    fun peekDutyContext(upcomingGuid: String): DutyContext?
     suspend fun loadPast(year: String): List<MinimalDutyDefinition>?
     suspend fun loadHoursOfService(year: String): Float?
     suspend fun loadUpcoming(): List<MinimalDutyDefinition>?

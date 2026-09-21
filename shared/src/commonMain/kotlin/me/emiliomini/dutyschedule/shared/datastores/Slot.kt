@@ -20,7 +20,12 @@ data class Slot(
     @ProtoNumber(6)
     val info: String? = null,
     @ProtoNumber(7)
-    val inlineEmployee: Employee? = Employee()
+    /**
+     * Null on a slot nobody is on, which is what the parser produces for one. The default has to be
+     * null rather than an empty employee: protobuf cannot write an explicit null over a non-null
+     * default, so a real null would fail to encode and the whole record would go unsaved
+     */
+    val inlineEmployee: Employee? = null
 ) : MultiplatformDataModel
 
 fun Slot.isDefault(): Boolean {

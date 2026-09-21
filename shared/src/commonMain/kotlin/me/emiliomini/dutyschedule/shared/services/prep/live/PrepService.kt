@@ -29,6 +29,7 @@ import me.emiliomini.dutyschedule.shared.comparators.DutyDefinitionComparator
 import me.emiliomini.dutyschedule.shared.datastores.CreateDutyResponse
 import me.emiliomini.dutyschedule.shared.datastores.DutyDefinition
 import me.emiliomini.dutyschedule.shared.datastores.DutyGroup
+import me.emiliomini.dutyschedule.shared.datastores.DutyContext
 import me.emiliomini.dutyschedule.shared.datastores.DutyLink
 import me.emiliomini.dutyschedule.shared.datastores.Employee
 import me.emiliomini.dutyschedule.shared.datastores.Incode
@@ -48,7 +49,6 @@ import me.emiliomini.dutyschedule.shared.services.CredentialService
 import me.emiliomini.dutyschedule.shared.services.network.Endpoints
 import me.emiliomini.dutyschedule.shared.services.network.MultiplatformNetworkAdapter
 import me.emiliomini.dutyschedule.shared.services.network.NetworkService
-import me.emiliomini.dutyschedule.shared.services.prep.DutyContext
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleServiceBase
 import me.emiliomini.dutyschedule.shared.services.prep.parsing.DataExtractorService
 import me.emiliomini.dutyschedule.shared.services.prep.parsing.DataParserService
@@ -117,7 +117,12 @@ object PrepService : DutyScheduleServiceBase {
     private val DUTY_CONTEXT_MAX_AGE = 15.minutes
 
     private val dutyContextMutex = Mutex()
-    private var dutyContextCache: Map<String, CachedDutyContext> = emptyMap()
+
+    /**
+     * When each duty's context was last asked for, successful or not. The contexts themselves are
+     * persisted; this only keeps a failed or unchanged lookup from being retried on every visit
+     */
+    private var dutyContextAttempts: Map<String, Instant> = emptyMap()
 
     private val dutyLinkMutex = Mutex()
     private val runningDutyLinks = mutableMapOf<String, Deferred<DutyLink?>>()
@@ -349,7 +354,7 @@ object PrepService : DutyScheduleServiceBase {
         this.self = null
         this.messages.clear()
         timelineMutex.withLock { timelineCache = emptyMap() }
-        dutyContextMutex.withLock { dutyContextCache = emptyMap() }
+        dutyContextMutex.withLock { dutyContextAttempts = emptyMap() }
         dutyLinkMutex.withLock { unresolvedDutyLinks.clear() }
         CredentialService.clearPassword()
         StorageService.clear()
@@ -766,6 +771,9 @@ object PrepService : DutyScheduleServiceBase {
             StorageService.DUTY_LINKS.update { items ->
                 items.copy(links = items.links.filterKeys { stillUpcoming.contains(it) })
             }
+            StorageService.DUTY_CONTEXTS.update { items ->
+                items.copy(contexts = items.contexts.filterKeys { stillUpcoming.contains(it) })
+            }
 
             // One plan covers every duty that shares its org and day, so the batch shares the loads
             val plans = mutableMapOf<PlanKey, List<DutyDefinition>?>()
@@ -866,36 +874,75 @@ object PrepService : DutyScheduleServiceBase {
 
     private data class PlanKey(val orgUnitDataGuid: String, val from: Long, val to: Long)
 
+    override fun peekDutyContext(upcomingGuid: String): DutyContext? {
+        return StorageService.DUTY_CONTEXTS.flow.value.contexts[upcomingGuid]
+    }
+
     override suspend fun loadDutyContext(duty: MinimalDutyDefinition): DutyContext? {
-        dutyContextMutex.withLock {
-            val cached = dutyContextCache[duty.guid]
-            if (cached != null && cached.loadedAt.withinLast(DUTY_CONTEXT_MAX_AGE)) {
-                return cached.context
+        val stored = peekDutyContext(duty.guid)
+        if (stored != null && stored.refreshedAt.toInstant().withinLast(DUTY_CONTEXT_MAX_AGE)) {
+            return stored
+        }
+
+        // A launch reaches here before the session is restored. Looking now would fail on every
+        // request and, worse, spend the attempt below, holding the retry off for the whole window
+        // once the session does come back
+        if (!isLoggedIn) {
+            return stored
+        }
+
+        val attempted = dutyContextMutex.withLock {
+            val last = dutyContextAttempts[duty.guid]
+            if (last.withinLast(DUTY_CONTEXT_MAX_AGE)) {
+                true
+            } else {
+                dutyContextAttempts = dutyContextAttempts + (duty.guid to Clock.System.now())
+                false
             }
+        }
+        if (attempted) {
+            logger.d("Duty context for ${duty.guid} was already looked for in this window")
+            return stored
         }
 
         // This is the duty the user is looking at, so a link an earlier sweep gave up on is worth
         // another try -- a plan published since would otherwise stay unreachable for the session.
-        // Coming up empty is remembered too, which is what keeps that retry down to one a window
-        val context = buildDutyContext(duty)
-        dutyContextMutex.withLock {
-            dutyContextCache =
-                dutyContextCache + (duty.guid to CachedDutyContext(context, Clock.System.now()))
+        // Failing leaves whatever was stored in place rather than blanking the card
+        val context = buildDutyContext(duty) ?: return stored
+        StorageService.DUTY_CONTEXTS.update {
+            it.copy(contexts = it.contexts + (duty.guid to context))
         }
+        logger.d("Stored duty context for ${duty.guid}: ${context.duty.slots.size} slots")
 
         return context
     }
 
     private suspend fun buildDutyContext(duty: MinimalDutyDefinition): DutyContext? {
-        val link = resolveDutyLink(duty, retryUnresolved = true) ?: return null
+        val link = resolveDutyLink(duty, retryUnresolved = true)
+        if (link == null) {
+            logger.w("Duty context: no plan entry is linked to upcoming duty ${duty.guid}")
+            return null
+        }
 
         // Wide enough that a shift butting onto this one is inside the window whether the portal
         // returns duties overlapping the range or only those fully within it
         val from = duty.begin.toInstant() - HANDOVER_WINDOW
         val to = duty.end.toInstant() + HANDOVER_WINDOW
 
-        val duties = loadPlan(link.orgGuid, from, to)?.first ?: return null
-        val planDuty = duties.firstOrNull { it.guid == link.planDutyGuid } ?: return null
+        val duties = loadPlan(link.orgGuid, from, to)?.first
+        if (duties == null) {
+            logger.w("Duty context: plan request failed for ${link.orgGuid}")
+            return null
+        }
+
+        val planDuty = duties.firstOrNull { it.guid == link.planDutyGuid }
+        if (planDuty == null) {
+            logger.w(
+                "Duty context: linked plan duty ${link.planDutyGuid} is not in the ${duties.size} " +
+                        "duties returned for ${link.orgGuid}"
+            )
+            return null
+        }
 
         val vehicle = planDuty.getVehicle()
         val vehicleGuid = vehicle?.employeeGuid.nullIfBlank()
@@ -906,7 +953,9 @@ object PrepService : DutyScheduleServiceBase {
         }
 
         return DutyContext(
+            upcomingGuid = duty.guid,
             orgGuid = link.orgGuid,
+            refreshedAt = Clock.System.now().toTimestamp(),
             duty = planDuty,
             vehicle = vehicle,
             handoverFrom = sameVehicle.adjoining(planDuty.begin.toEpochMilliseconds(), before = true),
@@ -933,8 +982,6 @@ object PrepService : DutyScheduleServiceBase {
         }
     }
 
-    /** [context] is null for a duty whose plan entry could not be found, so that result caches too */
-    private data class CachedDutyContext(val context: DutyContext?, val loadedAt: Instant)
 
     override suspend fun loadPast(year: String): List<MinimalDutyDefinition>? {
         val intYear = year.toIntOrNull()

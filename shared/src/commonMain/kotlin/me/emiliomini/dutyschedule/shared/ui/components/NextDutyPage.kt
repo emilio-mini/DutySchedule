@@ -29,6 +29,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -52,11 +53,12 @@ import dutyschedule.shared.generated.resources.main_dashboard_nextduty_handoff
 import dutyschedule.shared.generated.resources.main_dashboard_nextduty_starts_in
 import dutyschedule.shared.generated.resources.main_dashboard_nextduty_takeover
 import dutyschedule.shared.generated.resources.main_dashboard_nextduty_to_garage
+import me.emiliomini.dutyschedule.shared.api.getPlatformConnectivityApi
+import me.emiliomini.dutyschedule.shared.datastores.DutyContext
 import me.emiliomini.dutyschedule.shared.datastores.Employee
 import me.emiliomini.dutyschedule.shared.datastores.MinimalDutyDefinition
 import me.emiliomini.dutyschedule.shared.datastores.Slot
 import me.emiliomini.dutyschedule.shared.mappings.RequirementMapping
-import me.emiliomini.dutyschedule.shared.services.prep.DutyContext
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.icons.Garage
@@ -113,18 +115,32 @@ fun NextDutyPage(
     now: Instant,
     onEmployeeClick: (Slot) -> Unit
 ) {
-    var context by remember(duty.guid) { mutableStateOf<DutyContext?>(null) }
-    var loading by remember(duty.guid) { mutableStateOf(true) }
+    // Taken from the store rather than read once into local state: the store fills in from disk
+    // while the app is starting, and a single read on the way past would miss it and never look
+    // again. Observing it also means the last known roster is on screen offline, and that a
+    // refresh lands by itself once one completes
+    val storedContexts by StorageService.DUTY_CONTEXTS.collectAsState()
+    val context = storedContexts.contexts[duty.guid]
     val orgItems by StorageService.ORG_ITEMS.collectAsState()
 
-    LaunchedEffect(duty.guid) {
-        loading = true
-        try {
-            context = DutyScheduleService.loadDutyContext(duty)
-        } finally {
-            loading = false
+    var unresolved by remember(duty.guid) { mutableStateOf(false) }
+
+    // Keyed on the session too: a launch composes this before the login is restored, and a lookup
+    // made then can only fail. Without a session there is nothing to ask, so the placeholder stays
+    // until either one arrives or the store hands over something already known
+    LaunchedEffect(duty.guid, DutyScheduleService.isLoggedIn) {
+        if (!DutyScheduleService.isLoggedIn) {
+            return@LaunchedEffect
         }
+
+        unresolved = DutyScheduleService.loadDutyContext(duty) == null
     }
+
+    // A placeholder is a promise that something is coming, so it only holds while something can.
+    // Off the network there is nothing to wait for: whatever was last stored is all there is, and
+    // an empty card is the honest answer when there is not even that
+    val connected by getPlatformConnectivityApi().isConnected.collectAsState()
+    val loading = context == null && connected && !unresolved
 
     val begin = duty.begin.toInstant()
     val end = duty.end.toInstant()
