@@ -1,6 +1,8 @@
 package me.emiliomini.dutyschedule.shared.services.network
 
 import me.emiliomini.dutyschedule.shared.datastores.EndpointConfig
+import me.emiliomini.dutyschedule.shared.defaultDocscedUrl
+import me.emiliomini.dutyschedule.shared.defaultPrepUrl
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 
 /**
@@ -15,19 +17,19 @@ object EndpointService {
     private val SCHEME = Regex("^[a-zA-Z][a-zA-Z0-9+.-]*$SCHEME_SEPARATOR")
 
     val prepUrl: String
-        get() = normalize(stored().prepUrl, EndpointConfig.DEFAULT_PREP_URL)
+        get() = normalize(stored().prepUrl, defaultPrepUrl)
 
     val docscedUrl: String
-        get() = normalize(stored().docscedUrl, EndpointConfig.DEFAULT_DOCSCED_URL)
+        get() = normalize(stored().docscedUrl, defaultDocscedUrl)
 
     suspend fun update(prepUrl: String, docscedUrl: String) {
         val previousPrepUrl = this.prepUrl
-        val cleanedPrepUrl = normalize(prepUrl, EndpointConfig.DEFAULT_PREP_URL)
+        val cleanedPrepUrl = normalize(prepUrl, defaultPrepUrl)
 
         StorageService.ENDPOINTS.update {
             it.copy(
                 prepUrl = cleanedPrepUrl,
-                docscedUrl = normalize(docscedUrl, EndpointConfig.DEFAULT_DOCSCED_URL)
+                docscedUrl = normalize(docscedUrl, defaultDocscedUrl)
             )
         }
 

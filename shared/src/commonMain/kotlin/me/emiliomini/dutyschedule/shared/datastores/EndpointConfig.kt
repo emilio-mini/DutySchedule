@@ -3,24 +3,21 @@ package me.emiliomini.dutyschedule.shared.datastores
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoNumber
+import me.emiliomini.dutyschedule.shared.defaultDocscedUrl
+import me.emiliomini.dutyschedule.shared.defaultPrepUrl
 
 /**
  * The service URLs the app talks to. They cannot ship hardcoded, so the user supplies them during
- * onboarding; the defaults here are what the app used to be built with.
+ * onboarding; until then the install falls back to whatever its platform defaults to.
  */
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class EndpointConfig(
     @ProtoNumber(1)
-    val prepUrl: String = DEFAULT_PREP_URL,
+    val prepUrl: String = defaultPrepUrl,
     @ProtoNumber(2)
-    val docscedUrl: String = DEFAULT_DOCSCED_URL
-) : MultiplatformDataModel {
-    companion object {
-        const val DEFAULT_PREP_URL = "https://prep-demo.mwq.at"
-        const val DEFAULT_DOCSCED_URL = "https://prep-demo.mwq.at"
-    }
-}
+    val docscedUrl: String = defaultDocscedUrl
+) : MultiplatformDataModel
 
 fun EndpointConfig.isDefault(): Boolean {
     return this == EndpointConfig()
