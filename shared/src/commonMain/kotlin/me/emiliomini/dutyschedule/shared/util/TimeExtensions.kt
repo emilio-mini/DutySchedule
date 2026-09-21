@@ -20,6 +20,7 @@ import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
+val DAY_MILLIS = 86_400_000L
 val WEEK_MILLIS = 604_800_000L
 
 fun Long?.toInstant(): Instant {

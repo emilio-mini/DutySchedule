@@ -29,6 +29,7 @@ import me.emiliomini.dutyschedule.shared.comparators.DutyDefinitionComparator
 import me.emiliomini.dutyschedule.shared.datastores.CreateDutyResponse
 import me.emiliomini.dutyschedule.shared.datastores.DutyDefinition
 import me.emiliomini.dutyschedule.shared.datastores.DutyGroup
+import me.emiliomini.dutyschedule.shared.datastores.DutyLink
 import me.emiliomini.dutyschedule.shared.datastores.Employee
 import me.emiliomini.dutyschedule.shared.datastores.Incode
 import me.emiliomini.dutyschedule.shared.datastores.Message
@@ -58,9 +59,11 @@ import me.emiliomini.dutyschedule.shared.util.isNight
 import me.emiliomini.dutyschedule.shared.util.isNightShift
 import me.emiliomini.dutyschedule.shared.util.isNotNullOrBlank
 import me.emiliomini.dutyschedule.shared.util.midpointInstant
+import me.emiliomini.dutyschedule.shared.util.DAY_MILLIS
 import me.emiliomini.dutyschedule.shared.util.WEEK_MILLIS
 import me.emiliomini.dutyschedule.shared.util.nullIfBlank
 import me.emiliomini.dutyschedule.shared.util.startOfDay
+import me.emiliomini.dutyschedule.shared.util.toEpochMilliseconds
 import me.emiliomini.dutyschedule.shared.util.toInstant
 import me.emiliomini.dutyschedule.shared.util.toTimestamp
 import me.emiliomini.dutyschedule.shared.util.withinLast
@@ -100,6 +103,15 @@ object PrepService : DutyScheduleServiceBase {
 
     private val timelineMutex = Mutex()
     private val runningTimelines = mutableMapOf<TimelineKey, Deferred<List<OrgDay>?>>()
+
+    private val dutyLinkMutex = Mutex()
+    private val runningDutyLinks = mutableMapOf<String, Deferred<DutyLink?>>()
+
+    /**
+     * Upcoming duties whose plan entry could not be found. Kept for the session only: a plan that
+     * has not been published yet is the usual reason, so a later launch is worth another look
+     */
+    private val unresolvedDutyLinks = mutableSetOf<String>()
 
     // Replaced wholesale rather than mutated so peekTimeline can read it off the main thread
     // without taking the lock; a stale read costs at most one spinner frame.
@@ -322,6 +334,7 @@ object PrepService : DutyScheduleServiceBase {
         this.self = null
         this.messages.clear()
         timelineMutex.withLock { timelineCache = emptyMap() }
+        dutyLinkMutex.withLock { unresolvedDutyLinks.clear() }
         CredentialService.clearPassword()
         StorageService.clear()
         MultiplatformNetworkAdapter.clearCookies()
@@ -596,23 +609,22 @@ object PrepService : DutyScheduleServiceBase {
             logger.w("HÄND-Augmentierung fehlgeschlagen: ${e.message}")
         }
 
+        // One plan carries one set of groups, so every day of it shares that set. Appending it per
+        // duty instead left each day holding as many copies as it had duties, which the schedule
+        // then had to index again on every frame
+        val planGroups = groups.values.toList()
+
         val days = mutableMapOf<String, OrgDay>()
         for (duty in duties) {
             val date = duty.begin.format("yyyy-MM-dd")
             val day = days.getOrElse(date) {
-                OrgDay(orgUnitDataGuid, duty.begin)
+                OrgDay(orgUnitDataGuid, duty.begin, groups = planGroups)
             }
 
-            if (duty.isNightShift()) {
-                days[date] = day.copy(
-                    groups = listOf(*day.groups.toTypedArray(), *groups.values.toTypedArray()),
-                    nightShifts = listOf(*day.nightShifts.toTypedArray(), duty)
-                )
+            days[date] = if (duty.isNightShift()) {
+                day.copy(nightShifts = day.nightShifts + duty)
             } else {
-                days[date] = day.copy(
-                    groups = listOf(*day.groups.toTypedArray(), *groups.values.toTypedArray()),
-                    dayShifts = listOf(*day.dayShifts.toTypedArray(), duty)
-                )
+                day.copy(dayShifts = day.dayShifts + duty)
             }
         }
 
@@ -682,6 +694,161 @@ object PrepService : DutyScheduleServiceBase {
     private data class TimelineKey(val orgUnitDataGuid: String, val from: Long, val to: Long)
 
     private data class CachedTimeline(val days: List<OrgDay>, val loadedAt: Instant)
+
+    override fun peekDutyLink(upcomingGuid: String): DutyLink? {
+        return StorageService.DUTY_LINKS.flow.value.links[upcomingGuid]
+    }
+
+    override suspend fun resolveDutyLink(
+        duty: MinimalDutyDefinition,
+        retryUnresolved: Boolean
+    ): DutyLink? {
+        peekDutyLink(duty.guid)?.let { return it }
+        if (!isLoggedIn || duty.guid.isBlank()) {
+            return null
+        }
+
+        val request = dutyLinkMutex.withLock {
+            if (retryUnresolved) {
+                unresolvedDutyLinks.remove(duty.guid)
+            } else if (unresolvedDutyLinks.contains(duty.guid)) {
+                return null
+            }
+
+            runningDutyLinks[duty.guid] ?: scope.async {
+                storeDutyLink(duty, mutableMapOf())
+            }.also { started ->
+                runningDutyLinks[duty.guid] = started
+                started.invokeOnCompletion {
+                    scope.launch {
+                        dutyLinkMutex.withLock {
+                            if (runningDutyLinks[duty.guid] === started) {
+                                runningDutyLinks.remove(duty.guid)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return request.await()
+    }
+
+    override fun resolveUpcomingDutyLinks() {
+        scope.launch {
+            if (!isLoggedIn) {
+                return@launch
+            }
+
+            val upcoming = StorageService.UPCOMING_DUTIES.get()?.minimalDutyDefinitions.orEmpty()
+            if (upcoming.isEmpty()) {
+                return@launch
+            }
+
+            // Links for duties that have dropped off the upcoming list can never be reached again
+            val stillUpcoming = upcoming.map { it.guid }.toSet()
+            StorageService.DUTY_LINKS.update { items ->
+                items.copy(links = items.links.filterKeys { stillUpcoming.contains(it) })
+            }
+
+            // One plan covers every duty that shares its org and day, so the batch shares the loads
+            val plans = mutableMapOf<PlanKey, List<DutyDefinition>?>()
+            for (duty in upcoming) {
+                if (peekDutyLink(duty.guid) != null) {
+                    continue
+                }
+
+                val alreadyTried = dutyLinkMutex.withLock {
+                    unresolvedDutyLinks.contains(duty.guid)
+                }
+                if (alreadyTried) {
+                    continue
+                }
+
+                storeDutyLink(duty, plans)
+            }
+        }
+    }
+
+    private suspend fun storeDutyLink(
+        duty: MinimalDutyDefinition,
+        plans: MutableMap<PlanKey, List<DutyDefinition>?>
+    ): DutyLink? {
+        val link = findDutyLink(duty, plans)
+        if (link == null) {
+            logger.d("No plan duty matches upcoming duty ${duty.guid}")
+            dutyLinkMutex.withLock { unresolvedDutyLinks.add(duty.guid) }
+            return null
+        }
+
+        logger.d("Linked upcoming duty ${duty.guid} to ${link.planDutyGuid} in ${link.orgGuid}")
+        StorageService.DUTY_LINKS.update {
+            it.copy(links = it.links + (duty.guid to link))
+        }
+
+        return link
+    }
+
+    /**
+     * Walks the orgs the user may see, most likely first, and returns as soon as one of their plans
+     * holds a duty that is recognisably this one
+     */
+    private suspend fun findDutyLink(
+        duty: MinimalDutyDefinition,
+        plans: MutableMap<PlanKey, List<DutyDefinition>?>
+    ): DutyLink? {
+        val selfGuid = self?.guid.nullIfBlank() ?: return null
+
+        val from = duty.begin.toInstant().startOfDay()
+        val to = Instant.fromEpochMilliseconds(
+            duty.end.toInstant().startOfDay().toEpochMilliseconds() + DAY_MILLIS
+        )
+
+        val preferences = StorageService.USER_PREFERENCES.get()
+        val orgs = buildList {
+            getDefaultOrgGuid()?.let { add(it) }
+            addAll(preferences?.allowedOrgs.orEmpty())
+        }.distinct()
+
+        for (org in orgs) {
+            val key = PlanKey(org, from.toEpochMilliseconds(), to.toEpochMilliseconds())
+            val duties = plans.getOrPut(key) { loadPlan(org, from, to)?.first }
+            val match = duties?.let { matchPlanDuty(it, duty, selfGuid) } ?: continue
+
+            return DutyLink(
+                upcomingGuid = duty.guid,
+                orgGuid = org,
+                planDutyGuid = match.guid,
+                begin = duty.begin
+            )
+        }
+
+        return null
+    }
+
+    /**
+     * An upcoming duty always describes the signed in user's own slot, times included, so the plan
+     * entry behind it is the one holding a slot of theirs that starts and ends at the same moment.
+     * Anything looser risks linking a neighbouring duty, which is worse than linking none
+     */
+    private fun matchPlanDuty(
+        duties: List<DutyDefinition>,
+        duty: MinimalDutyDefinition,
+        selfGuid: String
+    ): DutyDefinition? {
+        val begin = duty.begin.toEpochMilliseconds()
+        val end = duty.end.toEpochMilliseconds()
+
+        return duties.firstOrNull { definition ->
+            definition.slots.any {
+                it.employeeGuid == selfGuid &&
+                        it.begin.toEpochMilliseconds() == begin &&
+                        it.end.toEpochMilliseconds() == end
+            }
+        }
+    }
+
+    private data class PlanKey(val orgUnitDataGuid: String, val from: Long, val to: Long)
 
     override suspend fun loadPast(year: String): List<MinimalDutyDefinition>? {
         val intYear = year.toIntOrNull()

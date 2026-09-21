@@ -11,10 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -44,7 +41,6 @@ import org.jetbrains.compose.resources.stringResource
 fun Main(modifier: Modifier = Modifier, onLogout: () -> Unit, onRestart: () -> Unit) {
     val snackbarHostState = remember { SnackbarHostState() }
     ScaffoldService.registerSnackbar(snackbarHostState)
-    var selectedNavIndex by remember { mutableIntStateOf(0) }
     val navItems = listOfNotNull(
         NavItem(
             id = NavItemId.DASHBOARD,
@@ -76,6 +72,11 @@ fun Main(modifier: Modifier = Modifier, onLogout: () -> Unit, onRestart: () -> U
         },
     )
 
+    // The service owns the current screen so that anything holding it -- a duty card linking into
+    // the schedule, for one -- can navigate without reaching into this composable's state
+    val selectedNavIndex =
+        navItems.indexOfFirst { it.id == ScaffoldService.currentScreen }.coerceAtLeast(0)
+
     Scaffold(modifier = modifier, topBar = {
         TopAppBar(
             title = {
@@ -93,9 +94,7 @@ fun Main(modifier: Modifier = Modifier, onLogout: () -> Unit, onRestart: () -> U
             navItems.forEachIndexed { index, item ->
                 NavigationBarItem(
                     selected = selectedNavIndex == index,
-                    onClick = {
-                        selectedNavIndex = index; ScaffoldService.switchScreen(navItems[index].id)
-                    },
+                    onClick = { ScaffoldService.switchScreen(item.id) },
                     icon = {
                         Icon(
                             item.icon, contentDescription = item.label

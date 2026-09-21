@@ -12,11 +12,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -53,12 +50,12 @@ fun AppPersonnelInfo(
         PersonnelInfoState.DEFAULT -> MaterialTheme.colorScheme.onSurface
     }
 
-    var employee by remember { mutableStateOf<Employee?>(null) }
-    var infoText by remember { mutableStateOf("") }
-
-    LaunchedEffect(employeeGuid, fallbackEmployee, employeeItems) {
-        employee = employeeItems.employees[employeeGuid] ?: fallbackEmployee
-
+    // Derived rather than assigned from an effect: a roster shows one of these per slot, and every
+    // background employee refresh used to restart all of their effects and recompose them twice
+    val employee = remember(employeeGuid, fallbackEmployee, employeeItems) {
+        employeeItems.employees[employeeGuid] ?: fallbackEmployee
+    }
+    val infoText = remember(employee, employeeGuid, customBegin, customEnd, info) {
         val infoContents = mutableListOf<String>()
         if (employeeGuid.isNotBlank() || info.isNullOrBlank()) {
             infoContents.add(employee?.identifier ?: "")
@@ -67,7 +64,7 @@ fun AppPersonnelInfo(
             infoContents.add(customBegin?.format("HH:mm") + " - " + customEnd?.format("HH:mm"))
         }
         infoContents.add(info ?: "")
-        infoText = infoContents.filter { it.isNotBlank() }.joinToString(" | ")
+        infoContents.filter { it.isNotBlank() }.joinToString(" | ")
     }
 
     Row(

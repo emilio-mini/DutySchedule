@@ -54,6 +54,7 @@ fun MinimalDutyCard(
     duty: MinimalDutyDefinition,
     demo: Boolean = false,
     type: CardListItemType = CardListItemType.DEFAULT,
+    onClick: () -> Unit = {},
     snackbarHostState: SnackbarHostState?
 ) {
     val scope = rememberCoroutineScope()
@@ -61,7 +62,7 @@ fun MinimalDutyCard(
     val dateFormatter = "dd.MM.yyyy"
     val clipboardLabel = stringResource(Res.string.base_dutycard_clipboard_duty)
 
-    Box(modifier = modifier.wrapContentSize().combinedClickable(onClick = {}, onLongClick = {
+    Box(modifier = modifier.wrapContentSize().combinedClickable(onClick = onClick, onLongClick = {
         scope.launch {
             getPlatformClipboardApi().copyToClipboard(Json.encodeToString(duty), clipboardLabel)
         }

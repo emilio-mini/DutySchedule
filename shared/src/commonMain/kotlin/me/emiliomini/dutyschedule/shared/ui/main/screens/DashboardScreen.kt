@@ -38,7 +38,9 @@ import androidx.compose.ui.unit.dp
 import dutyschedule.shared.generated.resources.Res
 import dutyschedule.shared.generated.resources.main_dashboard_hours
 import dutyschedule.shared.generated.resources.main_dashboard_section_upcoming_title
+import dutyschedule.shared.generated.resources.main_dashboard_upcoming_link_failed
 import kotlinx.coroutines.launch
+import me.emiliomini.dutyschedule.shared.datastores.MinimalDutyDefinition
 import me.emiliomini.dutyschedule.shared.debug.DebugFlags
 import me.emiliomini.dutyschedule.shared.services.CredentialService
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
@@ -55,6 +57,7 @@ import me.emiliomini.dutyschedule.shared.ui.components.MinimalDutyCard
 import me.emiliomini.dutyschedule.shared.ui.icons.DeleteSweep
 import me.emiliomini.dutyschedule.shared.ui.main.entry.NavItemId
 import me.emiliomini.dutyschedule.shared.util.format
+import me.emiliomini.dutyschedule.shared.util.toScheduleFocus
 import me.emiliomini.dutyschedule.shared.util.withinLast
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.floor
@@ -135,6 +138,32 @@ fun DashboardScreen(
         }
 
         DutyScheduleService.preloadTimeline()
+        DutyScheduleService.resolveUpcomingDutyLinks()
+    }
+
+    // Tapping a duty jumps to its place in the schedule. The pairing is worked out in the
+    // background after the list loads, so the tap only has to resolve it when it got there first
+    var linking by remember { mutableStateOf(false) }
+    val linkFailedMessage = stringResource(Res.string.main_dashboard_upcoming_link_failed)
+    val openInSchedule: (MinimalDutyDefinition) -> Unit = { duty ->
+        val known = DutyScheduleService.peekDutyLink(duty.guid)
+        if (known != null) {
+            ScaffoldService.focusSchedule(known.toScheduleFocus())
+        } else if (!linking) {
+            linking = true
+            scope.launch {
+                try {
+                    val resolved = DutyScheduleService.resolveDutyLink(duty, retryUnresolved = true)
+                    if (resolved != null) {
+                        ScaffoldService.focusSchedule(resolved.toScheduleFocus())
+                    } else {
+                        snackbarHostState?.showSnackbar(linkFailedMessage)
+                    }
+                } finally {
+                    linking = false
+                }
+            }
+        }
     }
 
     LaunchedEffect(statistics) {
@@ -215,6 +244,7 @@ fun DashboardScreen(
                     MinimalDutyCard(
                         duty = duty,
                         type = if (index == 0 && upcomingDuties.minimalDutyDefinitions.size == 1) CardListItemType.SINGLE else if (index == 0) CardListItemType.TOP else if (index == upcomingDuties.minimalDutyDefinitions.size - 1) CardListItemType.BOTTOM else CardListItemType.DEFAULT,
+                        onClick = { openInSchedule(duty) },
                         snackbarHostState = snackbarHostState
                     )
                     if (index == upcomingDuties.minimalDutyDefinitions.size - 1) {

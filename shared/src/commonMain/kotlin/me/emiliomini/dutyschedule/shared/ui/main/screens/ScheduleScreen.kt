@@ -62,12 +62,14 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
+import me.emiliomini.dutyschedule.shared.comparators.ownDutiesFirst
 import me.emiliomini.dutyschedule.shared.datastores.OrgDay
 import me.emiliomini.dutyschedule.shared.datastores.Requirement
 import me.emiliomini.dutyschedule.shared.datastores.Slot
 import me.emiliomini.dutyschedule.shared.mappings.ShiftType
 import me.emiliomini.dutyschedule.shared.services.prep.DutyScheduleService
 import me.emiliomini.dutyschedule.shared.services.scaffold.Action
+import me.emiliomini.dutyschedule.shared.services.scaffold.ScaffoldService
 import me.emiliomini.dutyschedule.shared.services.scaffold.ScreenActions
 import me.emiliomini.dutyschedule.shared.services.storage.StorageService
 import me.emiliomini.dutyschedule.shared.ui.components.AppDateInfo
@@ -108,12 +110,20 @@ fun ScheduleScreen(
 
     val dateRangePickerState = rememberDateRangePickerState()
 
+    // Read once as the screen composes, so a duty linked from the dashboard opens on its own org
+    // and time rather than on the default view for a frame first. The range starts on the duty
+    // itself, not on its week, so the duty is the first thing the list shows
+    val focus = remember { ScaffoldService.consumeScheduleFocus() }
+    val rangeStart = focus?.dutyBegin ?: currentMillis
+
     var showDatePicker by remember { mutableStateOf(false) }
-    var selectedStartDate by remember { mutableStateOf<Long?>(currentMillis) }
-    var selectedEndDate by remember { mutableStateOf<Long?>(currentMillis + WEEK_MILLIS) }
+    var selectedStartDate by remember { mutableStateOf<Long?>(rangeStart) }
+    var selectedEndDate by remember { mutableStateOf<Long?>(rangeStart + WEEK_MILLIS) }
 
     var allowedOrgs by remember { mutableStateOf<List<String>?>(null) }
-    var selectedOrg by remember { mutableStateOf(userPreferences.lastSelectedOrg.nullIfBlank()) }
+    var selectedOrg by remember {
+        mutableStateOf(focus?.orgGuid ?: userPreferences.lastSelectedOrg.nullIfBlank())
+    }
     val orgItems by StorageService.ORG_ITEMS.collectAsState()
 
     var timeline by remember {
@@ -293,18 +303,34 @@ fun ScheduleScreen(
                     )
                 }
             }
-            val days = timeline
+            // Ordered here rather than where the timeline is built: the preload can run before the
+            // signed in user is known, and that ordering would then be cached along with the days
+            val selfGuid = DutyScheduleService.self?.guid
+            val days = remember(timeline, selfGuid) {
+                val order = ownDutiesFirst(selfGuid)
+                timeline?.map {
+                    it.copy(
+                        dayShifts = it.dayShifts.sortedWith(order),
+                        nightShifts = it.nightShifts.sortedWith(order)
+                    )
+                }
+            }
+            // Every day of a timeline carries the same groups, so index them once for the whole
+            // list instead of rebuilding a map per day on every frame
+            val groupsByGuid = remember(days) {
+                days.orEmpty().flatMap { it.groups }.associateBy { it.guid }
+            }
             if (!days.isNullOrEmpty()) {
                 LazyColumn(
                     modifier = modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = PaddingValues(bottom = 20.dp)
                 ) {
-                    items(days) { item ->
+                    items(days, key = { it.date.seconds }) { item ->
                         AppDateInfo(date = item.date.toInstant())
                         DutyCardCarousel(
                             duties = item.dayShifts,
-                            groups = item.groups.associateBy { it.guid },
+                            groups = groupsByGuid,
                             shiftType = ShiftType.DAY_SHIFT,
                             onEmployeeClick = {
                                 detailViewEmployee = it
@@ -315,7 +341,7 @@ fun ScheduleScreen(
                             })
                         DutyCardCarousel(
                             duties = item.nightShifts,
-                            groups = item.groups.associateBy { it.guid },
+                            groups = groupsByGuid,
                             shiftType = ShiftType.NIGHT_SHIFT,
                             onEmployeeClick = {
                                 detailViewEmployee = it

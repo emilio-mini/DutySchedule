@@ -3,6 +3,7 @@ package me.emiliomini.dutyschedule.shared.services.prep
 import me.emiliomini.dutyschedule.shared.datastores.CreateDutyResponse
 import me.emiliomini.dutyschedule.shared.datastores.DutyDefinition
 import me.emiliomini.dutyschedule.shared.datastores.DutyGroup
+import me.emiliomini.dutyschedule.shared.datastores.DutyLink
 import me.emiliomini.dutyschedule.shared.datastores.Employee
 import me.emiliomini.dutyschedule.shared.datastores.Incode
 import me.emiliomini.dutyschedule.shared.datastores.Message
@@ -57,6 +58,25 @@ interface DutyScheduleServiceBase {
 
     /** Warms the timeline cache for the schedule's opening view without blocking the caller */
     fun preloadTimeline()
+    /**
+     * The plan entry an upcoming duty stands for, if it has been worked out before. Resolving is
+     * expensive enough that the result is persisted, so this reads it back without suspending
+     */
+    fun peekDutyLink(upcomingGuid: String): DutyLink?
+
+    /**
+     * Finds the plan entry behind [duty] by searching the plans of every org the user may see, and
+     * remembers the pairing. Returns the stored link straight away when there already is one, and
+     * null when no plan holds a matching duty. [retryUnresolved] looks again at a duty an earlier
+     * pass gave up on, which is what a deliberate tap on it warrants
+     */
+    suspend fun resolveDutyLink(
+        duty: MinimalDutyDefinition,
+        retryUnresolved: Boolean = false
+    ): DutyLink?
+
+    /** Works through every upcoming duty that has no link yet, without blocking the caller */
+    fun resolveUpcomingDutyLinks()
     suspend fun loadPast(year: String): List<MinimalDutyDefinition>?
     suspend fun loadHoursOfService(year: String): Float?
     suspend fun loadUpcoming(): List<MinimalDutyDefinition>?

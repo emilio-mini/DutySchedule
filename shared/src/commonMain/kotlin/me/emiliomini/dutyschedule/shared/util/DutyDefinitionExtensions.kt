@@ -9,6 +9,10 @@ import me.emiliomini.dutyschedule.shared.datastores.Slot
 import me.emiliomini.dutyschedule.shared.mappings.RequirementMapping
 import kotlin.time.ExperimentalTime
 
+fun DutyDefinition.isAllocatedTo(employeeGuid: String): Boolean {
+    return slots.any { it.employeeGuid == employeeGuid }
+}
+
 fun DutyDefinition.getVehicle(): Slot? {
     return slots.firstOrNull { !it.employeeGuid.isNullOrBlank() && RequirementMapping.VEHICLES.contains(it.requirement.guid) }
 }

@@ -3,7 +3,22 @@ package me.emiliomini.dutyschedule.shared.comparators
 import me.emiliomini.dutyschedule.shared.datastores.DutyDefinition
 import me.emiliomini.dutyschedule.shared.util.getAllocatedSlotsCount
 import me.emiliomini.dutyschedule.shared.util.getVehicle
+import me.emiliomini.dutyschedule.shared.util.isAllocatedTo
 import me.emiliomini.dutyschedule.shared.util.isNotNullOrBlank
+
+/**
+ * [DutyDefinitionComparator] with the signed in user's own duties pulled to the front, so a day
+ * with a dozen of them opens on the one they are rostered for instead of making them hunt for it.
+ * Falls back to the plain ordering when there is nobody to compare against
+ */
+fun ownDutiesFirst(employeeGuid: String?): Comparator<DutyDefinition> {
+    if (employeeGuid.isNullOrBlank()) {
+        return DutyDefinitionComparator
+    }
+
+    return compareByDescending<DutyDefinition> { it.isAllocatedTo(employeeGuid) }
+        .then(DutyDefinitionComparator)
+}
 
 val DutyDefinitionComparator = Comparator<DutyDefinition> { d1, d2 ->
     val d1Sew = d1.getVehicle()

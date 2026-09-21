@@ -5,6 +5,7 @@ import kotlinx.coroutines.sync.withLock
 import me.emiliomini.dutyschedule.shared.api.getPlatformStorageApi
 import me.emiliomini.dutyschedule.shared.datastores.AlarmItems
 import me.emiliomini.dutyschedule.shared.datastores.ClientCookies
+import me.emiliomini.dutyschedule.shared.datastores.DutyLinkItems
 import me.emiliomini.dutyschedule.shared.datastores.Employee
 import me.emiliomini.dutyschedule.shared.datastores.EndpointConfig
 import me.emiliomini.dutyschedule.shared.datastores.EmployeeItems
@@ -78,6 +79,13 @@ object StorageService {
         ClientCookies()
     )
 
+    val DUTY_LINKS = MultiplatformDataStore(
+        "duty_links",
+        onUpdate = { store, newData -> storageApi.update(store, newData) },
+        DutyLinkItems.serializer(),
+        DutyLinkItems()
+    )
+
     val ENDPOINTS = MultiplatformDataStore(
         "endpoints",
         onUpdate = { store, newData -> storageApi.update(store, newData) },
@@ -96,6 +104,7 @@ object StorageService {
         PAST_DUTIES,
         EMPLOYEES,
         COOKIES,
+        DUTY_LINKS,
         ENDPOINTS
     )
 
